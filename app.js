@@ -72,19 +72,115 @@ function updateThemeIcon(theme) {
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    const codeEditor = document.getElementById('codeEditor');
+    
     const runCodeBtn = document.getElementById('runCode');
     const editorOutput = document.getElementById('editorOutput');
-    
-    const replInput = document.getElementById('replInput');
     const replOutput = document.getElementById('replOutput');
     const clearReplBtn = document.getElementById('clearRepl');
-    
     const exampleBtns = document.querySelectorAll('.example-btn');
+    
+    // Initialize CodeMirror
+    const codeEditorTextarea = document.getElementById('codeEditor');
+    const codeEditor = CodeMirror.fromTextArea(codeEditorTextarea, {
+        mode: 'haskell',
+        theme: 'monokai',
+        lineNumbers: true,
+        indentUnit: 2,
+        tabSize: 2,
+        lineWrapping: true,
+        extraKeys: {
+            'Ctrl-Enter': () => runCodeBtn.click(),
+            'Cmd-Enter': () => runCodeBtn.click()
+        }
+    });
+    
+    // Initialize REPL CodeMirror
+    const replInputTextarea = document.getElementById('replInput');
+    const replEditor = CodeMirror.fromTextArea(replInputTextarea, {
+        mode: 'haskell',
+        theme: 'monokai',
+        lineNumbers: false,
+        indentUnit: 2,
+        tabSize: 2,
+        lineWrapping: true,
+        viewportMargin: Infinity,
+        extraKeys: {
+            'Enter': function(cm) {
+                const expr = cm.getValue().trim();
+                if (!expr) return;
+                
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const themeClass = currentTheme === 'light' ? 'cm-s-eclipse' : 'cm-s-monokai';
+
+                // Add input to history with syntax highlighting
+                const inputDiv = document.createElement('div');
+                inputDiv.className = 'repl-entry';
+                
+                const promptSpan = document.createElement('span');
+                promptSpan.className = 'repl-prompt';
+                promptSpan.textContent = '> ';
+                
+                const inputCode = document.createElement('code');
+                inputCode.className = `repl-input-code ${themeClass}`;
+                inputDiv.appendChild(promptSpan);
+                inputDiv.appendChild(inputCode);
+                
+                replOutput.appendChild(inputDiv);
+                
+                // Apply syntax highlighting to input
+                CodeMirror.runMode(expr, 'haskell', inputCode);
+
+                // Evaluate expression
+                const result = interpreter.evaluateRepl(expr);
+                const outputDiv = document.createElement('div');
+                
+                if (result.success) {
+                    outputDiv.className = 'repl-result';
+                    const outputCode = document.createElement('code');
+                    outputCode.className = `repl-output-code ${themeClass}`;
+                    outputDiv.appendChild(outputCode);
+                    // Apply syntax highlighting to output
+                    CodeMirror.runMode(result.result, 'haskell', outputCode);
+                } else {
+                    outputDiv.className = 'repl-error';
+                    outputDiv.textContent = `Error: ${result.error}`;
+                }
+                
+                replOutput.appendChild(outputDiv);
+                
+                // Scroll to bottom
+                replOutput.scrollTop = replOutput.scrollHeight;
+                
+                // Clear input
+                cm.setValue('');
+                cm.focus();
+            },
+            'Shift-Enter': function(cm) {
+                cm.replaceSelection('\n');
+            }
+        }
+    });
+    
+    const themeToggle = document.getElementById('themeToggle');
+    const originalThemeToggle = themeToggle.onclick;
+    themeToggle.addEventListener('click', () => {
+        setTimeout(() => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'eclipse' : 'monokai';
+            codeEditor.setOption('theme', newTheme);
+            replEditor.setOption('theme', newTheme);
+        }, 0);
+    });
+    
+    // Set initial theme
+    const initialTheme = document.documentElement.getAttribute('data-theme');
+    const initialEditorTheme = initialTheme === 'light' ? 'eclipse' : 'monokai';
+    codeEditor.setOption('theme', initialEditorTheme);
+    replEditor.setOption('theme', initialEditorTheme);
 
     // Run code from editor
     runCodeBtn.addEventListener('click', () => {
-        const code = codeEditor.value;
+        const code = codeEditor.getValue();
         const result = interpreter.run(code);
         
         if (result.success) {
@@ -95,43 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle REPL input
-    replInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const expr = replInput.value.trim();
-            if (!expr) return;
-
-            // Add input to history
-            const inputDiv = document.createElement('div');
-            inputDiv.className = 'repl-entry';
-            inputDiv.innerHTML = `<span class="repl-prompt">&gt;</span> <span class="repl-input">${escapeHtml(expr)}</span>`;
-            replOutput.appendChild(inputDiv);
-
-            // Evaluate expression
-            const result = interpreter.evaluateRepl(expr);
-            const outputDiv = document.createElement('div');
-            
-            if (result.success) {
-                outputDiv.className = 'repl-result';
-                outputDiv.textContent = result.result;
-            } else {
-                outputDiv.className = 'repl-error';
-                outputDiv.textContent = `Error: ${result.error}`;
-            }
-            
-            replOutput.appendChild(outputDiv);
-            
-            // Scroll to bottom
-            replOutput.scrollTop = replOutput.scrollHeight;
-            
-            // Clear input
-            replInput.value = '';
-        }
-    });
-
     // Clear REPL history
     clearReplBtn.addEventListener('click', () => {
         replOutput.innerHTML = '';
+        replEditor.focus();
     });
 
     // Load example code
@@ -139,14 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const exampleName = btn.dataset.example;
             if (examples[exampleName]) {
-                codeEditor.value = examples[exampleName];
+                codeEditor.setValue(examples[exampleName]);
                 editorOutput.innerHTML = '<div class="info">Example loaded! Click "Run Code" to load the functions.</div>';
             }
         });
     });
 
     // Load initial example
-    codeEditor.value = examples.total;
+    codeEditor.setValue(examples.total);
     editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
 });
 

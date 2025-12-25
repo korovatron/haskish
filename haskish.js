@@ -422,7 +422,12 @@ class HaskishInterpreter {
             { op: '<=', fn: (a, b) => a <= b },
             { op: '>=', fn: (a, b) => a >= b },
             { op: '==', fn: (a, b) => a == b },
-            { op: ':', fn: (a, b) => [a, ...(Array.isArray(b) ? b : [b])] }
+            { op: ':', fn: (a, b) => {
+                if (!Array.isArray(b)) {
+                    throw new Error('(:) requires a list as the second argument');
+                }
+                return [a, ...b];
+            }}
         ];
 
         for (let { op, fn } of binaryOps) {
@@ -536,7 +541,12 @@ class HaskishInterpreter {
             '<=': (a, b) => a <= b,
             '>=': (a, b) => a >= b,
             '==': (a, b) => a == b,
-            ':': (a, b) => [a, ...(Array.isArray(b) ? b : [b])]
+            ':': (a, b) => {
+                if (!Array.isArray(b)) {
+                    throw new Error('(:) requires a list as the second argument');
+                }
+                return [a, ...b];
+            }
         };
         
         if (!opMap[op]) {

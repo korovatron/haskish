@@ -159,24 +159,29 @@ header h1 {
     background-color: var(--border-color);
 }
 
-#codeEditor {
-    width: 100%;
+/* CodeMirror integration */
+.CodeMirror {
+    height: auto;
     min-height: 300px;
-    padding: 15px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.5;
-    background-color: var(--code-bg);
-    resize: vertical;
-    color: var(--text-color);
 }
 
-#codeEditor:focus {
+.CodeMirror-focused {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.1);
+}
+
+[data-theme="dark"] .CodeMirror {
+    background-color: var(--code-bg);
+}
+
+#codeEditor {
+    display: none; /* Hide the original textarea */
 }
 
 .output {
@@ -247,10 +252,24 @@ header h1 {
     color: var(--repl-text);
 }
 
+.repl-input-code,
+.repl-output-code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.repl-input-code {
+    color: var(--repl-text);
+}
+
 .repl-result {
-    color: var(--primary-color);
     margin-left: 20px;
     margin-bottom: 12px;
+}
+
+.repl-output-code {
+    display: inline-block;
 }
 
 .repl-error {
@@ -261,7 +280,7 @@ header h1 {
 
 .repl-input-container {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     background-color: var(--repl-bg);
     border: 2px solid var(--border-color);
     border-radius: 5px;
@@ -273,15 +292,24 @@ header h1 {
     border-color: var(--primary-color);
 }
 
-#replInput {
+#replInputWrapper {
     flex: 1;
-    background: none;
+}
+
+#replInputWrapper .CodeMirror {
     border: none;
-    color: var(--repl-text);
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
-    outline: none;
-    padding: 4px;
+    height: auto;
+    min-height: 20px;
+    background: transparent;
+}
+
+#replInputWrapper .CodeMirror-scroll {
+    min-height: 20px;
+    max-height: 150px;
+}
+
+#replInput {
+    display: none; /* Hide the original textarea */
 }
 
 /* Examples Panel */

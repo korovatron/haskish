@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haskish - A Level Functional Programming Playground</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
 </head>
 <body>
     <div class="container">
@@ -37,7 +40,9 @@
                 <div id="replOutput" class="output repl-history"></div>
                 <div class="repl-input-container">
                     <span class="repl-prompt">&gt;</span>
-                    <input type="text" id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])" />
+                    <div id="replInputWrapper">
+                        <textarea id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -63,6 +68,9 @@
         </footer>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/runmode/runmode.min.js"></script>
     <script src="haskish.js"></script>
     <script src="app.js"></script>
 </body>
