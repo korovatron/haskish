@@ -44,20 +44,43 @@ class HaskishInterpreter {
                 if (!Array.isArray(list)) {
                     throw new Error('map: second argument must be a list');
                 }
-                return list.map(item => this.applyFunction(fn, [item]));
+                return list.map(item => {
+                    if (fn instanceof PartialFunction) {
+                        return fn.apply([item]);
+                    }
+                    if (fn && fn._isOperatorFunction) {
+                        return fn.apply([item]);
+                    }
+                    return this.applyFunction(fn, [item]);
+                });
             },
             'filter': (predicate, list) => {
                 if (!Array.isArray(list)) {
                     throw new Error('filter: second argument must be a list');
                 }
-                return list.filter(item => this.applyFunction(predicate, [item]));
+                return list.filter(item => {
+                    if (predicate instanceof PartialFunction) {
+                        return predicate.apply([item]);
+                    }
+                    if (predicate && predicate._isOperatorFunction) {
+                        return predicate.apply([item]);
+                    }
+                    return this.applyFunction(predicate, [item]);
+                });
             },
             'fold': (fn, acc, list) => {
                 if (!Array.isArray(list)) {
                     throw new Error('fold: third argument must be a list');
                 }
-                return list.reduce((accumulator, item) => 
-                    this.applyFunction(fn, [accumulator, item]), acc);
+                return list.reduce((accumulator, item) => {
+                    if (fn instanceof PartialFunction) {
+                        return fn.apply([accumulator, item]);
+                    }
+                    if (fn && fn._isOperatorFunction) {
+                        return fn.apply([accumulator, item]);
+                    }
+                    return this.applyFunction(fn, [accumulator, item]);
+                }, acc);
             }
         };
     }
@@ -418,7 +441,14 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'paren') return this.evaluate(token.value);
+                if (token.type === 'paren') {
+                    // Check if it's an operator section like (*) or (<10)
+                    const fullParen = '(' + token.value + ')';
+                    if (/^\(([+\-*\/<>=]+)\s*\d*\)$/.test(fullParen) || /^\(\d+\s*[+\-*\/<>=]+\)$/.test(fullParen)) {
+                        return this.createOperatorSection(fullParen);
+                    }
+                    return this.evaluate(token.value);
+                }
                 if (token.type === 'identifier') {
                     // Evaluate identifier to get its value (could be a variable)
                     return this.evaluate(token.value);
@@ -472,18 +502,110 @@ class HaskishInterpreter {
 
     // Create operator section function
     createOperatorSection(section) {
-        const match = section.match(/^\(([+\-*\/<>=]+)\s*(\d+)?\)$/) || 
-                      section.match(/^\((\d+)\s*([+\-*\/<>=]+)\)$/);
+        // Match patterns like (*), (+), (<10), (10+), etc.
+        const opOnlyMatch = section.match(/^\(([+\-*\/<>=]+)\)$/);
+        if (opOnlyMatch) {
+            const op = opOnlyMatch[1];
+            return this.createOperatorFunction(op);
+        }
         
-        if (!match) return section;
-
-        // Return a function name that represents this section
+        const leftMatch = section.match(/^\(([+\-*\/<>=]+)\s*(\d+)\)$/);
+        if (leftMatch) {
+            const [, op, num] = leftMatch;
+            return this.createPartialOperatorFunction(op, null, parseFloat(num));
+        }
+        
+        const rightMatch = section.match(/^\((\d+)\s*([+\-*\/<>=]+)\)$/);
+        if (rightMatch) {
+            const [, num, op] = rightMatch;
+            return this.createPartialOperatorFunction(op, parseFloat(num), null);
+        }
+        
         return section;
+    }
+    
+    // Create a function for a binary operator
+    createOperatorFunction(op) {
+        const opMap = {
+            '+': (a, b) => a + b,
+            '-': (a, b) => a - b,
+            '*': (a, b) => a * b,
+            '/': (a, b) => a / b,
+            '<': (a, b) => a < b,
+            '>': (a, b) => a > b,
+            '<=': (a, b) => a <= b,
+            '>=': (a, b) => a >= b,
+            '==': (a, b) => a == b,
+            ':': (a, b) => [a, ...(Array.isArray(b) ? b : [b])]
+        };
+        
+        if (!opMap[op]) {
+            throw new Error(`Unknown operator: ${op}`);
+        }
+        
+        // Create a pseudo function that can be applied
+        return {
+            _isOperatorFunction: true,
+            op: op,
+            fn: opMap[op],
+            apply: function(args) {
+                if (args.length < 2) {
+                    throw new Error(`Operator ${op} requires 2 arguments`);
+                }
+                return this.fn(args[0], args[1]);
+            },
+            toString: function() {
+                return `<operator ${op}>`;
+            }
+        };
+    }
+    
+    // Create a partially applied operator function
+    createPartialOperatorFunction(op, leftVal, rightVal) {
+        const opMap = {
+            '+': (a, b) => a + b,
+            '-': (a, b) => a - b,
+            '*': (a, b) => a * b,
+            '/': (a, b) => a / b,
+            '<': (a, b) => a < b,
+            '>': (a, b) => a > b,
+            '<=': (a, b) => a <= b,
+            '>=': (a, b) => a >= b,
+            '==': (a, b) => a == b
+        };
+        
+        if (!opMap[op]) {
+            throw new Error(`Unknown operator: ${op}`);
+        }
+        
+        return {
+            _isOperatorFunction: true,
+            op: op,
+            leftVal: leftVal,
+            rightVal: rightVal,
+            apply: function(args) {
+                if (args.length < 1) {
+                    throw new Error(`Partial operator requires 1 argument`);
+                }
+                if (leftVal !== null) {
+                    return opMap[op](leftVal, args[0]);
+                } else {
+                    return opMap[op](args[0], rightVal);
+                }
+            },
+            toString: function() {
+                if (leftVal !== null) return `<operator ${leftVal}${op}>`;
+                return `<operator ${op}${rightVal}>`;
+            }
+        };
     }
 
     // Format output for display
     formatOutput(value) {
         if (value instanceof PartialFunction) {
+            return value.toString();
+        }
+        if (value && value._isOperatorFunction) {
             return value.toString();
         }
         if (Array.isArray(value)) {
