@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haskish - A Level Functional Programming Playground</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-container">
+                    <div class="logo">~λ</div>
+                    <h1>Haskish</h1>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Code Editor Panel -->
+            <div class="panel editor-panel">
+                <div class="panel-header">
+                    <h2>Function Definitions</h2>
+                    <button id="runCode" class="btn btn-primary">Run Code</button>
+                </div>
+                <textarea id="codeEditor" placeholder="-- Define your functions here&#10;-- Example:&#10;double x = x * 2&#10;&#10;total [] = 0&#10;total (x:xs) = x + total xs"></textarea>
+                <div id="editorOutput" class="output"></div>
+            </div>
+
+            <!-- REPL Panel -->
+            <div class="panel repl-panel">
+                <div class="panel-header">
+                    <h2>Interactive REPL</h2>
+                    <button id="clearRepl" class="btn btn-primary">Clear</button>
+                </div>
+                <div id="replOutput" class="output repl-history"></div>
+                <div class="repl-input-container">
+                    <span class="repl-prompt">&gt;</span>
+                    <input type="text" id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Examples Panel -->
+        <div class="examples-panel">
+            <h2>📚 Practice Examples</h2>
+            <div class="examples-grid">
+                <button class="example-btn" data-example="total">List Sum</button>
+                <button class="example-btn" data-example="map">Map Example</button>
+                <button class="example-btn" data-example="filter">Filter Example</button>
+                <button class="example-btn" data-example="fold">Fold Example</button>
+                <button class="example-btn" data-example="nested">Nested Lists</button>
+                <button class="example-btn" data-example="exam1">Exam Q: FunctionZ</button>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p>© 2025 Neil Kendall. More @ <a href="https://www.korovatron.co.uk/" target="_blank">www.korovatron.co.uk</a></p>
+            </div>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">☀️</button>
+        </footer>
+    </div>
+
+    <script src="haskish.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
