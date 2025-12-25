@@ -1,5 +1,23 @@
 // Haskish Interpreter - A subset of Haskell for A Level Computer Science
 
+// Class to represent a partially applied function
+class PartialFunction {
+    constructor(funcName, boundArgs, interpreter) {
+        this.funcName = funcName;
+        this.boundArgs = boundArgs;
+        this.interpreter = interpreter;
+    }
+
+    apply(additionalArgs) {
+        const allArgs = [...this.boundArgs, ...additionalArgs];
+        return this.interpreter.applyFunction(this.funcName, allArgs);
+    }
+
+    toString() {
+        return `<function ${this.funcName} with ${this.boundArgs.length} bound arg(s)>`;
+    }
+}
+
 class HaskishInterpreter {
     constructor() {
         this.functions = {};
@@ -251,7 +269,13 @@ class HaskishInterpreter {
     applyFunction(funcName, args) {
         // Check built-ins first
         if (this.builtins[funcName]) {
-            return this.builtins[funcName](...args);
+            // For built-ins, check if we have enough arguments
+            const builtinFn = this.builtins[funcName];
+            if (args.length < builtinFn.length) {
+                // Return a partially applied function
+                return new PartialFunction(funcName, args, this);
+            }
+            return builtinFn(...args);
         }
 
         // Check user-defined functions
@@ -264,6 +288,11 @@ class HaskishInterpreter {
         // Try each pattern case
         for (let caseObj of cases) {
             const patterns = this.parsePatterns(caseObj.params);
+            
+            // If not enough arguments, return a partial function
+            if (args.length < patterns.length) {
+                return new PartialFunction(funcName, args, this);
+            }
             
             if (patterns.length !== args.length) continue;
 
@@ -397,7 +426,22 @@ class HaskishInterpreter {
                 return token.value;
             });
 
+            // Check if funcName refers to a variable holding a partial function
+            if (this.variables[funcName] instanceof PartialFunction) {
+                return this.variables[funcName].apply(args);
+            }
+
             return this.applyFunction(funcName, args);
+        }
+        
+        // Single token that might be a function reference
+        if (tokens.length === 1 && tokens[0].type === 'identifier') {
+            const name = tokens[0].value;
+            // Check if it's a function name (for partial application like: addone = add 1)
+            if (this.functions[name] || this.builtins[name]) {
+                // Return a partial function with 0 arguments bound
+                return new PartialFunction(name, [], this);
+            }
         }
 
         throw new Error(`Cannot evaluate expression: ${expr}`);
@@ -439,11 +483,14 @@ class HaskishInterpreter {
 
     // Format output for display
     formatOutput(value) {
+        if (value instanceof PartialFunction) {
+            return value.toString();
+        }
         if (Array.isArray(value)) {
-            return '[' + value.map(v => this.formatOutput(v)).join(', ') + ']';
+            return '[' + value.map(v => this.formatOutput(v)).join(',') + ']';
         }
         if (typeof value === 'string') {
-            return value;
+            return '"' + value + '"';
         }
         return String(value);
     }
@@ -465,7 +512,24 @@ class HaskishInterpreter {
     // Evaluate a REPL expression
     evaluateRepl(expr) {
         try {
-            // Check if it's a variable assignment
+            // Check if it's a function definition (has parameters before =)
+            const funcMatch = expr.match(/^(\w+)\s+(.+?)\s*=\s*(.+)$/);
+            if (funcMatch) {
+                const [, funcName, params, body] = funcMatch;
+                
+                // Check if function already exists
+                if (this.functions[funcName]) {
+                    // Add to existing function cases (for pattern matching)
+                    this.functions[funcName].push({ params: params.trim(), body: body.trim() });
+                } else {
+                    // Create new function
+                    this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
+                }
+                
+                return { success: true, result: `Defined function: ${funcName}` };
+            }
+            
+            // Check if it's a variable assignment (no parameters before =)
             const assignMatch = expr.match(/^(\w+)\s*=\s*(.+)$/);
             if (assignMatch) {
                 const [, varName, value] = assignMatch;
