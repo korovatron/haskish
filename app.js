@@ -169,6 +169,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const newTheme = currentTheme === 'light' ? 'eclipse' : 'monokai';
             codeEditor.setOption('theme', newTheme);
             replEditor.setOption('theme', newTheme);
+            
+            // Update all existing REPL output syntax highlighting
+            const themeClass = currentTheme === 'light' ? 'cm-s-eclipse' : 'cm-s-monokai';
+            const oldThemeClass = currentTheme === 'light' ? 'cm-s-monokai' : 'cm-s-eclipse';
+            
+            document.querySelectorAll('.repl-input-code, .repl-output-code').forEach(el => {
+                el.classList.remove(oldThemeClass);
+                el.classList.add(themeClass);
+            });
         }, 0);
     });
     

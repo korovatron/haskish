@@ -431,3 +431,132 @@ footer a:hover {
 .repl-history::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
 }
+
+/* Syntax Highlighting Color Overrides for Light Mode */
+:root {
+    /* CodeMirror Eclipse theme overrides for better light mode visibility */
+    --syntax-keyword: #7F0055;
+    --syntax-function: #000080;
+    --syntax-string: #2A00FF;
+    --syntax-number: #0000C0;
+    --syntax-comment: #3F7F5F;
+    --syntax-operator: #000000;
+    --syntax-variable: #0000C0;
+}
+
+[data-theme="dark"] {
+    /* CodeMirror Monokai theme already has good colors */
+    --syntax-keyword: #F92672;
+    --syntax-function: #A6E22E;
+    --syntax-string: #E6DB74;
+    --syntax-number: #AE81FF;
+    --syntax-comment: #75715E;
+    --syntax-operator: #F92672;
+    --syntax-variable: #66D9EF;
+}
+
+/* CodeMirror syntax highlighting overrides for light mode */
+.cm-s-eclipse .cm-keyword {
+    color: #7F0055 !important;
+    font-weight: bold;
+}
+
+.cm-s-eclipse .cm-atom,
+.cm-s-eclipse .cm-number {
+    color: #0000C0 !important;
+    font-weight: bold;
+}
+
+.cm-s-eclipse .cm-def,
+.cm-s-eclipse .cm-variable,
+.cm-s-eclipse .cm-variable-2 {
+    color: #0000C0 !important;
+}
+
+.cm-s-eclipse .cm-variable-3,
+.cm-s-eclipse .cm-type {
+    color: #000080 !important;
+}
+
+.cm-s-eclipse .cm-comment {
+    color: #3F7F5F !important;
+    font-style: italic;
+}
+
+.cm-s-eclipse .cm-string {
+    color: #2A00FF !important;
+}
+
+.cm-s-eclipse .cm-string-2 {
+    color: #1F00AF !important;
+}
+
+.cm-s-eclipse .cm-meta {
+    color: #FF1717 !important;
+}
+
+.cm-s-eclipse .cm-qualifier {
+    color: #555555 !important;
+}
+
+.cm-s-eclipse .cm-builtin {
+    color: #30A;
+    font-weight: bold;
+}
+
+.cm-s-eclipse .cm-bracket {
+    color: #000000 !important;
+}
+
+.cm-s-eclipse .cm-tag {
+    color: #170;
+}
+
+.cm-s-eclipse .cm-attribute {
+    color: #00c;
+}
+
+.cm-s-eclipse .cm-operator {
+    color: #000000 !important;
+    font-weight: bold;
+}
+
+/* Ensure code elements in REPL also get proper highlighting */
+.repl-input-code.cm-s-eclipse,
+.repl-output-code.cm-s-eclipse {
+    color: var(--text-color);
+}
+
+.repl-input-code.cm-s-eclipse .cm-keyword,
+.repl-output-code.cm-s-eclipse .cm-keyword {
+    color: #7F0055 !important;
+    font-weight: bold;
+}
+
+.repl-input-code.cm-s-eclipse .cm-number,
+.repl-output-code.cm-s-eclipse .cm-number {
+    color: #0000C0 !important;
+    font-weight: bold;
+}
+
+.repl-input-code.cm-s-eclipse .cm-variable,
+.repl-output-code.cm-s-eclipse .cm-variable {
+    color: #0000C0 !important;
+}
+
+.repl-input-code.cm-s-eclipse .cm-comment,
+.repl-output-code.cm-s-eclipse .cm-comment {
+    color: #3F7F5F !important;
+    font-style: italic;
+}
+
+.repl-input-code.cm-s-eclipse .cm-string,
+.repl-output-code.cm-s-eclipse .cm-string {
+    color: #2A00FF !important;
+}
+
+.repl-input-code.cm-s-eclipse .cm-operator,
+.repl-output-code.cm-s-eclipse .cm-operator {
+    color: #000000 !important;
+    font-weight: bold;
+}
