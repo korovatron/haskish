@@ -2,6 +2,114 @@
 
 const interpreter = new HaskishInterpreter();
 
+// Module hints data
+const moduleHints = {
+    1: {
+        title: "Module 1: Basic Functions",
+        content: `
+            <h3>Getting Started with Functions</h3>
+            <p>In Haskish, functions are defined using the function name followed by parameters and the function body after an equals sign.</p>
+            
+            <h4>Function Syntax</h4>
+            <pre><code>functionName parameter = expression</code></pre>
+            
+            <h4>Key Concepts</h4>
+            <ul>
+                <li>Functions take one parameter and return a value</li>
+                <li>Use operators like <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> for arithmetic</li>
+                <li>Use comparison operators like <code>&lt;</code>, <code>&gt;</code>, <code>==</code> to return boolean values</li>
+                <li>All functions must return a value</li>
+            </ul>
+            
+            <h4>Examples</h4>
+            <pre><code>triple x = x * 3
+
+isPositive x = x > 0
+
+double x = x * 2</code></pre>
+        `
+    },
+    2: {
+        title: "Module 2: List Operations",
+        content: `
+            <h3>Working with Lists</h3>
+            <p>Lists are fundamental data structures in functional programming. Use pattern matching and recursion to process them.</p>
+            
+            <h4>List Patterns</h4>
+            <ul>
+                <li><code>[]</code> - Empty list (base case)</li>
+                <li><code>(x:xs)</code> - Head (first element) and tail (rest of list)</li>
+            </ul>
+            
+            <h4>Common Patterns</h4>
+            <pre><code>mySum [] = 0
+mySum (x:xs) = x + mySum xs
+
+myLength [] = 0
+myLength (x:xs) = 1 + myLength xs</code></pre>
+            
+            <h4>List Operators</h4>
+            <ul>
+                <li><code>++</code> - Concatenate lists</li>
+                <li><code>:</code> - Cons (add element to front)</li>
+            </ul>
+        `
+    },
+    3: {
+        title: "Module 3: Higher-Order Functions",
+        content: `
+            <h3>Higher-Order Functions</h3>
+            <p>Higher-order functions take other functions as arguments or return functions as results.</p>
+            
+            <h4>Built-in Higher-Order Functions</h4>
+            <ul>
+                <li><code>map f xs</code> - Apply function f to each element</li>
+                <li><code>filter p xs</code> - Keep elements where predicate p is true</li>
+                <li><code>foldl f init xs</code> - Fold left with function f and initial value</li>
+            </ul>
+            
+            <h4>Lambda Functions</h4>
+            <pre><code>map (\\x -> x * 2) [1,2,3]</code></pre>
+            
+            <h4>Tips</h4>
+            <ul>
+                <li>Use <code>map</code> to transform every element</li>
+                <li>Use <code>filter</code> to select elements</li>
+                <li>Use <code>foldl</code> to reduce a list to a single value</li>
+            </ul>
+        `
+    },
+    4: {
+        title: "Module 4: Pattern Matching",
+        content: `
+            <h3>Advanced Pattern Matching</h3>
+            <p>Pattern matching allows you to deconstruct data and handle different cases elegantly.</p>
+            
+            <h4>Pattern Types</h4>
+            <ul>
+                <li><code>[]</code> - Match empty list</li>
+                <li><code>(x:[])</code> - Match single-element list</li>
+                <li><code>(x:y:xs)</code> - Match first two elements and rest</li>
+                <li><code>_</code> - Wildcard (matches anything)</li>
+            </ul>
+            
+            <h4>Multiple Patterns</h4>
+            <pre><code>first (x:xs) = x
+first [] = error "empty list"
+
+safeHead [] = 0
+safeHead (x:xs) = x</code></pre>
+            
+            <h4>Best Practices</h4>
+            <ul>
+                <li>Always handle the base case (empty list)</li>
+                <li>Match most specific patterns first</li>
+                <li>Use wildcards for unused values</li>
+            </ul>
+        `
+    }
+};
+
 // Exercise content data
 const exerciseData = {
     1: {
@@ -506,19 +614,26 @@ function initExercises() {
     
     // Module accordion functionality - only one open at a time
     const moduleHeaders = document.querySelectorAll('.module-header');
-    moduleHeaders.forEach(header => {
+    moduleHeaders.forEach((header, index) => {
         header.addEventListener('click', () => {
             const module = header.parentElement;
             const isCurrentlyCollapsed = module.classList.contains('collapsed');
+            const moduleNumber = index + 1; // Modules are numbered 1-4
             
-            // Close all modules first
+            // Close all modules first and remove active state
             document.querySelectorAll('.module').forEach(m => {
                 m.classList.add('collapsed');
+                m.classList.remove('active');
             });
             
-            // If this module was collapsed, open it (toggle behavior)
+            // If this module was collapsed, open it and make it active (toggle behavior)
             if (isCurrentlyCollapsed) {
                 module.classList.remove('collapsed');
+                module.classList.add('active');
+                showModuleHints(moduleNumber);
+            } else {
+                // If closing, show hints for Module 1
+                showModuleHints(1);
             }
         });
     });
@@ -570,6 +685,25 @@ function initExercises() {
             document.querySelectorAll('.exercise').forEach(ex => ex.classList.remove('selected'));
         });
     }
+    
+    // Reset progress button
+    const resetBtn = document.getElementById('resetProgress');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all exercise progress? This cannot be undone.')) {
+                // Clear localStorage
+                localStorage.removeItem('haskishProgress');
+                
+                // Remove completed class from all exercises
+                document.querySelectorAll('.exercise').forEach(ex => {
+                    ex.classList.remove('completed');
+                });
+                
+                // Update all module progress
+                updateAllModuleProgress();
+            }
+        });
+    }
 }
 
 function showExerciseContent(exerciseId) {
@@ -603,4 +737,20 @@ function updateModuleProgress(module) {
 
 function updateAllModuleProgress() {
     const modules = document.querySelectorAll('.module');
-    modules.forEach(module => updateModuleProgress(module));}
+    modules.forEach(module => updateModuleProgress(module));
+}
+
+function showModuleHints(moduleNumber) {
+    const hintsContent = document.getElementById('hintsContent');
+    if (!hintsContent) return;
+    
+    const hints = moduleHints[moduleNumber];
+    if (hints) {
+        hintsContent.innerHTML = hints.content;
+    }
+}
+
+// Show Module 1 hints by default when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    showModuleHints(1);
+});

@@ -24,7 +24,10 @@
             <!-- Left Column: Exercises -->
             <div class="left-column">
                 <div class="exercises-section">
-                    <h2 class="exercises-header">Exercises 🔄</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h2 class="exercises-header" style="margin-bottom: 0; text-align: left; flex: 1;">Exercises</h2>
+                        <button id="resetProgress" class="btn btn-primary" title="Reset all progress">Reset</button>
+                    </div>
                     <p class="exercises-tip">💡 Tip: Click the ⭕ circles to mark exercises as complete ✅</p>
                     
                     <!-- Module 1: Basic Functions -->
@@ -159,6 +162,16 @@
                                 <span class="exercise-title">Fibonacci Sequence</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Hints Panel -->
+                <div class="panel hints-panel">
+                    <div class="panel-header">
+                        <h2>Module Hints</h2>
+                    </div>
+                    <div id="hintsContent" class="hints-content">
+                        <!-- Hints will be dynamically loaded here -->
                     </div>
                 </div>
             </div>
