@@ -1,5 +1,24 @@
 // Haskish Interpreter - A subset of Haskell for A Level Computer Science
 
+// Class to represent a lambda function
+class Lambda {
+    constructor(param, body, interpreter) {
+        this.param = param;
+        this.body = body;
+        this.interpreter = interpreter;
+    }
+
+    apply(arg) {
+        // Create a binding for the parameter
+        const bindings = { [this.param]: arg };
+        return this.interpreter.evaluateWithBindings(this.body, bindings);
+    }
+
+    toString() {
+        return `<lambda \\${this.param} -> ${this.body}>`;
+    }
+}
+
 // Class to represent a partially applied function
 class PartialFunction {
     constructor(funcName, boundArgs, interpreter) {
@@ -45,6 +64,9 @@ class HaskishInterpreter {
                     throw new Error('map: second argument must be a list');
                 }
                 return list.map(item => {
+                    if (fn instanceof Lambda) {
+                        return fn.apply(item);
+                    }
                     if (fn instanceof PartialFunction) {
                         return fn.apply([item]);
                     }
@@ -59,6 +81,9 @@ class HaskishInterpreter {
                     throw new Error('filter: second argument must be a list');
                 }
                 return list.filter(item => {
+                    if (predicate instanceof Lambda) {
+                        return predicate.apply(item);
+                    }
                     if (predicate instanceof PartialFunction) {
                         return predicate.apply([item]);
                     }
@@ -73,6 +98,11 @@ class HaskishInterpreter {
                     throw new Error('fold: third argument must be a list');
                 }
                 return list.reduce((accumulator, item) => {
+                    if (fn instanceof Lambda) {
+                        // For fold, lambda needs 2 params - we'd need multi-param lambdas
+                        // For now, treat single-param lambda as taking accumulator
+                        return fn.apply(accumulator);
+                    }
                     if (fn instanceof PartialFunction) {
                         return fn.apply([accumulator, item]);
                     }
@@ -166,7 +196,7 @@ class HaskishInterpreter {
                 continue;
             }
 
-            // Parentheses
+            // Parentheses (including lambdas)
             if (expr[i] === '(') {
                 let depth = 1;
                 let j = i + 1;
@@ -175,7 +205,40 @@ class HaskishInterpreter {
                     if (expr[j] === ')') depth--;
                     j++;
                 }
-                tokens.push({ type: 'paren', value: expr.slice(i + 1, j - 1) });
+                const parenContent = expr.slice(i + 1, j - 1);
+                // Check if it's a lambda expression
+                if (parenContent.includes('->')) {
+                    tokens.push({ type: 'lambda', value: parenContent });
+                } else {
+                    tokens.push({ type: 'paren', value: parenContent });
+                }
+                i = j;
+                continue;
+            }
+            
+            // Backslash for lambda (alternative syntax without parens)
+            if (expr[i] === '\\') {
+                // Find the end of the lambda (up to the end of expression or balanced parens)
+                let j = i + 1;
+                let depth = 0;
+                while (j < expr.length) {
+                    if (expr[j] === '(') depth++;
+                    if (expr[j] === ')') {
+                        if (depth === 0) break;
+                        depth--;
+                    }
+                    if (expr[j] === '[') depth++;
+                    if (expr[j] === ']') {
+                        if (depth === 0) break;
+                        depth--;
+                    }
+                    // Lambda ends at whitespace when depth is 0 and we've seen ->
+                    if (depth === 0 && /\s/.test(expr[j]) && expr.slice(i, j).includes('->')) {
+                        break;
+                    }
+                    j++;
+                }
+                tokens.push({ type: 'lambda', value: expr.slice(i + 1, j) });
                 i = j;
                 continue;
             }
@@ -412,6 +475,13 @@ class HaskishInterpreter {
     evaluate(expr) {
         expr = expr.trim();
 
+        // Lambda expression (\param -> body) or (\param -> body)
+        const lambdaMatch = expr.match(/^\(?\\(\w+)\s*->\s*(.+?)\)?$/);
+        if (lambdaMatch) {
+            const [, param, body] = lambdaMatch;
+            return new Lambda(param, body.trim(), this);
+        }
+
         // Check if it's a variable reference
         if (/^[a-zA-Z_]\w*$/.test(expr) && this.variables[expr] !== undefined) {
             return this.variables[expr];
@@ -483,6 +553,15 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
+                if (token.type === 'lambda') {
+                    // Parse lambda expression (with or without leading backslash)
+                    const lambdaMatch = token.value.match(/^\\?(\w+)\s*->\s*(.+)$/);
+                    if (lambdaMatch) {
+                        const [, param, body] = lambdaMatch;
+                        return new Lambda(param, body.trim(), this);
+                    }
+                    throw new Error(`Invalid lambda syntax: ${token.value}`);
+                }
                 if (token.type === 'paren') {
                     // Check if it's an operator section like (*) or (<10)
                     const fullParen = '(' + token.value + ')';
@@ -649,6 +728,9 @@ class HaskishInterpreter {
 
     // Format output for display
     formatOutput(value) {
+        if (value instanceof Lambda) {
+            return value.toString();
+        }
         if (value instanceof PartialFunction) {
             return value.toString();
         }
