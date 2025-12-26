@@ -101,6 +101,9 @@ class HaskishInterpreter {
             line = line.trim();
             if (!line) continue;
 
+            // Strip optional 'let' keyword at the start
+            line = line.replace(/^let\s+/, '');
+
             // Try to match function definition (has parameters before =)
             const funcMatch = line.match(/^(\w+)\s+(.+?)\s*=\s*(.+)$/);
             
@@ -219,6 +222,34 @@ class HaskishInterpreter {
         // Remove outer brackets
         if (listStr.startsWith('[') && listStr.endsWith(']')) {
             listStr = listStr.slice(1, -1);
+        }
+
+        // Check for range syntax: [start..end] or [start,next..end]
+        const rangeMatch = listStr.match(/^(-?\d+)(?:,(-?\d+))?\.\.(-?\d+)$/);
+        if (rangeMatch) {
+            const start = parseInt(rangeMatch[1]);
+            const end = parseInt(rangeMatch[3]);
+            const next = rangeMatch[2] ? parseInt(rangeMatch[2]) : null;
+            
+            // Calculate step
+            const step = next !== null ? (next - start) : (start <= end ? 1 : -1);
+            
+            if (step === 0) {
+                throw new Error('Range step cannot be zero');
+            }
+            
+            // Generate range
+            const result = [];
+            if (step > 0) {
+                for (let i = start; i <= end; i += step) {
+                    result.push(i);
+                }
+            } else {
+                for (let i = start; i >= end; i += step) {
+                    result.push(i);
+                }
+            }
+            return result;
         }
 
         const elements = [];
@@ -413,6 +444,12 @@ class HaskishInterpreter {
 
         // Binary operations
         const binaryOps = [
+            { op: '++', fn: (a, b) => {
+                if (!Array.isArray(a) || !Array.isArray(b)) {
+                    throw new Error('(++) requires two lists');
+                }
+                return [...a, ...b];
+            }},
             { op: '+', fn: (a, b) => a + b },
             { op: '-', fn: (a, b) => a - b },
             { op: '*', fn: (a, b) => a * b },
@@ -644,6 +681,9 @@ class HaskishInterpreter {
     // Evaluate a REPL expression
     evaluateRepl(expr) {
         try {
+            // Strip optional 'let' keyword at the start
+            expr = expr.trim().replace(/^let\s+/, '');
+            
             // Check if it's a function definition (has parameters before =)
             const funcMatch = expr.match(/^(\w+)\s+(.+?)\s*=\s*(.+)$/);
             if (funcMatch) {

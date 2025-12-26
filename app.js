@@ -2,6 +2,260 @@
 
 const interpreter = new HaskishInterpreter();
 
+// Exercise content data
+const exerciseData = {
+    1: {
+        title: "1. Double Function",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>double</code> that takes a number and returns its double.</p>
+            
+            <h3>Example</h3>
+            <pre><code>double 5
+-- Output: 10
+
+double 12
+-- Output: 24</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Use the multiplication operator (*) to multiply the input by 2.
+            </div>
+        `
+    },
+    2: {
+        title: "2. Square Function",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>square</code> that takes a number and returns its square.</p>
+            
+            <h3>Example</h3>
+            <pre><code>square 4
+-- Output: 16
+
+square 7
+-- Output: 49</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Multiply the number by itself: <code>x * x</code>
+            </div>
+        `
+    },
+    3: {
+        title: "3. IsEven Predicate",
+        content: `
+            <h3>Task</h3>
+            <p>Write a predicate function called <code>isEven</code> that returns <code>True</code> if a number is even, <code>False</code> otherwise.</p>
+            
+            <h3>Example</h3>
+            <pre><code>isEven 4
+-- Output: True
+
+isEven 7
+-- Output: False</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Use pattern matching with modulo: a number is even if <code>n % 2 == 0</code>
+            </div>
+        `
+    },
+    4: {
+        title: "4. Absolute Value",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>abs</code> that returns the absolute value of a number.</p>
+            
+            <h3>Example</h3>
+            <pre><code>abs (-5)
+-- Output: 5
+
+abs 3
+-- Output: 3</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> If the number is less than 0, negate it. Otherwise, return it as-is.
+            </div>
+        `
+    },
+    5: {
+        title: "5. Sum of List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function called <code>sum</code> that calculates the sum of all numbers in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>sum [1, 2, 3, 4]
+-- Output: 10
+
+sum []
+-- Output: 0</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Base case: empty list returns 0. Recursive case: add the head to the sum of the tail.
+            </div>
+        `
+    },
+    6: {
+        title: "6. Length of List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function called <code>len</code> that returns the length of a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>len [1, 2, 3, 4]
+-- Output: 4
+
+len []
+-- Output: 0</code></pre>
+        `
+    },
+    7: {
+        title: "7. Reverse List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function called <code>reverse</code> that reverses a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>reverse [1, 2, 3, 4]
+-- Output: [4,3,2,1]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Use the <code>++</code> operator to append elements. Pattern: <code>reverse xs ++ [x]</code>
+            </div>
+        `
+    },
+    8: {
+        title: "8. Maximum Element",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>maximum</code> that finds the largest number in a non-empty list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>maximum [3, 1, 4, 1, 5]
+-- Output: 5</code></pre>
+        `
+    },
+    9: {
+        title: "9. Concatenate Lists",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>concat</code> that concatenates two lists.</p>
+            
+            <h3>Example</h3>
+            <pre><code>concat [1, 2] [3, 4]
+-- Output: [1,2,3,4]</code></pre>
+        `
+    },
+    10: {
+        title: "10. Map Double",
+        content: `
+            <h3>Task</h3>
+            <p>Use the built-in <code>map</code> function to double every number in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>double x = x * 2
+map double [1, 2, 3]
+-- Output: [2,4,6]</code></pre>
+        `
+    },
+    11: {
+        title: "11. Filter Positives",
+        content: `
+            <h3>Task</h3>
+            <p>Use <code>filter</code> to keep only positive numbers from a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>isPositive x = x > 0
+filter isPositive [-2, 3, -1, 5]
+-- Output: [3,5]</code></pre>
+        `
+    },
+    12: {
+        title: "12. Fold Sum",
+        content: `
+            <h3>Task</h3>
+            <p>Use <code>fold</code> to sum all numbers in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>fold (+) 0 [1, 2, 3, 4]
+-- Output: 10</code></pre>
+        `
+    },
+    13: {
+        title: "13. Fold Product",
+        content: `
+            <h3>Task</h3>
+            <p>Use <code>fold</code> to calculate the product of all numbers in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>fold (*) 1 [2, 3, 4]
+-- Output: 24</code></pre>
+        `
+    },
+    14: {
+        title: "14. First Element",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>first</code> that returns the first element of a list using pattern matching.</p>
+            
+            <h3>Example</h3>
+            <pre><code>first [1, 2, 3]
+-- Output: 1</code></pre>
+        `
+    },
+    15: {
+        title: "15. Second Element",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function called <code>second</code> that returns the second element of a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>second [1, 2, 3]
+-- Output: 2</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Use pattern matching: <code>second (x:y:xs) = y</code>
+            </div>
+        `
+    },
+    16: {
+        title: "16. Drop Elements",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>drop</code> that removes the first n elements from a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>drop 2 [1, 2, 3, 4, 5]
+-- Output: [3,4,5]</code></pre>
+        `
+    },
+    17: {
+        title: "17. Take Elements",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>take</code> that returns the first n elements from a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>take 3 [1, 2, 3, 4, 5]
+-- Output: [1,2,3]</code></pre>
+        `
+    },
+    18: {
+        title: "18. Fibonacci Sequence",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function <code>fib</code> that calculates the nth Fibonacci number.</p>
+            
+            <h3>Example</h3>
+            <pre><code>fib 0 = 0
+fib 1 = 1
+fib n = fib (n-1) + fib (n-2)
+
+fib 6
+-- Output: 8</code></pre>
+        `
+    }
+};
+
 // Example code snippets from exam questions
 const examples = {
     total: `-- Sum all numbers in a list
@@ -220,6 +474,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load initial example
     codeEditor.setValue(examples.total);
     editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
+
+    // Initialize exercises functionality
+    initExercises();
 });
 
 // Helper function to escape HTML
@@ -228,3 +485,122 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Exercises functionality
+function initExercises() {
+    // Load saved progress from localStorage
+    const savedProgress = JSON.parse(localStorage.getItem('haskishProgress') || '{}');
+    
+    // Apply saved progress
+    Object.keys(savedProgress).forEach(exerciseId => {
+        if (savedProgress[exerciseId]) {
+            const exercise = document.querySelector(`.exercise[data-exercise="${exerciseId}"]`);
+            if (exercise) {
+                exercise.classList.add('completed');
+            }
+        }
+    });
+    
+    // Update all module progress counters
+    updateAllModuleProgress();
+    
+    // Module accordion functionality - only one open at a time
+    const moduleHeaders = document.querySelectorAll('.module-header');
+    moduleHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const module = header.parentElement;
+            const isCurrentlyCollapsed = module.classList.contains('collapsed');
+            
+            // Close all modules first
+            document.querySelectorAll('.module').forEach(m => {
+                m.classList.add('collapsed');
+            });
+            
+            // If this module was collapsed, open it (toggle behavior)
+            if (isCurrentlyCollapsed) {
+                module.classList.remove('collapsed');
+            }
+        });
+    });
+    
+    // Exercise completion toggle
+    const exercises = document.querySelectorAll('.exercise');
+    exercises.forEach(exercise => {
+        const status = exercise.querySelector('.exercise-status');
+        
+        // Click on exercise to select it
+        exercise.addEventListener('click', (e) => {
+            // If clicking the status icon, don't select
+            if (e.target === status) {
+                return;
+            }
+            
+            // Deselect all exercises
+            exercises.forEach(ex => ex.classList.remove('selected'));
+            
+            // Select this exercise
+            exercise.classList.add('selected');
+            
+            // Show exercise content
+            showExerciseContent(exercise.dataset.exercise);
+        });
+        
+        // Click on status to toggle completion
+        status.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent exercise selection
+            exercise.classList.toggle('completed');
+            
+            // Save progress
+            const exerciseId = exercise.dataset.exercise;
+            const progress = JSON.parse(localStorage.getItem('haskishProgress') || '{}');
+            progress[exerciseId] = exercise.classList.contains('completed');
+            localStorage.setItem('haskishProgress', JSON.stringify(progress));
+            
+            // Update module progress
+            updateModuleProgress(exercise.closest('.module'));
+        });
+    });
+    
+    // Close exercise panel button
+    const closeExerciseBtn = document.getElementById('closeExercise');
+    if (closeExerciseBtn) {
+        closeExerciseBtn.addEventListener('click', () => {
+            hideExerciseContent();
+            // Deselect all exercises
+            document.querySelectorAll('.exercise').forEach(ex => ex.classList.remove('selected'));
+        });
+    }
+}
+
+function showExerciseContent(exerciseId) {
+    const panel = document.getElementById('exercisePanel');
+    const title = document.getElementById('exerciseTitle');
+    const content = document.getElementById('exerciseContent');
+    
+    const exercise = exerciseData[exerciseId];
+    
+    if (exercise) {
+        title.textContent = exercise.title;
+        content.innerHTML = exercise.content;
+        panel.style.display = 'flex';
+    }
+}
+
+function hideExerciseContent() {
+    const panel = document.getElementById('exercisePanel');
+    panel.style.display = 'none';
+}
+
+function updateModuleProgress(module) {
+    const exercises = module.querySelectorAll('.exercise');
+    const completed = module.querySelectorAll('.exercise.completed');
+    const progressSpan = module.querySelector('.module-progress');
+    
+    if (progressSpan) {
+        progressSpan.textContent = `${completed.length}/${exercises.length}`;
+    }
+}
+
+function updateAllModuleProgress() {
+    const modules = document.querySelectorAll('.module');
+    modules.forEach(module => updateModuleProgress(module));}

@@ -21,27 +21,183 @@
         </header>
 
         <div class="main-content">
-            <!-- Code Editor Panel -->
-            <div class="panel editor-panel">
-                <div class="panel-header">
-                    <h2>Function Definitions</h2>
-                    <button id="runCode" class="btn btn-primary">Run Code</button>
+            <!-- Left Column: Exercises -->
+            <div class="left-column">
+                <div class="exercises-section">
+                    <h2 class="exercises-header">Exercises 🔄</h2>
+                    <p class="exercises-tip">💡 Tip: Click the ⭕ circles to mark exercises as complete ✅</p>
+                    
+                    <!-- Module 1: Basic Functions -->
+                    <div class="module collapsed">
+                        <div class="module-header">
+                            <span class="module-toggle">▼</span>
+                            <span class="module-title">Module 1: Basic Functions</span>
+                            <span class="module-progress">0/4</span>
+                        </div>
+                        <div class="module-content">
+                            <div class="exercise" data-exercise="1">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">1.</span>
+                                <span class="exercise-title">Double Function</span>
+                            </div>
+                            <div class="exercise" data-exercise="2">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">2.</span>
+                                <span class="exercise-title">Square Function</span>
+                            </div>
+                            <div class="exercise" data-exercise="3">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">3.</span>
+                                <span class="exercise-title">IsEven Predicate</span>
+                            </div>
+                            <div class="exercise" data-exercise="4">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">4.</span>
+                                <span class="exercise-title">Absolute Value</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 2: List Operations -->
+                    <div class="module collapsed">
+                        <div class="module-header">
+                            <span class="module-toggle">▼</span>
+                            <span class="module-title">Module 2: List Operations</span>
+                            <span class="module-progress">0/5</span>
+                        </div>
+                        <div class="module-content">
+                            <div class="exercise" data-exercise="5">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">5.</span>
+                                <span class="exercise-title">Sum of List</span>
+                            </div>
+                            <div class="exercise" data-exercise="6">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">6.</span>
+                                <span class="exercise-title">Length of List</span>
+                            </div>
+                            <div class="exercise" data-exercise="7">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">7.</span>
+                                <span class="exercise-title">Reverse List</span>
+                            </div>
+                            <div class="exercise" data-exercise="8">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">8.</span>
+                                <span class="exercise-title">Maximum Element</span>
+                            </div>
+                            <div class="exercise" data-exercise="9">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">9.</span>
+                                <span class="exercise-title">Concatenate Lists</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 3: Higher-Order Functions -->
+                    <div class="module collapsed">
+                        <div class="module-header">
+                            <span class="module-toggle">▼</span>
+                            <span class="module-title">Module 3: Higher-Order Functions</span>
+                            <span class="module-progress">0/4</span>
+                        </div>
+                        <div class="module-content">
+                            <div class="exercise" data-exercise="10">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">10.</span>
+                                <span class="exercise-title">Map Double</span>
+                            </div>
+                            <div class="exercise" data-exercise="11">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">11.</span>
+                                <span class="exercise-title">Filter Positives</span>
+                            </div>
+                            <div class="exercise" data-exercise="12">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">12.</span>
+                                <span class="exercise-title">Fold Sum</span>
+                            </div>
+                            <div class="exercise" data-exercise="13">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">13.</span>
+                                <span class="exercise-title">Fold Product</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 4: Pattern Matching -->
+                    <div class="module collapsed">
+                        <div class="module-header">
+                            <span class="module-toggle">▼</span>
+                            <span class="module-title">Module 4: Pattern Matching</span>
+                            <span class="module-progress">0/5</span>
+                        </div>
+                        <div class="module-content">
+                            <div class="exercise" data-exercise="14">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">14.</span>
+                                <span class="exercise-title">First Element</span>
+                            </div>
+                            <div class="exercise" data-exercise="15">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">15.</span>
+                                <span class="exercise-title">Second Element</span>
+                            </div>
+                            <div class="exercise" data-exercise="16">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">16.</span>
+                                <span class="exercise-title">Drop Elements</span>
+                            </div>
+                            <div class="exercise" data-exercise="17">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">17.</span>
+                                <span class="exercise-title">Take Elements</span>
+                            </div>
+                            <div class="exercise" data-exercise="18">
+                                <span class="exercise-status">⭕</span>
+                                <span class="exercise-number">18.</span>
+                                <span class="exercise-title">Fibonacci Sequence</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <textarea id="codeEditor" placeholder="-- Define your functions here&#10;-- Example:&#10;double x = x * 2&#10;&#10;total [] = 0&#10;total (x:xs) = x + total xs"></textarea>
-                <div id="editorOutput" class="output"></div>
             </div>
 
-            <!-- REPL Panel -->
-            <div class="panel repl-panel">
-                <div class="panel-header">
-                    <h2>Interactive REPL</h2>
-                    <button id="clearRepl" class="btn btn-primary">Clear</button>
+            <!-- Right Column: Editor and REPL -->
+            <div class="right-column">
+                <!-- Exercise Content Panel (hidden by default) -->
+                <div id="exercisePanel" class="panel exercise-content-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h2 id="exerciseTitle">Exercise</h2>
+                        <button id="closeExercise" class="btn btn-secondary">✕</button>
+                    </div>
+                    <div id="exerciseContent" class="exercise-content">
+                        Select an exercise to see its content here.
+                    </div>
                 </div>
-                <div id="replOutput" class="output repl-history"></div>
-                <div class="repl-input-container">
-                    <span class="repl-prompt">&gt;</span>
-                    <div id="replInputWrapper">
-                        <textarea id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])"></textarea>
+
+                <!-- Code Editor Panel -->
+                <div class="panel editor-panel">
+                    <div class="panel-header">
+                        <h2>Function Definitions</h2>
+                        <button id="runCode" class="btn btn-primary">Run Code</button>
+                    </div>
+                    <textarea id="codeEditor" placeholder="-- Define your functions here&#10;-- Example:&#10;double x = x * 2&#10;&#10;total [] = 0&#10;total (x:xs) = x + total xs"></textarea>
+                    <div id="editorOutput" class="output"></div>
+                </div>
+
+                <!-- REPL Panel -->
+                <div class="panel repl-panel">
+                    <div class="panel-header">
+                        <h2>Interactive REPL</h2>
+                        <button id="clearRepl" class="btn btn-primary">Clear</button>
+                    </div>
+                    <div id="replOutput" class="output repl-history"></div>
+                    <div class="repl-input-container">
+                        <span class="repl-prompt">&gt;</span>
+                        <div id="replInputWrapper">
+                            <textarea id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
