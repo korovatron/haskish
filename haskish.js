@@ -126,6 +126,7 @@ class HaskishInterpreter {
             },
             'compose': (g, f) => {
                 // Function composition: (g . f) x = g(f(x))
+                const interpreter = this;
                 return {
                     _isComposedFunction: true,
                     g: g,
@@ -142,7 +143,7 @@ class HaskishInterpreter {
                         } else if (f && f._isComposedFunction) {
                             fResult = f.apply(args);
                         } else {
-                            fResult = this.applyFunction(f, args);
+                            fResult = interpreter.applyFunction(f, args);
                         }
                         
                         // Apply g to the result
@@ -155,7 +156,7 @@ class HaskishInterpreter {
                         } else if (g && g._isComposedFunction) {
                             return g.apply([fResult]);
                         } else {
-                            return this.applyFunction(g, [fResult]);
+                            return interpreter.applyFunction(g, [fResult]);
                         }
                     },
                     toString: () => `<composed function>`
