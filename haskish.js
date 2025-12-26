@@ -111,6 +111,55 @@ class HaskishInterpreter {
                     }
                     return this.applyFunction(fn, [accumulator, item]);
                 }, acc);
+            },
+            'length': (list) => {
+                if (!Array.isArray(list)) {
+                    throw new Error('length: argument must be a list');
+                }
+                return list.length;
+            },
+            'null': (list) => {
+                if (!Array.isArray(list)) {
+                    throw new Error('null: argument must be a list');
+                }
+                return list.length === 0;
+            },
+            'compose': (g, f) => {
+                // Function composition: (g . f) x = g(f(x))
+                return {
+                    _isComposedFunction: true,
+                    g: g,
+                    f: f,
+                    apply: (args) => {
+                        // Apply f first
+                        let fResult;
+                        if (f instanceof Lambda) {
+                            fResult = f.apply(args[0]);
+                        } else if (f instanceof PartialFunction) {
+                            fResult = f.apply(args);
+                        } else if (f && f._isOperatorFunction) {
+                            fResult = f.apply(args);
+                        } else if (f && f._isComposedFunction) {
+                            fResult = f.apply(args);
+                        } else {
+                            fResult = this.applyFunction(f, args);
+                        }
+                        
+                        // Apply g to the result
+                        if (g instanceof Lambda) {
+                            return g.apply(fResult);
+                        } else if (g instanceof PartialFunction) {
+                            return g.apply([fResult]);
+                        } else if (g && g._isOperatorFunction) {
+                            return g.apply([fResult]);
+                        } else if (g && g._isComposedFunction) {
+                            return g.apply([fResult]);
+                        } else {
+                            return this.applyFunction(g, [fResult]);
+                        }
+                    },
+                    toString: () => `<composed function>`
+                };
             }
         };
     }
@@ -253,10 +302,20 @@ class HaskishInterpreter {
                 continue;
             }
 
-            // Operators and symbols
-            if (/[+\-*\/:<>=!]/.test(expr[i])) {
+            // Operators and symbols (including . for composition)
+            if (/[+\-*\/:<>=!.]/.test(expr[i])) {
                 let j = i;
-                while (j < expr.length && /[+\-*\/:<>=!]/.test(expr[j])) j++;
+                // Special handling for .. (range operator) vs . (composition)
+                if (expr[i] === '.' && i + 1 < expr.length && expr[i + 1] === '.') {
+                    // This is a range operator, not composition - skip it here
+                    i++;
+                    continue;
+                }
+                while (j < expr.length && /[+\-*\/:<>=!.]/.test(expr[j])) {
+                    // Stop at .. to avoid capturing range operator
+                    if (expr[j] === '.' && j + 1 < expr.length && expr[j + 1] === '.') break;
+                    j++;
+                }
                 tokens.push({ type: 'operator', value: expr.slice(i, j) });
                 i = j;
                 continue;
@@ -514,6 +573,10 @@ class HaskishInterpreter {
 
         // Binary operations
         const binaryOps = [
+            { op: '.', fn: (g, f) => {
+                // Function composition operator
+                return this.builtins['compose'].call(this, g, f);
+            }},
             { op: '++', fn: (a, b) => {
                 if (!Array.isArray(a) || !Array.isArray(b)) {
                     throw new Error('(++) requires two lists');
@@ -548,6 +611,37 @@ class HaskishInterpreter {
 
         // Function application
         const tokens = this.tokenize(expr);
+        
+        // Handle parenthesized function followed by arguments: (f . g) x
+        if (tokens.length > 1 && tokens[0].type === 'paren') {
+            const funcExpr = this.evaluate(tokens[0].value);
+            const args = tokens.slice(1).map(token => {
+                if (token.type === 'list') return this.parseList(token.value);
+                if (token.type === 'number') return token.value;
+                if (token.type === 'paren') return this.evaluate(token.value);
+                if (token.type === 'identifier') return this.evaluate(token.value);
+                return token.value;
+            });
+            
+            // Apply the function to the arguments
+            if (funcExpr && funcExpr._isComposedFunction) {
+                return funcExpr.apply(args);
+            }
+            if (funcExpr instanceof Lambda) {
+                return funcExpr.apply(args[0]);
+            }
+            if (funcExpr instanceof PartialFunction) {
+                return funcExpr.apply(args);
+            }
+            if (funcExpr && funcExpr._isOperatorFunction) {
+                return funcExpr.apply(args);
+            }
+            // If it's a function name, apply it
+            if (typeof funcExpr === 'string' || funcExpr instanceof String) {
+                return this.applyFunction(funcExpr, args);
+            }
+        }
+        
         if (tokens.length > 1 && tokens[0].type === 'identifier') {
             const funcName = tokens[0].value;
             const args = tokens.slice(1).map(token => {
@@ -577,9 +671,15 @@ class HaskishInterpreter {
                 return token.value;
             });
 
-            // Check if funcName refers to a variable holding a partial function
-            if (this.variables[funcName] instanceof PartialFunction) {
-                return this.variables[funcName].apply(args);
+            // Check if funcName refers to a variable holding a special function
+            if (this.variables[funcName]) {
+                const varValue = this.variables[funcName];
+                if (varValue instanceof PartialFunction) {
+                    return varValue.apply(args);
+                }
+                if (varValue && varValue._isComposedFunction) {
+                    return varValue.apply(args);
+                }
             }
 
             return this.applyFunction(funcName, args);
@@ -734,6 +834,9 @@ class HaskishInterpreter {
         if (value instanceof PartialFunction) {
             return value.toString();
         }
+        if (value && value._isComposedFunction) {
+            return value.toString();
+        }
         if (value && value._isOperatorFunction) {
             return value.toString();
         }
@@ -742,6 +845,9 @@ class HaskishInterpreter {
         }
         if (typeof value === 'string') {
             return '"' + value + '"';
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'True' : 'False';
         }
         return String(value);
     }
