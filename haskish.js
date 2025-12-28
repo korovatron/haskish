@@ -124,6 +124,36 @@ class HaskishInterpreter {
                 }
                 return list.length === 0;
             },
+            'reverse': (list) => {
+                if (!Array.isArray(list)) {
+                    throw new Error('reverse: argument must be a list');
+                }
+                return list.slice().reverse();
+            },
+            'take': (n, list) => {
+                if (!Array.isArray(list)) {
+                    throw new Error('take: second argument must be a list');
+                }
+                return list.slice(0, n);
+            },
+            'drop': (n, list) => {
+                if (!Array.isArray(list)) {
+                    throw new Error('drop: second argument must be a list');
+                }
+                return list.slice(n);
+            },
+            'not': (bool) => {
+                return !bool;
+            },
+            'error': (message) => {
+                throw new Error(message);
+            },
+            'mod': (a, b) => {
+                return a % b;
+            },
+            'div': (a, b) => {
+                return Math.floor(a / b);
+            },
             'compose': (g, f) => {
                 // Function composition: (g . f) x = g(f(x))
                 const interpreter = this;
@@ -176,6 +206,8 @@ class HaskishInterpreter {
 
         let currentFunction = null;
         let currentCases = [];
+        let currentParams = null;
+        let currentGuards = [];
 
         for (let line of lines) {
             line = line.trim();
@@ -184,10 +216,42 @@ class HaskishInterpreter {
             // Strip optional 'let' keyword at the start
             line = line.replace(/^let\s+/, '');
 
+            // Check if this is a guard line (starts with |)
+            // Need to find the = that separates condition from body, not == in comparisons
+            if (line.startsWith('|') && currentFunction && currentParams) {
+                // Remove the leading |
+                const guardLine = line.slice(1).trim();
+                
+                // Find the = that's not part of ==, <=, >=
+                let eqIndex = -1;
+                for (let i = 0; i < guardLine.length; i++) {
+                    if (guardLine[i] === '=' && 
+                        (i === 0 || guardLine[i-1] !== '=' && guardLine[i-1] !== '<' && guardLine[i-1] !== '>' && guardLine[i-1] !== '!') &&
+                        (i === guardLine.length - 1 || guardLine[i+1] !== '=')) {
+                        eqIndex = i;
+                        break;
+                    }
+                }
+                
+                if (eqIndex !== -1) {
+                    const condition = guardLine.slice(0, eqIndex).trim();
+                    const body = guardLine.slice(eqIndex + 1).trim();
+                    currentGuards.push({ condition, body });
+                    continue;
+                }
+            }
+
             // Try to match function definition (has parameters before =)
             const funcMatch = line.match(/^(\w+)\s+(.+?)\s*=\s*(.+)$/);
             
             if (funcMatch) {
+                // Save previous guards if any
+                if (currentGuards.length > 0) {
+                    currentCases.push({ params: currentParams, guards: currentGuards });
+                    currentGuards = [];
+                    currentParams = null;
+                }
+
                 // It's a function definition
                 const [, funcName, params, body] = funcMatch;
                 
@@ -197,11 +261,43 @@ class HaskishInterpreter {
                 }
                 
                 currentFunction = funcName;
-                currentCases.push({ params: params.trim(), body: body.trim() });
+                currentParams = params.trim();
+                currentCases.push({ params: currentParams, body: body.trim() });
+                currentParams = null; // Reset since this is a complete definition
             } else {
+                // Check for function header without = (for guard syntax)
+                const headerMatch = line.match(/^(\w+)\s+(.+)$/);
+                if (headerMatch && !line.includes('=')) {
+                    // Save previous guards if any
+                    if (currentGuards.length > 0) {
+                        currentCases.push({ params: currentParams, guards: currentGuards });
+                        currentGuards = [];
+                        currentParams = null;
+                    }
+
+                    const [, funcName, params] = headerMatch;
+                    
+                    if (currentFunction && currentFunction !== funcName) {
+                        this.functions[currentFunction] = currentCases;
+                        currentCases = [];
+                    }
+                    
+                    currentFunction = funcName;
+                    currentParams = params.trim();
+                    // Don't add to cases yet - wait for guards
+                    continue;
+                }
+
                 // Try to match variable binding (no parameters before =)
                 const varMatch = line.match(/^(\w+)\s*=\s*(.+)$/);
                 if (varMatch) {
+                    // Save pending guards first
+                    if (currentGuards.length > 0) {
+                        currentCases.push({ params: currentParams, guards: currentGuards });
+                        currentGuards = [];
+                        currentParams = null;
+                    }
+
                     // It's a variable binding
                     if (currentFunction) {
                         this.functions[currentFunction] = currentCases;
@@ -212,6 +308,11 @@ class HaskishInterpreter {
                     this.variables[name] = this.evaluate(value.trim());
                 }
             }
+        }
+
+        // Save any pending guards
+        if (currentGuards.length > 0) {
+            currentCases.push({ params: currentParams, guards: currentGuards });
         }
 
         if (currentFunction) {
@@ -229,6 +330,19 @@ class HaskishInterpreter {
             // Skip whitespace
             if (/\s/.test(expr[i])) {
                 i++;
+                continue;
+            }
+
+            // String literals
+            if (expr[i] === '"') {
+                let j = i + 1;
+                while (j < expr.length && expr[j] !== '"') {
+                    if (expr[j] === '\\') j++; // Skip escaped characters
+                    j++;
+                }
+                if (j < expr.length) j++; // Include closing quote
+                tokens.push({ type: 'string', value: expr.slice(i, j) });
+                i = j;
                 continue;
             }
 
@@ -303,8 +417,8 @@ class HaskishInterpreter {
                 continue;
             }
 
-            // Operators and symbols (including . for composition)
-            if (/[+\-*\/:<>=!.]/.test(expr[i])) {
+            // Operators and symbols (including . for composition, && and ||)
+            if (/[+\-*\/:<>=!.&|]/.test(expr[i])) {
                 let j = i;
                 // Special handling for .. (range operator) vs . (composition)
                 if (expr[i] === '.' && i + 1 < expr.length && expr[i + 1] === '.') {
@@ -312,7 +426,7 @@ class HaskishInterpreter {
                     i++;
                     continue;
                 }
-                while (j < expr.length && /[+\-*\/:<>=!.]/.test(expr[j])) {
+                while (j < expr.length && /[+\-*\/:<>=!.&|]/.test(expr[j])) {
                     // Stop at .. to avoid capturing range operator
                     if (expr[j] === '.' && j + 1 < expr.length && expr[j + 1] === '.') break;
                     j++;
@@ -486,7 +600,21 @@ class HaskishInterpreter {
             }
 
             if (matched) {
-                return this.evaluateWithBindings(caseObj.body, bindings);
+                // Check if this case has guards
+                if (caseObj.guards) {
+                    // Evaluate guards in order
+                    for (let guard of caseObj.guards) {
+                        const conditionResult = this.evaluateWithBindings(guard.condition, bindings);
+                        if (conditionResult === true) {
+                            return this.evaluateWithBindings(guard.body, bindings);
+                        }
+                    }
+                    // No guard matched - continue to next case
+                    continue;
+                } else {
+                    // No guards, just return the body
+                    return this.evaluateWithBindings(caseObj.body, bindings);
+                }
             }
         }
 
@@ -534,6 +662,11 @@ class HaskishInterpreter {
     // Main evaluation function
     evaluate(expr) {
         expr = expr.trim();
+
+        // Special handling for 'otherwise' keyword
+        if (expr === 'otherwise') {
+            return true;
+        }
 
         // Lambda expression (\param -> body) or (\param -> body)
         const lambdaMatch = expr.match(/^\(?\\(\w+)\s*->\s*(.+?)\)?$/);
@@ -584,15 +717,17 @@ class HaskishInterpreter {
                 }
                 return [...a, ...b];
             }},
+            { op: '&&', fn: (a, b) => a && b },
+            { op: '||', fn: (a, b) => a || b },
+            { op: '==', fn: (a, b) => a == b },
+            { op: '<=', fn: (a, b) => a <= b },
+            { op: '>=', fn: (a, b) => a >= b },
+            { op: '<', fn: (a, b) => a < b },
+            { op: '>', fn: (a, b) => a > b },
             { op: '+', fn: (a, b) => a + b },
             { op: '-', fn: (a, b) => a - b },
             { op: '*', fn: (a, b) => a * b },
             { op: '/', fn: (a, b) => a / b },
-            { op: '<', fn: (a, b) => a < b },
-            { op: '>', fn: (a, b) => a > b },
-            { op: '<=', fn: (a, b) => a <= b },
-            { op: '>=', fn: (a, b) => a >= b },
-            { op: '==', fn: (a, b) => a == b },
             { op: ':', fn: (a, b) => {
                 if (!Array.isArray(b)) {
                     throw new Error('(:) requires a list as the second argument');
@@ -648,6 +783,7 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
+                if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
                     const lambdaMatch = token.value.match(/^\\?(\w+)\s*->\s*(.+)$/);

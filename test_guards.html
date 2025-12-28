@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Guards</title>
+</head>
+<body>
+    <h1>Guard Test</h1>
+    <pre id="output"></pre>
+
+    <script src="haskish.js"></script>
+    <script>
+        const interpreter = new HaskishInterpreter();
+        const output = document.getElementById('output');
+        
+        function test(name, code, expr, expected) {
+            try {
+                interpreter.parseFunctionDefinitions(code);
+                const result = interpreter.evaluate(expr);
+                const pass = JSON.stringify(result) === JSON.stringify(expected);
+                output.textContent += `${pass ? '✓' : '✗'} ${name}: ${result} ${pass ? '' : `(expected ${expected})`}\n`;
+            } catch (error) {
+                output.textContent += `✗ ${name}: ERROR - ${error.message}\n`;
+            }
+        }
+
+        // Test 1: Factorial with guards
+        test('Factorial 0', `
+factorial n
+  | n == 0    = 1
+  | otherwise = n * factorial (n - 1)
+        `, 'factorial 0', 1);
+
+        test('Factorial 5', `
+factorial n
+  | n == 0    = 1
+  | otherwise = n * factorial (n - 1)
+        `, 'factorial 5', 120);
+
+        // Test 2: countElem with guards
+        test('countElem empty', `
+countElem e [] = 0
+countElem e (x:xs)
+  | x == e    = 1 + countElem e xs
+  | otherwise = countElem e xs
+        `, 'countElem 3 []', 0);
+
+        test('countElem found', `
+countElem e [] = 0
+countElem e (x:xs)
+  | x == e    = 1 + countElem e xs
+  | otherwise = countElem e xs
+        `, 'countElem 3 [1,2,3,3,4]', 2);
+
+        // Test 3: Multiple guard conditions
+        test('sign negative', `
+sign n
+  | n < 0     = -1
+  | n == 0    = 0
+  | otherwise = 1
+        `, 'sign (-5)', -1);
+
+        test('sign zero', `
+sign n
+  | n < 0     = -1
+  | n == 0    = 0
+  | otherwise = 1
+        `, 'sign 0', 0);
+
+        test('sign positive', `
+sign n
+  | n < 0     = -1
+  | n == 0    = 0
+  | otherwise = 1
+        `, 'sign 10', 1);
+
+        // Test 4: Guards with pattern matching
+        test('max2 guards', `
+max2 x y
+  | x >= y    = x
+  | otherwise = y
+        `, 'max2 5 3', 5);
+
+        test('max2 guards equal', `
+max2 x y
+  | x >= y    = x
+  | otherwise = y
+        `, 'max2 7 7', 7);
+    </script>
+</body>
+</html>
