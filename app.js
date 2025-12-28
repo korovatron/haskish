@@ -5,364 +5,652 @@ const interpreter = new HaskishInterpreter();
 // Module hints data
 const moduleHints = {
     1: {
-        title: "Module 1: Basic Functions",
+        title: "Module 1: Getting Started",
         content: `
-            <h3>Getting Started with Functions</h3>
-            <p>In Haskish, functions are defined using the function name followed by parameters and the function body after an equals sign.</p>
-            
-            <h4>Function Syntax</h4>
-            <pre><code>functionName parameter = expression</code></pre>
-            
-            <h4>Key Concepts</h4>
+            <h3>Welcome to Haskish!</h3>
+            <p>This functional programming playground has two main areas:</p>
             <ul>
-                <li>Functions take one parameter and return a value</li>
-                <li>Use operators like <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> for arithmetic</li>
-                <li>Use comparison operators like <code>&lt;</code>, <code>&gt;</code>, <code>==</code> to return boolean values</li>
-                <li>All functions must return a value</li>
+                <li><strong>Code Panel</strong> (left) - Write function definitions here</li>
+                <li><strong>Interactive REPL</strong> (below) - Test expressions and call functions</li>
             </ul>
             
-            <h4>Examples</h4>
-            <pre><code>triple x = x * 3
+            <h4>Function Syntax</h4>
+            <pre><code>functionName parameter = expression
 
-isPositive x = x > 0
-
-double x = x * 2</code></pre>
+-- Examples:
+triple x = x * 3
+doubleAdd x y = 2*x + 2*y</code></pre>
+            
+            <h4>Basic Operators</h4>
+            <ul>
+                <li>Arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>mod</code>, <code>div</code></li>
+                <li>Comparison: <code>==</code>, <code>/=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></li>
+                <li>Boolean: <code>&&</code>, <code>||</code>, <code>not</code></li>
+            </ul>
+            
+            <h4>Testing in REPL</h4>
+            <pre><code>> triple 5
+15
+> doubleAdd 3 4
+14</code></pre>
         `
     },
     2: {
-        title: "Module 2: List Operations",
+        title: "Module 2: Functions & Recursion",
         content: `
-            <h3>Working with Lists</h3>
-            <p>Lists are fundamental data structures in functional programming. Use pattern matching and recursion to process them.</p>
+            <h3>Recursive Functions</h3>
+            <p>Functions that call themselves to solve problems. Always need a base case!</p>
             
-            <h4>List Patterns</h4>
+            <h4>Pattern Matching (Multiple Definitions)</h4>
+            <p>Define the same function multiple times for different inputs:</p>
+            <pre><code>factorial 0 = 1
+factorial n = n * factorial (n - 1)
+
+fib 0 = 0
+fib 1 = 1
+fib n = fib (n-1) + fib (n-2)</code></pre>
+            
+            <h4>Guards (Alternative Approach) 🌟</h4>
+            <p>Use guards when you need to test conditions rather than match values:</p>
+            <pre><code>factorial n
+  | n == 0    = 1
+  | otherwise = n * factorial (n - 1)
+
+sign n
+  | n < 0     = -1
+  | n == 0    = 0
+  | otherwise = 1</code></pre>
+            
+            <h4>When to Use Each</h4>
             <ul>
-                <li><code>[]</code> - Empty list (base case)</li>
-                <li><code>(x:xs)</code> - Head (first element) and tail (rest of list)</li>
+                <li><strong>Pattern matching</strong>: Matching specific values (0, [], etc.)</li>
+                <li><strong>Guards</strong>: Comparing values (&lt;, &gt;, ==) or complex conditions</li>
             </ul>
             
-            <h4>Common Patterns</h4>
-            <pre><code>mySum [] = 0
-mySum (x:xs) = x + mySum xs
-
-myLength [] = 0
-myLength (x:xs) = 1 + myLength xs</code></pre>
-            
-            <h4>List Operators</h4>
+            <h4>Key Points</h4>
             <ul>
-                <li><code>++</code> - Concatenate lists</li>
-                <li><code>:</code> - Cons (add element to front)</li>
+                <li>Patterns/guards are checked top-to-bottom</li>
+                <li><code>otherwise</code> catches all remaining cases</li>
+                <li>Guards can be indented with any number of spaces (or none)</li>
             </ul>
         `
     },
     3: {
-        title: "Module 3: Higher-Order Functions",
+        title: "Module 3: Lists & Pattern Matching",
         content: `
-            <h3>Higher-Order Functions</h3>
-            <p>Higher-order functions take other functions as arguments or return functions as results.</p>
+            <h3>Pattern Matching with (x:xs)</h3>
+            <p>Decompose lists into head and tail for recursive processing.</p>
             
-            <h4>Built-in Higher-Order Functions</h4>
+            <h4>Understanding the Pattern</h4>
             <ul>
-                <li><code>map f xs</code> - Apply function f to each element</li>
-                <li><code>filter p xs</code> - Keep elements where predicate p is true</li>
-                <li><code>foldl f init xs</code> - Fold left with function f and initial value</li>
+                <li><code>[]</code> - Empty list (base case)</li>
+                <li><code>(x:xs)</code> - x is head (single element), xs is tail (rest)</li>
+                <li><code>x</code> is NOT a list, <code>xs</code> IS a list</li>
             </ul>
             
-            <h4>Lambda Functions</h4>
-            <pre><code>map (\\x -> x * 2) [1,2,3]</code></pre>
+            <h4>Basic Examples</h4>
+            <pre><code>calcLength [] = 0
+calcLength (x:xs) = 1 + calcLength xs
+
+sumList [] = 0
+sumList (x:xs) = x + sumList xs</code></pre>
             
-            <h4>Tips</h4>
+            <h4>With Guards</h4>
+            <pre><code>countElem e [] = 0
+countElem e (x:xs)
+  | x == e    = 1 + countElem e xs
+  | otherwise = countElem e xs</code></pre>
+            
+            <h4>List Functions</h4>
             <ul>
-                <li>Use <code>map</code> to transform every element</li>
-                <li>Use <code>filter</code> to select elements</li>
-                <li>Use <code>foldl</code> to reduce a list to a single value</li>
+                <li><code>head</code>, <code>tail</code>, <code>length</code>, <code>reverse</code></li>
+                <li><code>take n xs</code>, <code>drop n xs</code></li>
+                <li><code>:</code> (cons), <code>++</code> (concatenate)</li>
             </ul>
         `
     },
     4: {
-        title: "Module 4: Pattern Matching",
+        title: "Module 4: Higher-Order Functions",
         content: `
-            <h3>Advanced Pattern Matching</h3>
-            <p>Pattern matching allows you to deconstruct data and handle different cases elegantly.</p>
+            <h3>Map, Filter, and Fold</h3>
+            <p>Higher-order functions that take functions as arguments.</p>
             
-            <h4>Pattern Types</h4>
-            <ul>
-                <li><code>[]</code> - Match empty list</li>
-                <li><code>(x:[])</code> - Match single-element list</li>
-                <li><code>(x:y:xs)</code> - Match first two elements and rest</li>
-                <li><code>_</code> - Wildcard (matches anything)</li>
-            </ul>
+            <h4>map - Transform each element</h4>
+            <pre><code>double x = x * 2
+map double [1,2,3]        -- [2,4,6]
+map even [1,2,3,4]        -- [False,True,False,True]</code></pre>
             
-            <h4>Multiple Patterns</h4>
-            <pre><code>first (x:xs) = x
-first [] = error "empty list"
+            <h4>filter - Select elements</h4>
+            <pre><code>isPositive x = x > 0
+filter isPositive [-2,3,-1,4]  -- [3,4]
+filter even [1..10]            -- [2,4,6,8,10]</code></pre>
+            
+            <h4>fold - Reduce to single value</h4>
+            <pre><code>add x y = x + y
+fold add 0 [1,2,3,4]      -- 10
+fold (*) 1 [1,2,3,4]      -- 24</code></pre>
+            
+            <h4>Lambda Functions 🌟 (Extension)</h4>
+            <p>Anonymous functions for one-time use (not required for A Level):</p>
+            <pre><code>map (\\x -> x * 2) [1,2,3]  -- [2,4,6]
+filter (\\x -> x > 5) [1..10]
+filter (\\x -> mod x 3 == 0) [1..10]</code></pre>
+            <p>Format: <code>\\parameter -> expression</code></p>
+            
+            <h4>Problem Solving</h4>
+            <p>Combine these to solve complex problems elegantly!</p>
+        `
+    },
+    5: {
+        title: "Module 5: Function Composition",
+        content: `
+            <h3>Composing Functions</h3>
+            <p>Combine functions to create more complex operations.</p>
+            
+            <h4>The . Operator</h4>
+            <pre><code>double x = x * 2
+square x = x * x
 
-safeHead [] = 0
-safeHead (x:xs) = x</code></pre>
+(square . double) 3   -- 36  (square of 6)
+(double . square) 3   -- 18  (double of 9)</code></pre>
             
-            <h4>Best Practices</h4>
-            <ul>
-                <li>Always handle the base case (empty list)</li>
-                <li>Match most specific patterns first</li>
-                <li>Use wildcards for unused values</li>
-            </ul>
+            <h4>The $ Operator</h4>
+            <p>Apply a function (avoids parentheses):</p>
+            <pre><code>square . double $ 3    -- Same as (square . double) 3
+sum . filter even $ [1..10]</code></pre>
+            
+            <h4>Solving Problems</h4>
+            <pre><code>-- Sum of multiples of 3 or 5 below 100:
+sum (filter (\\n -> mod n 3 == 0 || mod n 5 == 0) [1..99])
+
+-- Sum of even numbers 100-300:
+sum (filter even [100..300])</code></pre>
+            
+            <h4>Key Concept</h4>
+            <p>Output of one function becomes input to the next!</p>
+            <pre><code>f . g $ x    means    f(g(x))</code></pre>
         `
     }
 };
 
 // Exercise content data
 const exerciseData = {
+    // Module 1: Getting Started
     1: {
-        title: "1. Double Function",
+        title: "1. Using the REPL",
         content: `
             <h3>Task</h3>
-            <p>Write a function called <code>double</code> that takes a number and returns its double.</p>
+            <p>Get familiar with the Interactive REPL (Read-Eval-Print Loop) below. Try these expressions:</p>
             
-            <h3>Example</h3>
-            <pre><code>double 5
--- Output: 10
-
-double 12
--- Output: 24</code></pre>
+            <h3>Examples to Try</h3>
+            <pre><code>> 15 + 12
+> 3 * 56
+> True && False
+> not (False && True)
+> 5 == 5
+> 5 /= 5
+> "hello" == "hello"</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Use the multiplication operator (*) to multiply the input by 2.
+                <strong>💡 Remember:</strong>
+                <ul>
+                    <li><code>&&</code> means AND, <code>||</code> means OR</li>
+                    <li><code>/=</code> means not equal</li>
+                    <li>Type expressions in the REPL and press Enter</li>
+                </ul>
             </div>
         `
     },
     2: {
-        title: "2. Square Function",
+        title: "2. First Function",
         content: `
             <h3>Task</h3>
-            <p>Write a function called <code>square</code> that takes a number and returns its square.</p>
+            <p>Write a function called <code>tripleMe</code> that takes a number and returns triple its value.</p>
             
             <h3>Example</h3>
-            <pre><code>square 4
--- Output: 16
-
-square 7
--- Output: 49</code></pre>
+            <pre><code>> tripleMe 10
+30
+> tripleMe 7
+21</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Multiply the number by itself: <code>x * x</code>
+                <strong>💡 Hint:</strong> In the Code Panel above, write:<br>
+                <code>tripleMe x = x * 3</code><br>
+                Click "Run Code", then test in the REPL!
             </div>
         `
     },
     3: {
-        title: "3. IsEven Predicate",
+        title: "3. Multiple Parameters",
         content: `
             <h3>Task</h3>
-            <p>Write a predicate function called <code>isEven</code> that returns <code>True</code> if a number is even, <code>False</code> otherwise.</p>
+            <p>Write a function <code>doubleAdd</code> that takes two values, doubles each of them, and adds them together.</p>
             
             <h3>Example</h3>
-            <pre><code>isEven 4
--- Output: True
-
-isEven 7
--- Output: False</code></pre>
+            <pre><code>> doubleAdd 3 4
+14
+> doubleAdd 10 5
+30</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Use pattern matching with modulo: a number is even if <code>n % 2 == 0</code>
+                <strong>💡 Hint:</strong> <code>doubleAdd x y = 2*x + 2*y</code>
             </div>
         `
     },
     4: {
-        title: "4. Absolute Value",
+        title: "4. Comparison Function",
         content: `
             <h3>Task</h3>
-            <p>Write a function called <code>abs</code> that returns the absolute value of a number.</p>
+            <p>Write a function <code>isPositive</code> that returns <code>True</code> if a number is greater than 0, <code>False</code> otherwise.</p>
             
             <h3>Example</h3>
-            <pre><code>abs (-5)
--- Output: 5
-
-abs 3
--- Output: 3</code></pre>
+            <pre><code>> isPositive 5
+True
+> isPositive (-3)
+False
+> isPositive 0
+False</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> If the number is less than 0, negate it. Otherwise, return it as-is.
+                <strong>💡 Hint:</strong> Use the <code>></code> operator to compare with 0
             </div>
         `
     },
+
+    // Module 2: Functions & Recursion
     5: {
-        title: "5. Sum of List",
+        title: "5. Factorial",
         content: `
             <h3>Task</h3>
-            <p>Write a recursive function called <code>sum</code> that calculates the sum of all numbers in a list.</p>
+            <p>Write a recursive function <code>factorial</code> using pattern matching. Remember: 0! = 1, and n! = n × (n-1)!</p>
             
             <h3>Example</h3>
-            <pre><code>sum [1, 2, 3, 4]
--- Output: 10
+            <pre><code>factorial 0 = 1
+factorial n = n * factorial (n - 1)
 
-sum []
--- Output: 0</code></pre>
+> factorial 5
+120
+> factorial 10
+3628800</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Base case: empty list returns 0. Recursive case: add the head to the sum of the tail.
+                <strong>💡 Hint:</strong> Define the function twice - once for 0 (base case), once for n (recursive case)
             </div>
         `
     },
     6: {
-        title: "6. Length of List",
+        title: "6. Fibonacci",
         content: `
             <h3>Task</h3>
-            <p>Write a recursive function called <code>len</code> that returns the length of a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>len [1, 2, 3, 4]
--- Output: 4
-
-len []
--- Output: 0</code></pre>
-        `
-    },
-    7: {
-        title: "7. Reverse List",
-        content: `
-            <h3>Task</h3>
-            <p>Write a recursive function called <code>reverse</code> that reverses a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>reverse [1, 2, 3, 4]
--- Output: [4,3,2,1]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Use the <code>++</code> operator to append elements. Pattern: <code>reverse xs ++ [x]</code>
-            </div>
-        `
-    },
-    8: {
-        title: "8. Maximum Element",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function called <code>maximum</code> that finds the largest number in a non-empty list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>maximum [3, 1, 4, 1, 5]
--- Output: 5</code></pre>
-        `
-    },
-    9: {
-        title: "9. Concatenate Lists",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function called <code>concat</code> that concatenates two lists.</p>
-            
-            <h3>Example</h3>
-            <pre><code>concat [1, 2] [3, 4]
--- Output: [1,2,3,4]</code></pre>
-        `
-    },
-    10: {
-        title: "10. Map Double",
-        content: `
-            <h3>Task</h3>
-            <p>Use the built-in <code>map</code> function to double every number in a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>double x = x * 2
-map double [1, 2, 3]
--- Output: [2,4,6]</code></pre>
-        `
-    },
-    11: {
-        title: "11. Filter Positives",
-        content: `
-            <h3>Task</h3>
-            <p>Use <code>filter</code> to keep only positive numbers from a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>isPositive x = x > 0
-filter isPositive [-2, 3, -1, 5]
--- Output: [3,5]</code></pre>
-        `
-    },
-    12: {
-        title: "12. Fold Sum",
-        content: `
-            <h3>Task</h3>
-            <p>Use <code>fold</code> to sum all numbers in a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>fold (+) 0 [1, 2, 3, 4]
--- Output: 10</code></pre>
-        `
-    },
-    13: {
-        title: "13. Fold Product",
-        content: `
-            <h3>Task</h3>
-            <p>Use <code>fold</code> to calculate the product of all numbers in a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>fold (*) 1 [2, 3, 4]
--- Output: 24</code></pre>
-        `
-    },
-    14: {
-        title: "14. First Element",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function called <code>first</code> that returns the first element of a list using pattern matching.</p>
-            
-            <h3>Example</h3>
-            <pre><code>first [1, 2, 3]
--- Output: 1</code></pre>
-        `
-    },
-    15: {
-        title: "15. Second Element",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function called <code>second</code> that returns the second element of a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>second [1, 2, 3]
--- Output: 2</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Use pattern matching: <code>second (x:y:xs) = y</code>
-            </div>
-        `
-    },
-    16: {
-        title: "16. Drop Elements",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>drop</code> that removes the first n elements from a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>drop 2 [1, 2, 3, 4, 5]
--- Output: [3,4,5]</code></pre>
-        `
-    },
-    17: {
-        title: "17. Take Elements",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>take</code> that returns the first n elements from a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>take 3 [1, 2, 3, 4, 5]
--- Output: [1,2,3]</code></pre>
-        `
-    },
-    18: {
-        title: "18. Fibonacci Sequence",
-        content: `
-            <h3>Task</h3>
-            <p>Write a recursive function <code>fib</code> that calculates the nth Fibonacci number.</p>
+            <p>Write a recursive function <code>fib</code> that calculates the nth Fibonacci number using pattern matching.</p>
             
             <h3>Example</h3>
             <pre><code>fib 0 = 0
 fib 1 = 1
 fib n = fib (n-1) + fib (n-2)
 
-fib 6
--- Output: 8</code></pre>
+> fib 6
+8
+> fib 10
+55</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> You need THREE definitions - for 0, for 1, and for n
+            </div>
+        `
+    },
+    7: {
+        title: "7. Sum To N",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>sumTo</code> that adds all numbers from 0 to n. Try using guards this time!</p>
+            
+            <h3>Example</h3>
+            <pre><code>sumTo n
+  | n == 0    = 0
+  | otherwise = n + sumTo (n-1)
+
+> sumTo 5
+15
+> sumTo 100
+5050</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Guards start with <code>|</code> and can test conditions
+            </div>
+        `
+    },
+    8: {
+        title: "8. Sign Function",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>sign</code> using guards that returns -1 for negative numbers, 0 for zero, and 1 for positive numbers.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> sign (-5)
+-1
+> sign 0
+0
+> sign 10
+1</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Use three guards: <code>| n < 0</code>, <code>| n == 0</code>, <code>| otherwise</code>
+            </div>
+        `
+    },
+    9: {
+        title: "9. Power Function",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>power</code> that calculates x raised to the power n (x^n) using recursion.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> power 2 3
+8
+> power 5 2
+25
+> power 10 0
+1</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Base case: anything to power 0 is 1. Recursive: x^n = x × x^(n-1)
+            </div>
+        `
+    },
+
+    // Module 3: Lists & Pattern Matching
+    10: {
+        title: "10. Calculate Length",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function <code>calcLength</code> using (x:xs) pattern matching to find the length of a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>calcLength [] = 0
+calcLength (x:xs) = 1 + calcLength xs
+
+> calcLength [1,2,3,4]
+4
+> calcLength []
+0</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Empty list has length 0. For (x:xs), length is 1 + length of xs
+            </div>
+        `
+    },
+    11: {
+        title: "11. Sum List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>sumList</code> that sums all elements in a list using (x:xs) pattern matching.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> sumList [2,5,1,9]
+17
+> sumList []
+0</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Base case: sum of [] is 0. Recursive: sum of (x:xs) is x + sum of xs
+            </div>
+        `
+    },
+    12: {
+        title: "12. Multiply List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>multList</code> that multiplies all elements in a list together.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> multList [2,3,4]
+24
+> multList [1,2,3,4,5]
+120</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Base case: product of [] is 1 (not 0!). Recursive: x * multList xs
+            </div>
+        `
+    },
+    13: {
+        title: "13. Switch Binary ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>switchBinary</code> that takes a list of 0s and 1s and flips them (0→1, 1→0). Use guards!</p>
+            
+            <h3>Example</h3>
+            <pre><code>switchBinary [] = []
+switchBinary (x:xs)
+  | x == 0    = 1 : switchBinary xs
+  | x == 1    = 0 : switchBinary xs
+  | otherwise = error "not binary"
+
+> switchBinary [1,0,1,0]
+[0,1,0,1]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Combine pattern matching AND guards!
+            </div>
+        `
+    },
+    14: {
+        title: "14. Count Element",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>countElem</code> that counts how many times an element appears in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> countElem 3 [1,3,2,3,4,3]
+3
+> countElem 5 [1,2,3,4]
+0</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> If x == e, add 1 to the count. Otherwise, add 0
+            </div>
+        `
+    },
+    15: {
+        title: "15. Remove All",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>removeAllElem</code> that removes ALL occurrences of an element from a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> removeAllElem 2 [0,2,1,2,3]
+[0,1,3]
+> removeAllElem 5 [1,2,3]
+[1,2,3]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> If x == e, skip it (don't cons it). Otherwise, cons x
+            </div>
+        `
+    },
+    16: {
+        title: "16. Replace Elements ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>replace</code> that replaces all instances of one element with another in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> replace 2 9 [1,2,3,2,4]
+[1,9,3,9,4]
+> replace "cat" "dog" ["cat","hat","cat"]
+["dog","hat","dog"]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> If x == oldElem, cons newElem. Otherwise, cons x
+            </div>
+        `
+    },
+
+    // Module 4: Higher-Order Functions
+    17: {
+        title: "17. Using Map",
+        content: `
+            <h3>Task</h3>
+            <p>First, write a function <code>square</code>. Then use <code>map</code> to square every number in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>square x = x * x
+
+> map square [1,2,3,4,5]
+[1,4,9,16,25]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Remember:</strong> map applies a function to every element
+            </div>
+        `
+    },
+    18: {
+        title: "18. Using Filter",
+        content: `
+            <h3>Task</h3>
+            <p>Use <code>filter</code> to get all even numbers from a list. You can use the built-in <code>even</code> function.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> filter even [1,2,3,4,5,6,7,8,9,10]
+[2,4,6,8,10]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Remember:</strong> filter selects elements where a condition is True
+            </div>
+        `
+    },
+    19: {
+        title: "19. Using Fold",
+        content: `
+            <h3>Task</h3>
+            <p>Use <code>fold</code> to multiply all numbers in a list together.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> fold (*) 1 [1,2,3,4,5]
+120
+> fold (*) 1 [2,3,4]
+24</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Remember:</strong> fold combines elements with an operation. Initial value for multiplication is 1!
+            </div>
+        `
+    },
+    20: {
+        title: "20. Map and Filter ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Find the sum of squares of all even numbers in a list. Combine <code>filter</code>, <code>map</code>, and a sum function!</p>
+            
+            <h3>Example</h3>
+            <pre><code>square x = x * x
+mySum xs = fold (+) 0 xs
+
+-- Combine them!
+> mySum (map square (filter even [1,2,3,4,5]))
+20</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Think about the order - filter first, then map, then sum
+            </div>
+        `
+    },
+    21: {
+        title: "21. Project Euler Style ⭐⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Find the sum of all multiples of 3 or 5 below 100. Write a predicate function, then use filter and fold!</p>
+            
+            <h3>Example</h3>
+            <pre><code>multiple3or5 n = mod n 3 == 0 || mod n 5 == 0
+
+> fold (+) 0 (filter multiple3or5 [1..99])
+2318</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> This is a classic Project Euler problem!
+            </div>
+        `
+    },
+
+    // Module 5: Function Composition
+    22: {
+        title: "22. Basic Composition",
+        content: `
+            <h3>Task</h3>
+            <p>Write two functions: <code>double x = x * 2</code> and <code>square x = x * x</code>. Then compose them with the <code>.</code> operator.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> (square . double) 3
+36
+> (double . square) 3
+18</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Remember:</strong> <code>f . g</code> means "do g first, then f"
+            </div>
+        `
+    },
+    23: {
+        title: "23. Understanding Order",
+        content: `
+            <h3>Task</h3>
+            <p>Explain why <code>(square . double) 3</code> gives 36 but <code>(double . square) 3</code> gives 18.</p>
+            
+            <h3>Analysis</h3>
+            <pre><code>(square . double) 3
+= square (double 3)
+= square 6
+= 36
+
+(double . square) 3
+= double (square 3)
+= double 9
+= 18</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Key:</strong> Order matters! Right function is applied first
+            </div>
+        `
+    },
+    24: {
+        title: "24. Sum of Evens ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Find the sum of all even numbers between 100 and 300 using function composition.</p>
+            
+            <h3>Example</h3>
+            <pre><code>mySum xs = fold (+) 0 xs
+
+> mySum (filter even [100..300])
+20100</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Can you do it without parentheses using <code>$</code>?
+            </div>
+        `
+    },
+    25: {
+        title: "25. Lambda Extension ⭐⭐",
+        content: `
+            <h3>Task (Extension)</h3>
+            <p>Try using lambda functions (anonymous functions) with map and filter!</p>
+            
+            <h3>Example</h3>
+            <pre><code>> map (\\x -> x * 2) [1,2,3,4,5]
+[2,4,6,8,10]
+
+> filter (\\x -> mod x 3 == 0) [1..20]
+[3,6,9,12,15,18]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Extension:</strong> Lambdas are written as <code>\\parameter -> expression</code>
+            </div>
         `
     }
 };
+
 
 // Example code snippets from exam questions
 const examples = {
