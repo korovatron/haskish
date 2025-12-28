@@ -467,10 +467,6 @@ True</code></pre>
             </div>
         `
     },
-                <strong>💡 Hint:</strong> If x == e, add 1 to the count. Otherwise, add 0
-            </div>
-        `
-    },
     15: {
         title: "15. List Zip ⭐⭐",
         content: `
