@@ -419,6 +419,15 @@ class HaskishInterpreter {
 
             // Operators and symbols (including . for composition, && and ||)
             if (/[+\-*\/:<>=!.&|]/.test(expr[i])) {
+                // Skip . if it's part of a decimal number (preceded by digit or followed by digit)
+                if (expr[i] === '.' && (
+                    (i > 0 && /\d/.test(expr[i - 1])) ||
+                    (i + 1 < expr.length && /\d/.test(expr[i + 1]))
+                )) {
+                    i++;
+                    continue;
+                }
+                
                 let j = i;
                 // Special handling for .. (range operator) vs . (composition)
                 if (expr[i] === '.' && i + 1 < expr.length && expr[i + 1] === '.') {
@@ -429,6 +438,8 @@ class HaskishInterpreter {
                 while (j < expr.length && /[+\-*\/:<>=!.&|]/.test(expr[j])) {
                     // Stop at .. to avoid capturing range operator
                     if (expr[j] === '.' && j + 1 < expr.length && expr[j + 1] === '.') break;
+                    // Stop if . is part of a decimal number
+                    if (expr[j] === '.' && j + 1 < expr.length && /\d/.test(expr[j + 1])) break;
                     j++;
                 }
                 tokens.push({ type: 'operator', value: expr.slice(i, j) });
@@ -663,6 +674,14 @@ class HaskishInterpreter {
     evaluate(expr) {
         expr = expr.trim();
 
+        // Boolean literals
+        if (expr === 'True' || expr === 'true') {
+            return true;
+        }
+        if (expr === 'False' || expr === 'false') {
+            return false;
+        }
+
         // Special handling for 'otherwise' keyword
         if (expr === 'otherwise') {
             return true;
@@ -862,6 +881,16 @@ class HaskishInterpreter {
                     if (i + j >= expr.length || expr[i + j] !== op[j]) {
                         matches = false;
                         break;
+                    }
+                }
+                
+                // Special case: if operator is '.' and it's part of a decimal number, don't split
+                if (matches && op === '.') {
+                    const prevChar = i > 0 ? expr[i - 1] : '';
+                    const nextChar = i + 1 < expr.length ? expr[i + 1] : '';
+                    // Skip if . is between digits (decimal number)
+                    if (/\d/.test(prevChar) && /\d/.test(nextChar)) {
+                        matches = false;
                     }
                 }
                 
