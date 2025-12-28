@@ -737,6 +737,15 @@ class HaskishInterpreter {
                 // Function composition operator
                 return this.builtins['compose'].call(this, g, f);
             }},
+            { op: '!!', fn: (list, index) => {
+                if (!Array.isArray(list)) {
+                    throw new Error('(!!) requires a list as the first argument');
+                }
+                if (typeof index !== 'number' || index < 0 || index >= list.length) {
+                    throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
+                }
+                return list[Math.floor(index)];
+            }},
             { op: '++', fn: (a, b) => {
                 if (!Array.isArray(a) || !Array.isArray(b)) {
                     throw new Error('(++) requires two lists');
