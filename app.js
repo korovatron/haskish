@@ -8,18 +8,15 @@ const moduleHints = {
         title: "Module 1: Getting Started",
         content: `
             <h3>Welcome to Haskish!</h3>
-            <p>This functional programming playground has two main areas:</p>
-            <ul>
-                <li><strong>Code Panel</strong> (left) - Write function definitions here</li>
-                <li><strong>Interactive REPL</strong> (below) - Test expressions and call functions</li>
-            </ul>
+            <p>Learn the basics of functional programming by creating simple functions.</p>
             
             <h4>Function Syntax</h4>
             <pre><code>functionName parameter = expression
 
 -- Examples:
-triple x = x * 3
-doubleAdd x y = 2*x + 2*y</code></pre>
+triple x = 3 * x
+doubleAdd x y = 2*x + 2*y
+circleArea r = 3.14159 * r * r</code></pre>
             
             <h4>Basic Operators</h4>
             <ul>
@@ -28,154 +25,162 @@ doubleAdd x y = 2*x + 2*y</code></pre>
                 <li>Boolean: <code>&&</code>, <code>||</code>, <code>not</code></li>
             </ul>
             
-            <h4>Testing in REPL</h4>
-            <pre><code>> triple 5
-15
-> doubleAdd 3 4
-14</code></pre>
+            <h4>Using the Editor and REPL</h4>
+            <ul>
+                <li>Write function definitions in the Code Panel</li>
+                <li>Click "Run Code" to load your functions</li>
+                <li>Test functions in the REPL below</li>
+            </ul>
         `
     },
     2: {
-        title: "Module 2: Functions & Recursion",
+        title: "Module 2: Introduction to Lists",
         content: `
-            <h3>Recursive Functions</h3>
-            <p>Functions that call themselves to solve problems. Always need a base case!</p>
+            <h3>Working with Lists</h3>
+            <p>Lists are fundamental data structures in functional programming.</p>
             
-            <h4>Pattern Matching (Multiple Definitions)</h4>
-            <p>Define the same function multiple times for different inputs:</p>
-            <pre><code>factorial 0 = 1
-factorial n = n * factorial (n - 1)
-
-fib 0 = 0
-fib 1 = 1
-fib n = fib (n-1) + fib (n-2)</code></pre>
+            <h4>List Syntax</h4>
+            <pre><code>[1,2,3,4,5]           -- Explicit list
+[1..10]               -- Range from 1 to 10
+[2,4..20]             -- Even numbers 2 to 20
+[]                    -- Empty list</code></pre>
             
-            <h4>Guards (Alternative Approach) 🌟</h4>
-            <p>Use guards when you need to test conditions rather than match values:</p>
-            <pre><code>factorial n
-  | n == 0    = 1
-  | otherwise = n * factorial (n - 1)
-
-sign n
-  | n < 0     = -1
-  | n == 0    = 0
-  | otherwise = 1</code></pre>
-            
-            <h4>When to Use Each</h4>
+            <h4>Basic List Functions</h4>
             <ul>
-                <li><strong>Pattern matching</strong>: Matching specific values (0, [], etc.)</li>
-                <li><strong>Guards</strong>: Comparing values (&lt;, &gt;, ==) or complex conditions</li>
+                <li><code>head [1,2,3]</code> → 1 (first element)</li>
+                <li><code>tail [1,2,3]</code> → [2,3] (all but first)</li>
+                <li><code>length [1,2,3]</code> → 3</li>
+                <li><code>reverse [1,2,3]</code> → [3,2,1]</li>
+                <li><code>take 3 [1..10]</code> → [1,2,3]</li>
+                <li><code>drop 3 [1..10]</code> → [4,5,6,7,8,9,10]</li>
             </ul>
             
-            <h4>Key Points</h4>
-            <ul>
-                <li>Patterns/guards are checked top-to-bottom</li>
-                <li><code>otherwise</code> catches all remaining cases</li>
-                <li>Guards can be indented with any number of spaces (or none)</li>
-            </ul>
+            <h4>List Operators</h4>
+            <pre><code>1:[2,3,4]             -- [1,2,3,4]  (cons)
+[1,2] ++ [3,4]        -- [1,2,3,4]  (concatenate)</code></pre>
         `
     },
     3: {
-        title: "Module 3: Lists & Pattern Matching",
+        title: "Module 3: Advanced Lists",
         content: `
-            <h3>Pattern Matching with (x:xs)</h3>
-            <p>Decompose lists into head and tail for recursive processing.</p>
+            <h3>Recursion and Pattern Matching</h3>
+            <p>Process lists recursively by breaking them into head and tail.</p>
             
-            <h4>Understanding the Pattern</h4>
-            <ul>
-                <li><code>[]</code> - Empty list (base case)</li>
-                <li><code>(x:xs)</code> - x is head (single element), xs is tail (rest)</li>
-                <li><code>x</code> is NOT a list, <code>xs</code> IS a list</li>
-            </ul>
-            
-            <h4>Basic Examples</h4>
-            <pre><code>calcLength [] = 0
-calcLength (x:xs) = 1 + calcLength xs
+            <h4>Pattern Matching with Lists</h4>
+            <pre><code>sumList [] = 0
+sumList (x:xs) = x + sumList xs
 
-sumList [] = 0
-sumList (x:xs) = x + sumList xs</code></pre>
+myLength [] = 0
+myLength (x:xs) = 1 + myLength xs</code></pre>
             
-            <h4>With Guards</h4>
-            <pre><code>countElem e [] = 0
-countElem e (x:xs)
-  | x == e    = 1 + countElem e xs
-  | otherwise = countElem e xs</code></pre>
+            <h4>Pattern Matching (Values)</h4>
+            <pre><code>factorial 0 = 1
+factorial n = n * factorial (n-1)</code></pre>
             
-            <h4>List Functions</h4>
-            <ul>
-                <li><code>head</code>, <code>tail</code>, <code>length</code>, <code>reverse</code></li>
-                <li><code>take n xs</code>, <code>drop n xs</code></li>
-                <li><code>:</code> (cons), <code>++</code> (concatenate)</li>
-            </ul>
+            <h4>Guards (Conditions)</h4>
+            <pre><code>grade mark
+  | mark >= 70 = "A"
+  | mark >= 60 = "B"
+  | mark >= 50 = "C"
+  | otherwise  = "F"</code></pre>
+            
+            <h4>Combining Patterns and Guards</h4>
+            <pre><code>positive [] = []
+positive (x:xs)
+  | x > 0     = x : positive xs
+  | otherwise = positive xs</code></pre>
         `
     },
     4: {
         title: "Module 4: Higher-Order Functions",
         content: `
-            <h3>Map, Filter, and Fold</h3>
-            <p>Higher-order functions that take functions as arguments.</p>
+            <h3>Functions as Values</h3>
+            <p>Pass functions as arguments to other functions!</p>
             
-            <h4>map - Transform each element</h4>
-            <pre><code>double x = x * 2
-map double [1,2,3]        -- [2,4,6]
-map even [1,2,3,4]        -- [False,True,False,True]</code></pre>
+            <h4>map - Transform every element</h4>
+            <pre><code>map square [1,2,3]          -- [1,4,9]
+map isEven [1,2,3,4]        -- [False,True,False,True]</code></pre>
             
-            <h4>filter - Select elements</h4>
-            <pre><code>isPositive x = x > 0
-filter isPositive [-2,3,-1,4]  -- [3,4]
-filter even [1..10]            -- [2,4,6,8,10]</code></pre>
+            <h4>filter - Keep matching elements</h4>
+            <pre><code>filter isEven [1..10]       -- [2,4,6,8,10]
+filter (\\x -> x > 5) [1..10]  -- [6,7,8,9,10]</code></pre>
             
-            <h4>fold - Reduce to single value</h4>
-            <pre><code>add x y = x + y
-fold add 0 [1,2,3,4]      -- 10
-fold (*) 1 [1,2,3,4]      -- 24</code></pre>
+            <h4>fold - Combine into single value</h4>
+            <pre><code>fold (+) 0 [1,2,3,4]        -- 10
+fold (*) 1 [1,2,3,4]        -- 24</code></pre>
             
-            <h4>Lambda Functions 🌟 (Extension)</h4>
-            <p>Anonymous functions for one-time use (not required for A Level):</p>
-            <pre><code>map (\\x -> x * 2) [1,2,3]  -- [2,4,6]
-filter (\\x -> x > 5) [1..10]
-filter (\\x -> mod x 3 == 0) [1..10]</code></pre>
-            <p>Format: <code>\\parameter -> expression</code></p>
-            
-            <h4>Problem Solving</h4>
-            <p>Combine these to solve complex problems elegantly!</p>
+            <h4>Combining Higher-Order Functions</h4>
+            <pre><code>-- Sum of all even numbers 1-100
+fold (+) 0 (filter isEven [1..100])
+
+-- Sum of squares of odd numbers
+fold (+) 0 (map square (filter isOdd [1..20]))</code></pre>
         `
     },
     5: {
         title: "Module 5: Function Composition",
         content: `
-            <h3>Composing Functions</h3>
-            <p>Combine functions to create more complex operations.</p>
+            <h3>Building Complex Functions</h3>
+            <p>Combine simple functions to create powerful transformations.</p>
             
-            <h4>The . Operator</h4>
+            <h4>The . (Composition) Operator</h4>
             <pre><code>double x = x * 2
 square x = x * x
 
-(square . double) 3   -- 36  (square of 6)
-(double . square) 3   -- 18  (double of 9)</code></pre>
+(square . double) 3       -- 36
+(double . square) 3       -- 18</code></pre>
             
-            <h4>The $ Operator</h4>
-            <p>Apply a function (avoids parentheses):</p>
-            <pre><code>square . double $ 3    -- Same as (square . double) 3
-sum . filter even $ [1..10]</code></pre>
+            <h4>Reading Composition</h4>
+            <p><code>(f . g) x</code> means: apply g first, then f</p>
+            <p>Functions are applied RIGHT to LEFT!</p>
             
-            <h4>Solving Problems</h4>
-            <pre><code>-- Sum of multiples of 3 or 5 below 100:
-sum (filter (\\n -> mod n 3 == 0 || mod n 5 == 0) [1..99])
+            <h4>Practical Examples</h4>
+            <pre><code>-- Add 10 then double
+(double . addTen) 5       -- 30
 
--- Sum of even numbers 100-300:
-sum (filter even [100..300])</code></pre>
+-- Square then negate
+(negate . square) 4       -- -16</code></pre>
             
-            <h4>Key Concept</h4>
-            <p>Output of one function becomes input to the next!</p>
-            <pre><code>f . g $ x    means    f(g(x))</code></pre>
+            <h4>With Lists</h4>
+            <pre><code>sumSquares = fold (+) 0 . map square
+sumSquares [1,2,3,4]      -- 30</code></pre>
+        `
+    },
+    6: {
+        title: "Module 6: Lambda Functions",
+        content: `
+            <h3>Anonymous Functions</h3>
+            <p>Create functions on-the-fly without naming them.</p>
+            
+            <h4>Lambda Syntax</h4>
+            <pre><code>\\parameter -> expression
+
+-- Examples:
+\\x -> x * 2
+\\x -> x * x
+\\x y -> x + y</code></pre>
+            
+            <h4>Using with map</h4>
+            <pre><code>map (\\x -> x * 2) [1,2,3]        -- [2,4,6]
+map (\\x -> x * x) [1,2,3,4]      -- [1,4,9,16]</code></pre>
+            
+            <h4>Using with filter</h4>
+            <pre><code>filter (\\x -> x > 5) [1..10]     -- [6,7,8,9,10]
+filter (\\x -> mod x 2 == 0) [1..10]  -- [2,4,6,8,10]</code></pre>
+            
+            <h4>Using with fold</h4>
+            <pre><code>fold (\\x y -> x + y) 0 [1..5]    -- 15
+fold (\\x y -> x * y) 1 [1..5]    -- 120</code></pre>
+            
+            <h4>When to Use Lambdas</h4>
+            <p>Perfect for simple, one-time operations that don't need a name!</p>
         `
     }
 };
 
 // Exercise content data
 const exerciseData = {
-    // Module 1: Getting Started
+    // Module 1: Getting Started (3 exercises for now)
     1: {
         title: "1. Using the REPL",
         content: `
@@ -238,6 +243,8 @@ const exerciseData = {
             </div>
         `
     },
+
+    // Module 2: Introduction to Lists (2 exercises for now)
     4: {
         title: "4. Lists & Ranges",
         content: `
@@ -248,20 +255,46 @@ const exerciseData = {
             <pre><code>> [1,2,3,4,5]
 > [1..10]
 > [1..100]
-> head [5,6,7]
-> tail [5,6,7]
-> length [10,20,30,40]</code></pre>
+> [2,4..20]
+> reverse [1,2,3,4,5]
+> take 3 [1..10]
+> drop 3 [1..10]</code></pre>
             
             <div class="hint">
                 <strong>💡 Remember:</strong> <code>[1..10]</code> creates a range from 1 to 10.<br>
-                <code>head</code> gets the first element, <code>tail</code> gets the rest.
+                <code>[2,4..20]</code> creates evens from 2 to 20.
+            </div>
+        `
+    },
+    5: {
+        title: "5. Head and Tail",
+        content: `
+            <h3>Task</h3>
+            <p>Try using the built-in <code>head</code> and <code>tail</code> functions to break apart lists in the REPL.</p>
+            
+            <h3>Examples to Try</h3>
+            <pre><code>> head [10,20,30,40]
+10
+> tail [10,20,30,40]
+[20,30,40]
+> head (tail [10,20,30,40])
+20
+> 1:[2,3,4]
+[1,2,3,4]
+> [1,2] ++ [3,4]
+[1,2,3,4]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Remember:</strong> <code>head</code> gets the first element.<br>
+                <code>tail</code> gets everything except the first.<br>
+                <code>:</code> adds to front, <code>++</code> joins lists.
             </div>
         `
     },
 
-    // Module 2: Functions & Recursion
-    5: {
-        title: "5. Factorial",
+    // Module 3: Advanced Lists (11 exercises)
+    6: {
+        title: "6. Factorial",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>factorial</code> using pattern matching. Remember: 0! = 1, and n! = n × (n-1)!</p>
@@ -278,8 +311,8 @@ const exerciseData = {
             </div>
         `
     },
-    6: {
-        title: "6. Powers ⭐",
+    7: {
+        title: "7. Powers ⭐",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>power</code> that calculates x raised to the power n (x^n). Remember: anything to power 0 is 1!</p>
@@ -298,8 +331,8 @@ const exerciseData = {
             </div>
         `
     },
-    7: {
-        title: "7. List Sum",
+    8: {
+        title: "8. List Sum",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>sumList</code> that adds all the numbers in a list. Use (x:xs) pattern matching!</p>
@@ -318,8 +351,68 @@ const exerciseData = {
             </div>
         `
     },
-    8: {
-        title: "8. Count Elements",
+    9: {
+        title: "9. Safe Head",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>safeHead</code> that returns the first element of a list, or "empty" for an empty list. Use pattern matching!</p>
+            
+            <h3>Example</h3>
+            <pre><code>> safeHead [5,6,7]
+5
+> safeHead []
+"empty"
+> safeHead ["cat","dog"]
+"cat"</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Write two definitions - one for [], one for (x:xs).<br>
+                For empty list, return "empty". For (x:xs), return x.
+            </div>
+        `
+    },
+    10: {
+        title: "10. Double List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function <code>doubleList</code> that doubles every number in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> doubleList [1,2,3]
+[2,4,6]
+> doubleList [10,20,30]
+[20,40,60]
+> doubleList []
+[]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Empty list stays empty.<br>
+                For (x:xs), cons (x*2) to the doubled rest of the list.
+            </div>
+        `
+    },
+    11: {
+        title: "11. Positive Numbers ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>onlyPositive</code> that filters out all non-positive numbers from a list (keep only numbers > 0).</p>
+            
+            <h3>Example</h3>
+            <pre><code>> onlyPositive [-2,3,-1,5,0,8]
+[3,5,8]
+> onlyPositive [-5,-10]
+[]
+> onlyPositive [1,2,3]
+[1,2,3]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Use pattern matching AND guards!<br>
+                If x > 0, cons it to the result. Otherwise, skip it.
+            </div>
+        `
+    },
+    12: {
+        title: "12. Count Elements",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>countElem</code> that counts how many times an element appears in a list.</p>
@@ -338,8 +431,67 @@ const exerciseData = {
             </div>
         `
     },
-    9: {
-        title: "9. Grade Classifier ⭐",
+    13: {
+        title: "13. Member Check",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>member</code> that checks if an element exists in a list (returns True or False).</p>
+            
+            <h3>Example</h3>
+            <pre><code>> member 3 [1,2,3,4,5]
+True
+> member 10 [1,2,3,4,5]
+False
+> member "cat" ["dog","cat","bird"]
+True</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Empty list → False (not found).<br>
+                If x matches, return True. Otherwise, check the rest of the list.
+            </div>
+        `
+    },
+    14: {
+        title: "14. List Zip ⭐⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>zipLists</code> that combines two lists into pairs. Stop when either list runs out!</p>
+            
+            <h3>Example</h3>
+            <pre><code>> zipLists [1,2,3] ["a","b","c"]
+[[1,"a"],[2,"b"],[3,"c"]]
+> zipLists [1,2] ["a","b","c","d"]
+[[1,"a"],[2,"b"]]
+> zipLists [] [1,2,3]
+[]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> You need pattern matching for BOTH lists!<br>
+                Use (x:xs) and (y:ys) together. Build pairs with [x,y].
+            </div>
+        `
+    },
+    15: {
+        title: "15. Quicksort ⭐⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write the classic Quicksort algorithm! Pick the first element as pivot, partition the rest into smaller and larger elements, then recursively sort.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> qsort [3,1,4,1,5,9,2,6]
+[1,1,2,3,4,5,6,9]
+> qsort [5,4,3,2,1]
+[1,2,3,4,5]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Base case: empty list is sorted.<br>
+                For (x:xs): Create two lists - elements < x and elements >= x.<br>
+                Then: qsort smaller ++ [x] ++ qsort larger
+            </div>
+        `
+    },
+    16: {
+        title: "16. Grade Classifier ⭐",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>grade</code> that takes a mark (0-100) and returns a grade string using guards:</p>
@@ -366,148 +518,7 @@ const exerciseData = {
         `
     },
 
-    // Module 3: Lists & Pattern Matching
-    10: {
-        title: "10. Head and Tail",
-        content: `
-            <h3>Task</h3>
-            <p>Try using the built-in <code>head</code> and <code>tail</code> functions to break apart lists in the REPL.</p>
-            
-            <h3>Examples to Try</h3>
-            <pre><code>> head [10,20,30,40]
-10
-> tail [10,20,30,40]
-[20,30,40]
-> head (tail [10,20,30,40])
-20</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong> <code>head</code> gets the first element.<br>
-                <code>tail</code> gets everything except the first element.
-            </div>
-        `
-    },
-    11: {
-        title: "11. Safe Head",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>safeHead</code> that returns the first element of a list, or "empty" for an empty list. Use pattern matching!</p>
-            
-            <h3>Example</h3>
-            <pre><code>> safeHead [5,6,7]
-5
-> safeHead []
-"empty"
-> safeHead ["cat","dog"]
-"cat"</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Write two definitions - one for [], one for (x:xs).<br>
-                For empty list, return "empty". For (x:xs), return x.
-            </div>
-        `
-    },
-    12: {
-        title: "12. Double List",
-        content: `
-            <h3>Task</h3>
-            <p>Write a recursive function <code>doubleList</code> that doubles every number in a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>> doubleList [1,2,3]
-[2,4,6]
-> doubleList [10,20,30]
-[20,40,60]
-> doubleList []
-[]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list stays empty.<br>
-                For (x:xs), cons (x*2) to the doubled rest of the list.
-            </div>
-        `
-    },
-    13: {
-        title: "13. Positive Numbers ⭐",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>onlyPositive</code> that filters out all non-positive numbers from a list (keep only numbers > 0).</p>
-            
-            <h3>Example</h3>
-            <pre><code>> onlyPositive [-2,3,-1,5,0,8]
-[3,5,8]
-> onlyPositive [-5,-10]
-[]
-> onlyPositive [1,2,3]
-[1,2,3]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Use pattern matching AND guards!<br>
-                If x > 0, cons it to the result. Otherwise, skip it.
-            </div>
-        `
-    },
-    14: {
-        title: "14. Member Check",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>member</code> that checks if an element exists in a list (returns True or False).</p>
-            
-            <h3>Example</h3>
-            <pre><code>> member 3 [1,2,3,4,5]
-True
-> member 10 [1,2,3,4,5]
-False
-> member "cat" ["dog","cat","bird"]
-True</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list → False (not found).<br>
-                If x matches, return True. Otherwise, check the rest of the list.
-            </div>
-        `
-    },
-    15: {
-        title: "15. List Zip ⭐⭐",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>zipLists</code> that combines two lists into pairs. Stop when either list runs out!</p>
-            
-            <h3>Example</h3>
-            <pre><code>> zipLists [1,2,3] ["a","b","c"]
-[[1,"a"],[2,"b"],[3,"c"]]
-> zipLists [1,2] ["a","b","c","d"]
-[[1,"a"],[2,"b"]]
-> zipLists [] [1,2,3]
-[]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> You need pattern matching for BOTH lists!<br>
-                Use (x:xs) and (y:ys) together. Build pairs with [x,y].
-            </div>
-        `
-    },
-    16: {
-        title: "16. Quicksort ⭐⭐",
-        content: `
-            <h3>Task</h3>
-            <p>Write the classic Quicksort algorithm! Pick the first element as pivot, partition the rest into smaller and larger elements, then recursively sort.</p>
-            
-            <h3>Example</h3>
-            <pre><code>> qsort [3,1,4,1,5,9,2,6]
-[1,1,2,3,4,5,6,9]
-> qsort [5,4,3,2,1]
-[1,2,3,4,5]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Base case: empty list is sorted.<br>
-                For (x:xs): Create two lists - elements < x and elements >= x.<br>
-                Then: qsort smaller ++ [x] ++ qsort larger
-            </div>
-        `
-    },
-
-    // Module 4: Higher-Order Functions
+    // Module 4: Higher-Order Functions (6 exercises)
     17: {
         title: "17. Map Basics",
         content: `
@@ -564,54 +575,81 @@ True</code></pre>
         `
     },
     20: {
-        title: "20. Caesar Cipher ⭐⭐",
+        title: "20. Shift Cipher ⭐",
         content: `
             <h3>Task</h3>
-            <p>Create a simple Caesar cipher! Write a function <code>shift</code> that adds 1 to each number in a list. Then use <code>map</code> to apply it.</p>
+            <p>Write a function <code>shift</code> that adds 1 to a number, then use <code>map</code> to shift all values in a list.</p>
             
             <h3>Example</h3>
-            <pre><code>> map shift [1,2,3,4,5]
+            <pre><code>> shift 5
+6
+> map shift [1,2,3,4,5]
 [2,3,4,5,6]
 > map shift [10,20,30]
 [11,21,31]</code></pre>
             
             <div class="hint">
-                <strong>💡 Challenge:</strong> Define <code>shift</code> to add 1 to its input.<br>
+                <strong>💡 Hint:</strong> Define <code>shift x = x + 1</code><br>
                 Then use <code>map shift listName</code> to shift all values.
             </div>
         `
     },
     21: {
-        title: "21. Lambda Extension ⭐⭐",
+        title: "21. Data Analysis ⭐⭐",
         content: `
-            <h3>Task (Extension)</h3>
-            <p>Try using lambda functions (anonymous functions) with map! Use <code>\\x -> expression</code> syntax.</p>
+            <h3>Task</h3>
+            <p>Find the sum of all even numbers between 1 and 100. Combine <code>filter</code> and <code>fold</code>!</p>
             
             <h3>Example</h3>
-            <pre><code>> map (\\x -> x * 2) [1,2,3,4,5]
-[2,4,6,8,10]
-> map (\\x -> x * x) [1,2,3,4]
-[1,4,9,16]
-> filter (\\x -> x > 5) [1,3,7,2,9,4]
-[7,9]</code></pre>
+            <pre><code>> fold (+) 0 (filter isEven [1..100])
+2550</code></pre>
             
             <div class="hint">
-                <strong>💡 Extension:</strong> Lambdas let you create functions inline!<br>
-                Syntax: <code>\\parameter -> expression</code><br>
-                Try creating your own lambda functions!
+                <strong>💡 Challenge:</strong> You'll need:<br>
+                1. An <code>isEven</code> function (use <code>mod</code>)<br>
+                2. <code>filter</code> to keep only evens<br>
+                3. <code>fold</code> to sum them up
+            </div>
+        `
+    },
+    22: {
+        title: "22. Advanced Challenge ⭐⭐⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Find the sum of squares of all numbers divisible by 3 in the range [1..50]. Combine filter, map, and fold!</p>
+            
+            <h3>Hint Structure</h3>
+            <ul>
+                <li>Write <code>isDivBy3</code> function</li>
+                <li>Use <code>filter</code> for divisibility by 3</li>
+                <li>Use <code>map square</code> to square each</li>
+                <li>Use <code>fold</code> to sum the results</li>
+            </ul>
+            
+            <h3>Expected Result</h3>
+            <pre><code>> -- Your solution here
+4275</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Extension:</strong> Nest the functions together!<br>
+                <code>fold (+) 0 (map square (filter isDivBy3 [1..50]))</code>
             </div>
         `
     },
 
-    // Module 5: Function Composition
-    22: {
-        title: "22. Compose Basics",
+    // Module 5: Function Composition (2 exercises for now)
+    23: {
+        title: "23. Compose Basics",
         content: `
             <h3>Task</h3>
             <p>Write two functions: <code>double</code> (multiply by 2) and <code>addTen</code> (add 10). Then try composing them!</p>
             
             <h3>Example</h3>
-            <pre><code>> (addTen . double) 5
+            <pre><code>> double 5
+10
+> addTen 5
+15
+> (addTen . double) 5
 20
 > (double . addTen) 5
 30</code></pre>
@@ -622,17 +660,17 @@ True</code></pre>
             </div>
         `
     },
-    23: {
-        title: "23. Pipeline Transformation ⬅0",
+    24: {
+        title: "24. Pipeline Transformation ⭐",
         content: `
             <h3>Task</h3>
             <p>Create a data processing pipeline! Write three functions and combine them to transform data in multiple steps.</p>
             
-            <h3>Example Functions</h3>
+            <h3>Functions to Write</h3>
             <ul>
-                <li><code>double</code> - multiply by 2</li>
-                <li><code>addFive</code> - add 5</li>
-                <li><code>square</code> - multiply by itself</li>
+                <li><code>double x = x * 2</code></li>
+                <li><code>addFive x = x + 5</code></li>
+                <li><code>square x = x * x</code></li>
             </ul>
             
             <h3>Example</h3>
@@ -641,50 +679,33 @@ True</code></pre>
             
             <div class="hint">
                 <strong>💡 Challenge:</strong> Chain three functions together!<br>
-                Remember: rightmost function is applied first.
+                Remember: rightmost function is applied first.<br>
+                So: double 3 = 6, then addFive 6 = 11, then square 11 = 121
             </div>
         `
     },
-    24: {
-        title: "24. Data Analysis ⭐⭐",
-        content: `
-            <h3>Task</h3>
-            <p>Find the sum of all even numbers between 1 and 100. Combine <code>filter</code> and <code>fold</code>!</p>
-            
-            <h3>Example</h3>
-            <pre><code>> fold (+) 0 (filter isEven [1..100])
-2550</code></pre>
-            
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> You'll need:<br>
-                1. An <code>isEven</code> function (use <code>mod</code>)<br>
-                2. <code>filter</code> to keep only evens<br>
-                3. <code>fold</code> to sum them up
-            </div>
-        `
-    },
+
+    // Module 6: Lambda Functions (1 exercise for now)
     25: {
-        title: "25. Advanced Challenge ⭐⭐",
+        title: "25. Lambda with Map ⭐",
         content: `
-            <h3>Task (Advanced)</h3>
-            <p>Combine everything you've learned! Find the sum of squares of all numbers divisible by 3 in the range [1..50].</p>
+            <h3>Task (Extension)</h3>
+            <p>Try using lambda functions (anonymous functions) with map! Use <code>\\x -> expression</code> syntax.</p>
             
-            <h3>Hint Structure</h3>
-            <ul>
-                <li>Filter for divisibility by 3</li>
-                <li>Map to square each number</li>
-                <li>Fold to sum the results</li>
-            </ul>
-            
-            <h3>Expected Result</h3>
-            <pre><code>> -- Your solution here
-4275</code></pre>
+            <h3>Examples to Try</h3>
+            <pre><code>> map (\\x -> x * 2) [1,2,3,4,5]
+[2,4,6,8,10]
+> map (\\x -> x * x) [1,2,3,4]
+[1,4,9,16]
+> filter (\\x -> x > 5) [1,3,7,2,9,4]
+[7,9]
+> fold (\\x y -> x + y) 0 [1,2,3,4,5]
+15</code></pre>
             
             <div class="hint">
-                <strong>💡 Extension:</strong> Try using lambda functions!<br>
-                You can write <code>\\x -> mod x 3 == 0</code> instead of defining a separate function.<br>
-                Combine <code>filter</code>, <code>map</code>, and <code>fold</code>.
+                <strong>💡 Extension:</strong> Lambdas let you create functions inline!<br>
+                Syntax: <code>\\parameter -> expression</code><br>
+                Perfect for simple operations you only need once!
             </div>
         `
     }

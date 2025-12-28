@@ -222,11 +222,11 @@ class HaskishInterpreter {
                 // Remove the leading |
                 const guardLine = line.slice(1).trim();
                 
-                // Find the = that's not part of ==, <=, >=
+                // Find the = that's not part of ==, <=, >=, /=
                 let eqIndex = -1;
                 for (let i = 0; i < guardLine.length; i++) {
                     if (guardLine[i] === '=' && 
-                        (i === 0 || guardLine[i-1] !== '=' && guardLine[i-1] !== '<' && guardLine[i-1] !== '>' && guardLine[i-1] !== '!') &&
+                        (i === 0 || guardLine[i-1] !== '=' && guardLine[i-1] !== '<' && guardLine[i-1] !== '>' && guardLine[i-1] !== '!' && guardLine[i-1] !== '/') &&
                         (i === guardLine.length - 1 || guardLine[i+1] !== '=')) {
                         eqIndex = i;
                         break;
