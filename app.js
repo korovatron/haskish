@@ -824,6 +824,9 @@ function saveExerciseState() {
     const allStates = JSON.parse(localStorage.getItem('haskishExerciseStates') || '{}');
     allStates[currentExerciseId] = state;
     localStorage.setItem('haskishExerciseStates', JSON.stringify(allStates));
+    
+    // Save last exercise ID
+    localStorage.setItem('haskishLastExercise', currentExerciseId);
 }
 
 // Load exercise state from localStorage
@@ -893,6 +896,9 @@ function initExercises() {
                 hintsPanel.classList.add('collapsed');
                 toggleHintsBtn.textContent = '▶';
             }
+            
+            // Update mobile navigation
+            updateMobileNavigationLabel();
         });
         
         // Right-click or double-click to toggle completion
@@ -906,18 +912,15 @@ function initExercises() {
         });
     });
     
-    // Close exercise panel button
-    const closeExerciseBtn = document.getElementById('closeExercise');
-    if (closeExerciseBtn) {
-        closeExerciseBtn.addEventListener('click', () => {
-            // Save state before closing
-            if (currentExerciseId) {
-                saveExerciseState();
-            }
-            hideExerciseContent();
-            // Remove active class from all buttons
-            exerciseButtons.forEach(b => b.classList.remove('active'));
-            currentExerciseId = null;
+    // Toggle exercise panel button
+    const toggleExerciseBtn = document.getElementById('toggleExercisePanel');
+    const exercisePanel = document.getElementById('exercisePanel');
+    const exercisePanelHeader = document.getElementById('exercisePanelHeader');
+    
+    if (toggleExerciseBtn && exercisePanel) {
+        exercisePanelHeader.addEventListener('click', () => {
+            exercisePanel.classList.toggle('collapsed');
+            toggleExerciseBtn.textContent = exercisePanel.classList.contains('collapsed') ? '▶' : '▼';
         });
     }
     
@@ -926,21 +929,19 @@ function initExercises() {
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to reset all progress and clear all saved work? This cannot be undone.')) {
+                // Save theme preference before clearing
+                const currentTheme = localStorage.getItem('theme');
+                
                 // Clear all localStorage data
-                localStorage.removeItem('haskishProgress');
-                localStorage.removeItem('haskishExerciseStates');
+                localStorage.clear();
                 
-                // Reset UI
-                exerciseButtons.forEach(btn => {
-                    btn.classList.remove('completed');
-                });
-                
-                // Reset editor and REPL if an exercise is open
-                if (currentExerciseId) {
-                    codeEditor.setValue('-- Write your function definitions here');
-                    document.getElementById('replOutput').innerHTML = '';
-                    document.getElementById('editorOutput').innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
+                // Restore theme preference
+                if (currentTheme) {
+                    localStorage.setItem('theme', currentTheme);
                 }
+                
+                // Reload the page to reset everything
+                location.reload();
             }
         });
     }
@@ -968,6 +969,87 @@ function initExercises() {
             }
         });
     }
+    
+    // Mobile exercise navigation
+    initMobileNavigation();
+    
+    // Auto-load last exercise or exercise 1 on startup
+    const lastExerciseId = localStorage.getItem('haskishLastExercise') || '1';
+    const exerciseToLoad = document.querySelector(`.exercise-btn[data-exercise="${lastExerciseId}"]`);
+    if (exerciseToLoad) {
+        exerciseToLoad.click();
+        // Start with exercise panel collapsed
+        setTimeout(() => {
+            const panel = document.getElementById('exercisePanel');
+            const toggleBtn = document.getElementById('toggleExercisePanel');
+            if (panel && toggleBtn) {
+                panel.classList.add('collapsed');
+                toggleBtn.textContent = '▶';
+            }
+        }, 0);
+    }
+}
+
+function initMobileNavigation() {
+    const prevBtn = document.getElementById('prevExercise');
+    const nextBtn = document.getElementById('nextExercise');
+    const label = document.getElementById('currentExerciseLabel');
+    const totalExercises = 27;
+    
+    // Make update function globally accessible
+    window.updateMobileNavigationLabel = function() {
+        if (currentExerciseId) {
+            const exId = parseInt(currentExerciseId);
+            const exercise = exerciseData[currentExerciseId];
+            const titleParts = exercise.title.split('. ');
+            const shortTitle = titleParts.length > 1 ? titleParts[1] : exercise.title;
+            label.textContent = `Exercise ${exId}: ${shortTitle}`;
+            
+            // Check if exercise is completed and update label color
+            const btn = document.querySelector(`.exercise-btn[data-exercise="${currentExerciseId}"]`);
+            if (btn && btn.classList.contains('completed')) {
+                label.classList.add('completed');
+            } else {
+                label.classList.remove('completed');
+            }
+            
+            prevBtn.disabled = exId <= 1;
+            nextBtn.disabled = exId >= totalExercises;
+        } else {
+            label.textContent = 'Select an exercise';
+            label.classList.remove('completed');
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+        }
+    };
+    
+    function navigateToExercise(exerciseId) {
+        const btn = document.querySelector(`.exercise-btn[data-exercise="${exerciseId}"]`);
+        if (btn) {
+            btn.click();
+        }
+    }
+    
+    prevBtn.addEventListener('click', () => {
+        if (currentExerciseId) {
+            const prevId = parseInt(currentExerciseId) - 1;
+            if (prevId >= 1) {
+                navigateToExercise(prevId.toString());
+            }
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (currentExerciseId) {
+            const nextId = parseInt(currentExerciseId) + 1;
+            if (nextId <= totalExercises) {
+                navigateToExercise(nextId.toString());
+            }
+        }
+    });
+    
+    // Initialize mobile nav state
+    updateMobileNavigationLabel();
 }
 
 function toggleExerciseCompletion(btn) {
@@ -992,6 +1074,11 @@ function toggleExerciseCompletion(btn) {
     }
     
     localStorage.setItem('haskishProgress', JSON.stringify(savedProgress));
+    
+    // Update mobile navigation label color if this is the current exercise
+    if (currentExerciseId === exerciseId && typeof updateMobileNavigationLabel === 'function') {
+        updateMobileNavigationLabel();
+    }
 }
 
 function restoreExerciseState(exerciseId) {

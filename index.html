@@ -49,6 +49,13 @@
         </header>
 
         <div class="main-content">
+            <!-- Mobile Exercise Navigator -->
+            <div class="mobile-exercise-nav">
+                <button id="prevExercise" class="nav-arrow" title="Previous exercise">&lt;&lt;</button>
+                <span id="currentExerciseLabel" class="exercise-label">Select an exercise</span>
+                <button id="nextExercise" class="nav-arrow" title="Next exercise">&gt;&gt;</button>
+            </div>
+            
             <!-- Exercise Selector Bar -->
             <div class="exercise-selector-bar">
                 <div class="exercise-buttons-wrapper">
@@ -103,14 +110,14 @@
 
             <!-- Exercise Content Panel (hidden by default) -->
             <div id="exercisePanel" class="panel exercise-content-panel" style="display: none;">
-                <div class="panel-header">
+                <div class="panel-header" id="exercisePanelHeader">
                     <h2 id="exerciseTitle">Exercise</h2>
                     <div class="exercise-controls">
                         <label class="completion-toggle">
                             <input type="checkbox" id="exerciseComplete" />
                             <span>Mark as Complete</span>
                         </label>
-                        <button id="closeExercise" class="btn btn-secondary">✕</button>
+                        <button id="toggleExercisePanel" class="btn btn-secondary">▼</button>
                     </div>
                 </div>
                 <div id="exerciseContent" class="exercise-content">
