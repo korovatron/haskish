@@ -633,6 +633,11 @@ function updateThemeIcon(theme) {
     themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
 }
 
+// Global variables for editor state
+let currentExerciseId = null;
+let codeEditor = null;
+let replEditor = null;
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -644,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize CodeMirror
     const codeEditorTextarea = document.getElementById('codeEditor');
-    const codeEditor = CodeMirror.fromTextArea(codeEditorTextarea, {
+    codeEditor = CodeMirror.fromTextArea(codeEditorTextarea, {
         mode: 'haskell',
         theme: 'monokai',
         lineNumbers: true,
@@ -659,7 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize REPL CodeMirror
     const replInputTextarea = document.getElementById('replInput');
-    const replEditor = CodeMirror.fromTextArea(replInputTextarea, {
+    replEditor = CodeMirror.fromTextArea(replInputTextarea, {
         mode: 'haskell',
         theme: 'monokai',
         lineNumbers: false,
@@ -714,6 +719,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Scroll to bottom
                 replOutput.scrollTop = replOutput.scrollHeight;
                 
+                // Save state after REPL command
+                if (currentExerciseId) {
+                    saveExerciseState();
+                }
+                
                 // Clear input
                 cm.setValue('');
                 cm.focus();
@@ -750,6 +760,15 @@ document.addEventListener('DOMContentLoaded', () => {
     codeEditor.setOption('theme', initialEditorTheme);
     replEditor.setOption('theme', initialEditorTheme);
 
+    // Auto-save on code change (debounced)
+    let saveTimeout;
+    codeEditor.on('change', () => {
+        if (currentExerciseId) {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => saveExerciseState(), 1000);
+        }
+    });
+    
     // Run code from editor
     runCodeBtn.addEventListener('click', () => {
         const code = codeEditor.getValue();
@@ -761,12 +780,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             editorOutput.innerHTML = `<div class="error">✗ Error: ${result.error}</div>`;
         }
+        
+        // Save state after running code
+        if (currentExerciseId) {
+            saveExerciseState();
+        }
     });
 
     // Clear REPL history
     clearReplBtn.addEventListener('click', () => {
         replOutput.innerHTML = '';
         replEditor.focus();
+        // Save cleared state
+        if (currentExerciseId) {
+            saveExerciseState();
+        }
     });
 
     // Start with empty editor
@@ -782,6 +810,26 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Save current exercise state to localStorage
+function saveExerciseState() {
+    if (!currentExerciseId) return;
+    
+    const state = {
+        code: codeEditor.getValue(),
+        replHistory: document.getElementById('replOutput').innerHTML
+    };
+    
+    const allStates = JSON.parse(localStorage.getItem('haskishExerciseStates') || '{}');
+    allStates[currentExerciseId] = state;
+    localStorage.setItem('haskishExerciseStates', JSON.stringify(allStates));
+}
+
+// Load exercise state from localStorage
+function loadExerciseState(exerciseId) {
+    const allStates = JSON.parse(localStorage.getItem('haskishExerciseStates') || '{}');
+    return allStates[exerciseId] || null;
 }
 
 // Exercises functionality
@@ -805,6 +853,14 @@ function initExercises() {
         btn.addEventListener('click', () => {
             const exerciseId = btn.getAttribute('data-exercise');
             
+            // Save current exercise state before switching
+            if (currentExerciseId) {
+                saveExerciseState();
+            }
+            
+            // Update current exercise ID
+            currentExerciseId = exerciseId;
+            
             // Remove active class from all buttons
             exerciseButtons.forEach(b => b.classList.remove('active'));
             
@@ -813,6 +869,9 @@ function initExercises() {
             
             // Show exercise content
             showExerciseContent(exerciseId);
+            
+            // Restore exercise state
+            restoreExerciseState(exerciseId);
             
             // Get module number from exercise ID
             const exId = parseInt(exerciseId);
@@ -851,9 +910,14 @@ function initExercises() {
     const closeExerciseBtn = document.getElementById('closeExercise');
     if (closeExerciseBtn) {
         closeExerciseBtn.addEventListener('click', () => {
+            // Save state before closing
+            if (currentExerciseId) {
+                saveExerciseState();
+            }
             hideExerciseContent();
             // Remove active class from all buttons
             exerciseButtons.forEach(b => b.classList.remove('active'));
+            currentExerciseId = null;
         });
     }
     
@@ -861,11 +925,22 @@ function initExercises() {
     const resetBtn = document.getElementById('resetProgress');
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+            if (confirm('Are you sure you want to reset all progress and clear all saved work? This cannot be undone.')) {
+                // Clear all localStorage data
                 localStorage.removeItem('haskishProgress');
+                localStorage.removeItem('haskishExerciseStates');
+                
+                // Reset UI
                 exerciseButtons.forEach(btn => {
                     btn.classList.remove('completed');
                 });
+                
+                // Reset editor and REPL if an exercise is open
+                if (currentExerciseId) {
+                    codeEditor.setValue('-- Write your function definitions here');
+                    document.getElementById('replOutput').innerHTML = '';
+                    document.getElementById('editorOutput').innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
+                }
             }
         });
     }
@@ -917,6 +992,29 @@ function toggleExerciseCompletion(btn) {
     }
     
     localStorage.setItem('haskishProgress', JSON.stringify(savedProgress));
+}
+
+function restoreExerciseState(exerciseId) {
+    const state = loadExerciseState(exerciseId);
+    const editorOutput = document.getElementById('editorOutput');
+    const replOutput = document.getElementById('replOutput');
+    
+    if (state) {
+        // Restore saved state
+        codeEditor.setValue(state.code);
+        replOutput.innerHTML = state.replHistory;
+        editorOutput.innerHTML = '<div class="info">Restored your previous work. Click "Run Code" to reload functions!</div>';
+    } else {
+        // Use default state for new exercise
+        codeEditor.setValue('-- Write your function definitions here');
+        replOutput.innerHTML = '';
+        editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
+    }
+    
+    // Scroll REPL to bottom if there's history
+    if (replOutput.innerHTML) {
+        replOutput.scrollTop = replOutput.scrollHeight;
+    }
 }
 
 function showExerciseContent(exerciseId) {
