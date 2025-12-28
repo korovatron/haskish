@@ -690,51 +690,6 @@ True</code></pre>
     }
 };
 
-
-// Example code snippets from exam questions
-const examples = {
-    total: `-- Sum all numbers in a list
-temps = [50, 68, 95, 86]
-
-total [] = 0
-total (x:xs) = x + total xs
-
--- Try: total temps
--- Try: total [1, 2, 3, 4]`,
-
-    map: `-- Double every number in a list
-double x = x * 2
-
--- Map applies a function to each element
--- Try: map double [1, 2, 3, 4]`,
-
-    filter: `-- Filter example with operator section
-square x = x * x
-
--- Try: filter (<10) [1, 5, 10, 15]
--- Try: map square [1, 3, 5]`,
-
-    fold: `-- Fold reduces a list to a single value
--- Try: fold (*) 1 [2, 3, 2]
--- Try: fold (+) 0 [1, 2, 3, 4]`,
-
-    nested: `-- Working with nested lists
-fw [a, b] = a * b
-
-sales = [[10, 2], [2, 25], [4, 8]]
-
--- Calculate revenue from each sale
--- Try: map fw sales
--- Try: sales`,
-
-    exam1: `-- Exam Question: FunctionZ
-functionZ [] = 0
-functionZ (x:xs) = x + 2 * functionZ xs
-
--- Try: functionZ [4, 2, 5, 3]
--- Trace through the recursive calls!`
-};
-
 // Theme toggle functionality
 function initTheme() {
     const themeToggle = document.getElementById('themeToggle');
@@ -766,7 +721,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editorOutput = document.getElementById('editorOutput');
     const replOutput = document.getElementById('replOutput');
     const clearReplBtn = document.getElementById('clearRepl');
-    const exampleBtns = document.querySelectorAll('.example-btn');
     
     // Initialize CodeMirror
     const codeEditorTextarea = document.getElementById('codeEditor');
@@ -893,17 +847,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clearReplBtn.addEventListener('click', () => {
         replOutput.innerHTML = '';
         replEditor.focus();
-    });
-
-    // Load example code
-    exampleBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const exampleName = btn.dataset.example;
-            if (examples[exampleName]) {
-                codeEditor.setValue(examples[exampleName]);
-                editorOutput.innerHTML = '<div class="info">Example loaded! Click "Run Code" to load the functions.</div>';
-            }
-        });
     });
 
     // Start with empty editor
