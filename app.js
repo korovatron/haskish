@@ -826,6 +826,14 @@ function initExercises() {
             
             // Show appropriate module hints
             showModuleHints(moduleNum);
+            
+            // Collapse the hints panel
+            const hintsPanel = document.querySelector('.hints-panel');
+            const toggleHintsBtn = document.getElementById('toggleHints');
+            if (hintsPanel && toggleHintsBtn) {
+                hintsPanel.classList.add('collapsed');
+                toggleHintsBtn.textContent = '▶';
+            }
         });
         
         // Right-click or double-click to toggle completion
