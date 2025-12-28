@@ -857,7 +857,7 @@ footer a:hover {
 /* Responsive design for exercises */
 @media (max-width: 768px) {
     .exercises-section {
-        margin: 1rem auto;
+        margin: 0;
     }
 
     .exercises-header {
