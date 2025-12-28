@@ -906,8 +906,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Load initial example
-    codeEditor.setValue(examples.total);
+    // Start with empty editor
+    codeEditor.setValue('-- Write your function definitions here');
     editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
 
     // Initialize exercises functionality
