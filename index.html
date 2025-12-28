@@ -105,7 +105,13 @@
             <div id="exercisePanel" class="panel exercise-content-panel" style="display: none;">
                 <div class="panel-header">
                     <h2 id="exerciseTitle">Exercise</h2>
-                    <button id="closeExercise" class="btn btn-secondary">✕</button>
+                    <div class="exercise-controls">
+                        <label class="completion-toggle">
+                            <input type="checkbox" id="exerciseComplete" />
+                            <span>Mark as Complete</span>
+                        </label>
+                        <button id="closeExercise" class="btn btn-secondary">✕</button>
+                    </div>
                 </div>
                 <div id="exerciseContent" class="exercise-content">
                     Click an exercise button above to begin.

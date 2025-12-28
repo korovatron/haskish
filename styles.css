@@ -836,6 +836,40 @@ footer a:hover {
     animation: slideDown 0.3s ease;
 }
 
+.exercise-content-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.exercise-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.completion-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.completion-toggle input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.completion-toggle:hover {
+    color: var(--primary-color);
+}
+
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -935,6 +969,21 @@ footer a:hover {
     .exercise-status {
         left: 1rem;
         font-size: 1rem;
+    }
+    
+    .exercise-content-panel .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .exercise-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .completion-toggle {
+        font-size: 0.85rem;
     }
 }
 

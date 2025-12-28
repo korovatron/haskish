@@ -881,18 +881,39 @@ function initExercises() {
             toggleHintsBtn.textContent = hintsPanel.classList.contains('collapsed') ? '▶' : '▼';
         });
     }
+    
+    // Exercise completion checkbox
+    const exerciseCompleteCheckbox = document.getElementById('exerciseComplete');
+    if (exerciseCompleteCheckbox) {
+        exerciseCompleteCheckbox.addEventListener('change', (e) => {
+            const exerciseId = e.target.getAttribute('data-exercise');
+            const btn = document.querySelector(`.exercise-btn[data-exercise="${exerciseId}"]`);
+            if (btn) {
+                toggleExerciseCompletion(btn);
+            }
+        });
+    }
 }
 
 function toggleExerciseCompletion(btn) {
     const exerciseId = btn.getAttribute('data-exercise');
     const savedProgress = JSON.parse(localStorage.getItem('haskishProgress') || '{}');
+    const checkbox = document.getElementById('exerciseComplete');
     
     if (btn.classList.contains('completed')) {
         btn.classList.remove('completed');
         delete savedProgress[exerciseId];
+        // Update checkbox if it's for the same exercise
+        if (checkbox && checkbox.getAttribute('data-exercise') === exerciseId) {
+            checkbox.checked = false;
+        }
     } else {
         btn.classList.add('completed');
         savedProgress[exerciseId] = true;
+        // Update checkbox if it's for the same exercise
+        if (checkbox && checkbox.getAttribute('data-exercise') === exerciseId) {
+            checkbox.checked = true;
+        }
     }
     
     localStorage.setItem('haskishProgress', JSON.stringify(savedProgress));
@@ -902,6 +923,7 @@ function showExerciseContent(exerciseId) {
     const panel = document.getElementById('exercisePanel');
     const title = document.getElementById('exerciseTitle');
     const content = document.getElementById('exerciseContent');
+    const checkbox = document.getElementById('exerciseComplete');
     
     const exercise = exerciseData[exerciseId];
     
@@ -909,6 +931,13 @@ function showExerciseContent(exerciseId) {
         title.textContent = exercise.title;
         content.innerHTML = exercise.content;
         panel.style.display = 'flex';
+        
+        // Update checkbox state based on completion status
+        const btn = document.querySelector(`.exercise-btn[data-exercise="${exerciseId}"]`);
+        if (checkbox && btn) {
+            checkbox.checked = btn.classList.contains('completed');
+            checkbox.setAttribute('data-exercise', exerciseId);
+        }
     }
 }
 
