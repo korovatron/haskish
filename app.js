@@ -195,15 +195,6 @@ const exerciseData = {
 > 5 == 5
 > 5 /= 5
 > "hello" == "hello"</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong>
-                <ul>
-                    <li><code>&&</code> means AND, <code>||</code> means OR</li>
-                    <li><code>/=</code> means not equal</li>
-                    <li>Type expressions in the REPL and press Enter</li>
-                </ul>
-            </div>
         `
     },
     2: {
@@ -217,12 +208,6 @@ const exerciseData = {
 30
 > tripleMe 7
 21</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> In the Code Panel above, write your function definition.<br>
-                Use <code>x</code> as the parameter name and multiply it by 3.<br>
-                Click "Run Code", then test in the REPL!
-            </div>
         `
     },
     3: {
@@ -236,15 +221,10 @@ const exerciseData = {
 14
 > doubleAdd 10 5
 30</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Functions can take multiple parameters separated by spaces.<br>
-                Double each parameter and add the results together.
-            </div>
         `
     },
 
-    // Module 2: Introduction to Lists (2 exercises for now)
+    // Module 2: Introduction to Lists (4 exercises)
     4: {
         title: "4. Lists & Ranges",
         content: `
@@ -256,14 +236,9 @@ const exerciseData = {
 > [1..10]
 > [1..100]
 > [2,4..20]
-> reverse [1,2,3,4,5]
-> take 3 [1..10]
+> reverse ["cat","dog","bird"]
+> take 2 ["red","green","blue","yellow"]
 > drop 3 [1..10]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong> <code>[1..10]</code> creates a range from 1 to 10.<br>
-                <code>[2,4..20]</code> creates evens from 2 to 20.
-            </div>
         `
     },
     5: {
@@ -283,18 +258,48 @@ const exerciseData = {
 [1,2,3,4]
 > [1,2] ++ [3,4]
 [1,2,3,4]</code></pre>
+        `
+    },
+    6: {
+        title: "6. Cons Operator (:)",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>prepend</code> that adds an element to the front of a list using the <code>:</code> operator.</p>
             
-            <div class="hint">
-                <strong>💡 Remember:</strong> <code>head</code> gets the first element.<br>
-                <code>tail</code> gets everything except the first.<br>
-                <code>:</code> adds to front, <code>++</code> joins lists.
-            </div>
+            <h3>Example</h3>
+            <pre><code>> prepend 1 [2,3,4]
+[1,2,3,4]
+> prepend "hello" ["world"]
+["hello","world"]
+> prepend 0 []
+[0]</code></pre>
+            
+            <h3>Remember</h3>
+            <p>The <code>:</code> operator takes an <strong>element</strong> on the left and a <strong>list</strong> on the right.</p>
+        `
+    },
+    7: {
+        title: "7. Concatenate Operator (++)",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>join</code> that combines two lists using the <code>++</code> operator. Test with both number and string lists.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> join [1,2] [3,4,5]
+[1,2,3,4,5]
+> join ["cat","dog"] ["bird"]
+["cat","dog","bird"]
+> join [] [1,2,3]
+[1,2,3]</code></pre>
+            
+            <h3>Remember</h3>
+            <p>The <code>++</code> operator takes a <strong>list</strong> on both the left and right sides.</p>
         `
     },
 
     // Module 3: Advanced Lists (11 exercises)
-    6: {
-        title: "6. Factorial",
+    8: {
+        title: "8. Factorial",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>factorial</code> using pattern matching. Remember: 0! = 1, and n! = n × (n-1)!</p>
@@ -304,15 +309,10 @@ const exerciseData = {
 120
 > factorial 10
 3628800</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Define the function twice - once for the base case (0), once for the recursive case (n).<br>
-                For recursion, multiply n by the factorial of (n-1).
-            </div>
         `
     },
-    7: {
-        title: "7. Powers ⭐",
+    9: {
+        title: "9. Powers ⭐",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>power</code> that calculates x raised to the power n (x^n). Remember: anything to power 0 is 1!</p>
@@ -324,15 +324,10 @@ const exerciseData = {
 25
 > power 10 0
 1</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> You need TWO parameters (x and n) and pattern matching.<br>
-                Base case: x^0 = 1. Recursive case: x^n = x × x^(n-1)
-            </div>
         `
     },
-    8: {
-        title: "8. List Sum",
+    10: {
+        title: "10. List Sum",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>sumList</code> that adds all the numbers in a list. Use (x:xs) pattern matching!</p>
@@ -344,15 +339,10 @@ const exerciseData = {
 0
 > sumList [10,20,30]
 60</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list [] sums to 0 (base case).<br>
-                For (x:xs), add x to the sum of xs (recursive case).
-            </div>
         `
     },
-    9: {
-        title: "9. Safe Head",
+    11: {
+        title: "11. Safe Head",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>safeHead</code> that returns the first element of a list, or "empty" for an empty list. Use pattern matching!</p>
@@ -364,15 +354,10 @@ const exerciseData = {
 "empty"
 > safeHead ["cat","dog"]
 "cat"</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Write two definitions - one for [], one for (x:xs).<br>
-                For empty list, return "empty". For (x:xs), return x.
-            </div>
         `
     },
-    10: {
-        title: "10. Double List",
+    12: {
+        title: "12. Double List",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>doubleList</code> that doubles every number in a list.</p>
@@ -384,15 +369,10 @@ const exerciseData = {
 [20,40,60]
 > doubleList []
 []</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list stays empty.<br>
-                For (x:xs), cons (x*2) to the doubled rest of the list.
-            </div>
         `
     },
-    11: {
-        title: "11. Positive Numbers ⭐",
+    13: {
+        title: "13. Positive Numbers ⭐",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>onlyPositive</code> that filters out all non-positive numbers from a list (keep only numbers > 0).</p>
@@ -404,15 +384,10 @@ const exerciseData = {
 []
 > onlyPositive [1,2,3]
 [1,2,3]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Use pattern matching AND guards!<br>
-                If x > 0, cons it to the result. Otherwise, skip it.
-            </div>
         `
     },
-    12: {
-        title: "12. Count Elements",
+    14: {
+        title: "14. Count Elements",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>countElem</code> that counts how many times an element appears in a list.</p>
@@ -424,15 +399,10 @@ const exerciseData = {
 0
 > countElem "cat" ["dog","cat","bird","cat"]
 2</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list has count 0.<br>
-                For (x:xs), if x matches the element, add 1. Otherwise add 0.
-            </div>
         `
     },
-    13: {
-        title: "13. Member Check",
+    15: {
+        title: "15. Member Check",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>member</code> that checks if an element exists in a list (returns True or False).</p>
@@ -444,15 +414,10 @@ True
 False
 > member "cat" ["dog","cat","bird"]
 True</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list → False (not found).<br>
-                If x matches, return True. Otherwise, check the rest of the list.
-            </div>
         `
     },
-    14: {
-        title: "14. List Zip ⭐⭐",
+    16: {
+        title: "16. List Zip ⭐⭐",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>zipLists</code> that combines two lists into pairs. Stop when either list runs out!</p>
@@ -464,15 +429,10 @@ True</code></pre>
 [[1,"a"],[2,"b"]]
 > zipLists [] [1,2,3]
 []</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> You need pattern matching for BOTH lists!<br>
-                Use (x:xs) and (y:ys) together. Build pairs with [x,y].
-            </div>
         `
     },
-    15: {
-        title: "15. Quicksort ⭐⭐",
+    17: {
+        title: "17. Quicksort ⭐⭐",
         content: `
             <h3>Task</h3>
             <p>Write the classic Quicksort algorithm! Pick the first element as pivot, partition the rest into smaller and larger elements, then recursively sort.</p>
@@ -482,16 +442,10 @@ True</code></pre>
 [1,1,2,3,4,5,6,9]
 > qsort [5,4,3,2,1]
 [1,2,3,4,5]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Base case: empty list is sorted.<br>
-                For (x:xs): Create two lists - elements < x and elements >= x.<br>
-                Then: qsort smaller ++ [x] ++ qsort larger
-            </div>
         `
     },
-    16: {
-        title: "16. Grade Classifier ⭐",
+    18: {
+        title: "18. Grade Classifier ⭐",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>grade</code> that takes a mark (0-100) and returns a grade string using guards:</p>
@@ -510,17 +464,12 @@ True</code></pre>
 "C"
 > grade 35
 "F"</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Use multiple guards with <code>>=</code> comparisons.<br>
-                Order matters - check from highest grade to lowest!
-            </div>
         `
     },
 
     // Module 4: Higher-Order Functions (6 exercises)
-    17: {
-        title: "17. Map Basics",
+    19: {
+        title: "19. Map Basics",
         content: `
             <h3>Task</h3>
             <p>First, write a function <code>square</code> that squares a number. Then use <code>map</code> to square every number in a list.</p>
@@ -530,15 +479,10 @@ True</code></pre>
 [1,4,9,16,25]
 > map square [10,20]
 [100,400]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong> <code>map</code> applies a function to every element in a list.<br>
-                Syntax: <code>map functionName listName</code>
-            </div>
         `
     },
-    18: {
-        title: "18. Filter Basics",
+    20: {
+        title: "20. Filter Basics",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>isEven</code> that returns True if a number is even. Then use <code>filter</code> to get all even numbers from a list.</p>
@@ -548,15 +492,10 @@ True</code></pre>
 [2,4,6,8,10]
 > filter isEven [1,3,5,7]
 []</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong> <code>filter</code> keeps elements where the function returns True.<br>
-                Hint for isEven: use <code>mod x 2 == 0</code>
-            </div>
         `
     },
-    19: {
-        title: "19. Fold Basics",
+    21: {
+        title: "21. Fold Basics",
         content: `
             <h3>Task</h3>
             <p>Use <code>fold</code> to multiply all numbers in a list together. Remember to use the right initial value!</p>
@@ -566,16 +505,10 @@ True</code></pre>
 120
 > fold (*) 1 [2,3,4]
 24</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong> <code>fold</code> combines elements using an operator.<br>
-                Syntax: <code>fold operator initialValue list</code><br>
-                For multiplication, initial value should be 1 (not 0!).
-            </div>
         `
     },
-    20: {
-        title: "20. Shift Cipher ⭐",
+    22: {
+        title: "22. Shift Cipher ⭐",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>shift</code> that adds 1 to a number, then use <code>map</code> to shift all values in a list.</p>
@@ -587,15 +520,10 @@ True</code></pre>
 [2,3,4,5,6]
 > map shift [10,20,30]
 [11,21,31]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Define <code>shift x = x + 1</code><br>
-                Then use <code>map shift listName</code> to shift all values.
-            </div>
         `
     },
-    21: {
-        title: "21. Data Analysis ⭐⭐",
+    23: {
+        title: "23. Data Analysis ⭐⭐",
         content: `
             <h3>Task</h3>
             <p>Find the sum of all even numbers between 1 and 100. Combine <code>filter</code> and <code>fold</code>!</p>
@@ -603,17 +531,10 @@ True</code></pre>
             <h3>Example</h3>
             <pre><code>> fold (+) 0 (filter isEven [1..100])
 2550</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> You'll need:<br>
-                1. An <code>isEven</code> function (use <code>mod</code>)<br>
-                2. <code>filter</code> to keep only evens<br>
-                3. <code>fold</code> to sum them up
-            </div>
         `
     },
-    22: {
-        title: "22. Advanced Challenge ⭐⭐⭐",
+    24: {
+        title: "24. Advanced Challenge ⭐⭐⭐",
         content: `
             <h3>Task</h3>
             <p>Find the sum of squares of all numbers divisible by 3 in the range [1..50]. Combine filter, map, and fold!</p>
@@ -629,17 +550,12 @@ True</code></pre>
             <h3>Expected Result</h3>
             <pre><code>> -- Your solution here
 4275</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Extension:</strong> Nest the functions together!<br>
-                <code>fold (+) 0 (map square (filter isDivBy3 [1..50]))</code>
-            </div>
         `
     },
 
     // Module 5: Function Composition (2 exercises for now)
-    23: {
-        title: "23. Compose Basics",
+    25: {
+        title: "25. Compose Basics",
         content: `
             <h3>Task</h3>
             <p>Write two functions: <code>double</code> (multiply by 2) and <code>addTen</code> (add 10). Then try composing them!</p>
@@ -653,15 +569,10 @@ True</code></pre>
 20
 > (double . addTen) 5
 30</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Remember:</strong> The <code>.</code> operator composes functions.<br>
-                <code>(f . g) x</code> means "apply g first, then apply f to the result".
-            </div>
         `
     },
-    24: {
-        title: "24. Pipeline Transformation ⭐",
+    26: {
+        title: "26. Pipeline Transformation ⭐",
         content: `
             <h3>Task</h3>
             <p>Create a data processing pipeline! Write three functions and combine them to transform data in multiple steps.</p>
@@ -676,18 +587,12 @@ True</code></pre>
             <h3>Example</h3>
             <pre><code>> (square . addFive . double) 3
 121</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Chain three functions together!<br>
-                Remember: rightmost function is applied first.<br>
-                So: double 3 = 6, then addFive 6 = 11, then square 11 = 121
-            </div>
         `
     },
 
     // Module 6: Lambda Functions (1 exercise for now)
-    25: {
-        title: "25. Lambda with Map ⭐",
+    27: {
+        title: "27. Lambda with Map ⭐",
         content: `
             <h3>Task (Extension)</h3>
             <p>Try using lambda functions (anonymous functions) with map! Use <code>\\x -> expression</code> syntax.</p>
@@ -701,12 +606,6 @@ True</code></pre>
 [7,9]
 > fold (\\x y -> x + y) 0 [1,2,3,4,5]
 15</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Extension:</strong> Lambdas let you create functions inline!<br>
-                Syntax: <code>\\parameter -> expression</code><br>
-                Perfect for simple operations you only need once!
-            </div>
         `
     }
 };
@@ -890,80 +789,53 @@ function initExercises() {
     // Load saved progress from localStorage
     const savedProgress = JSON.parse(localStorage.getItem('haskishProgress') || '{}');
     
-    // Apply saved progress
+    // Apply saved progress to buttons
     Object.keys(savedProgress).forEach(exerciseId => {
         if (savedProgress[exerciseId]) {
-            const exercise = document.querySelector(`.exercise[data-exercise="${exerciseId}"]`);
-            if (exercise) {
-                exercise.classList.add('completed');
+            const btn = document.querySelector(`.exercise-btn[data-exercise="${exerciseId}"]`);
+            if (btn) {
+                btn.classList.add('completed');
             }
         }
     });
     
-    // Update all module progress counters
-    updateAllModuleProgress();
-    
-    // Module accordion functionality - only one open at a time
-    const moduleHeaders = document.querySelectorAll('.module-header');
-    moduleHeaders.forEach((header, index) => {
-        header.addEventListener('click', () => {
-            const module = header.parentElement;
-            const isCurrentlyCollapsed = module.classList.contains('collapsed');
-            const moduleNumber = index + 1; // Modules are numbered 1-4
+    // Exercise button click - show exercise content
+    const exerciseButtons = document.querySelectorAll('.exercise-btn');
+    exerciseButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const exerciseId = btn.getAttribute('data-exercise');
             
-            // Close all modules first and remove active state
-            document.querySelectorAll('.module').forEach(m => {
-                m.classList.add('collapsed');
-                m.classList.remove('active');
-            });
+            // Remove active class from all buttons
+            exerciseButtons.forEach(b => b.classList.remove('active'));
             
-            // If this module was collapsed, open it and make it active (toggle behavior)
-            if (isCurrentlyCollapsed) {
-                module.classList.remove('collapsed');
-                module.classList.add('active');
-                showModuleHints(moduleNumber);
-            } else {
-                // If closing, show hints for Module 1
-                showModuleHints(1);
-            }
-        });
-    });
-    
-    // Exercise completion toggle
-    const exercises = document.querySelectorAll('.exercise');
-    exercises.forEach(exercise => {
-        const status = exercise.querySelector('.exercise-status');
-        
-        // Click on exercise to select it
-        exercise.addEventListener('click', (e) => {
-            // If clicking the status icon, don't select
-            if (e.target === status) {
-                return;
-            }
-            
-            // Deselect all exercises
-            exercises.forEach(ex => ex.classList.remove('selected'));
-            
-            // Select this exercise
-            exercise.classList.add('selected');
+            // Add active class to clicked button
+            btn.classList.add('active');
             
             // Show exercise content
-            showExerciseContent(exercise.dataset.exercise);
+            showExerciseContent(exerciseId);
+            
+            // Get module number from exercise ID
+            const exId = parseInt(exerciseId);
+            let moduleNum = 1;
+            if (exId <= 3) moduleNum = 1;
+            else if (exId <= 7) moduleNum = 2;
+            else if (exId <= 18) moduleNum = 3;
+            else if (exId <= 24) moduleNum = 4;
+            else if (exId <= 26) moduleNum = 5;
+            else moduleNum = 6;
+            
+            // Show appropriate module hints
+            showModuleHints(moduleNum);
         });
         
-        // Click on status to toggle completion
-        status.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent exercise selection
-            exercise.classList.toggle('completed');
-            
-            // Save progress
-            const exerciseId = exercise.dataset.exercise;
-            const progress = JSON.parse(localStorage.getItem('haskishProgress') || '{}');
-            progress[exerciseId] = exercise.classList.contains('completed');
-            localStorage.setItem('haskishProgress', JSON.stringify(progress));
-            
-            // Update module progress
-            updateModuleProgress(exercise.closest('.module'));
+        // Right-click or double-click to toggle completion
+        btn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            toggleExerciseCompletion(btn);
+        });
+        
+        btn.addEventListener('dblclick', () => {
+            toggleExerciseCompletion(btn);
         });
     });
     
@@ -972,8 +844,8 @@ function initExercises() {
     if (closeExerciseBtn) {
         closeExerciseBtn.addEventListener('click', () => {
             hideExerciseContent();
-            // Deselect all exercises
-            document.querySelectorAll('.exercise').forEach(ex => ex.classList.remove('selected'));
+            // Remove active class from all buttons
+            exerciseButtons.forEach(b => b.classList.remove('active'));
         });
     }
     
@@ -981,20 +853,41 @@ function initExercises() {
     const resetBtn = document.getElementById('resetProgress');
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to reset all exercise progress? This cannot be undone.')) {
-                // Clear localStorage
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
                 localStorage.removeItem('haskishProgress');
-                
-                // Remove completed class from all exercises
-                document.querySelectorAll('.exercise').forEach(ex => {
-                    ex.classList.remove('completed');
+                exerciseButtons.forEach(btn => {
+                    btn.classList.remove('completed');
                 });
-                
-                // Update all module progress
-                updateAllModuleProgress();
             }
         });
     }
+    
+    // Hints toggle functionality
+    const hintsHeader = document.getElementById('hintsHeader');
+    const toggleHintsBtn = document.getElementById('toggleHints');
+    const hintsPanel = document.querySelector('.hints-panel');
+    
+    if (hintsHeader && toggleHintsBtn) {
+        hintsHeader.addEventListener('click', () => {
+            hintsPanel.classList.toggle('collapsed');
+            toggleHintsBtn.textContent = hintsPanel.classList.contains('collapsed') ? '▶' : '▼';
+        });
+    }
+}
+
+function toggleExerciseCompletion(btn) {
+    const exerciseId = btn.getAttribute('data-exercise');
+    const savedProgress = JSON.parse(localStorage.getItem('haskishProgress') || '{}');
+    
+    if (btn.classList.contains('completed')) {
+        btn.classList.remove('completed');
+        delete savedProgress[exerciseId];
+    } else {
+        btn.classList.add('completed');
+        savedProgress[exerciseId] = true;
+    }
+    
+    localStorage.setItem('haskishProgress', JSON.stringify(savedProgress));
 }
 
 function showExerciseContent(exerciseId) {
@@ -1014,21 +907,6 @@ function showExerciseContent(exerciseId) {
 function hideExerciseContent() {
     const panel = document.getElementById('exercisePanel');
     panel.style.display = 'none';
-}
-
-function updateModuleProgress(module) {
-    const exercises = module.querySelectorAll('.exercise');
-    const completed = module.querySelectorAll('.exercise.completed');
-    const progressSpan = module.querySelector('.module-progress');
-    
-    if (progressSpan) {
-        progressSpan.textContent = `${completed.length}/${exercises.length}`;
-    }
-}
-
-function updateAllModuleProgress() {
-    const modules = document.querySelectorAll('.module');
-    modules.forEach(module => updateModuleProgress(module));
 }
 
 function showModuleHints(moduleNumber) {

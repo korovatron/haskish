@@ -21,6 +21,7 @@
     
     <!-- PWA -->
     <meta name="theme-color" content="#7c3aed">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Haskish">
@@ -48,231 +49,72 @@
         </header>
 
         <div class="main-content">
-            <!-- Left Column: Exercises -->
-            <div class="left-column">
-                <div class="exercises-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <h2 class="exercises-header" style="margin-bottom: 0; text-align: left; flex: 1;">Exercises</h2>
-                        <button id="resetProgress" class="btn btn-primary" title="Reset all progress">Reset</button>
-                    </div>
-                    <p class="exercises-tip">💡 Tip: Click the ⭕ circles to mark exercises as complete ✅</p>
-                    
-                    <!-- Module 1: Getting Started -->
-                    <div class="module collapsed">
-                        <div class="module-header">
-                            <span class="module-toggle">▼</span>
-                            <span class="module-title">Module 1: Getting Started</span>
-                            <span class="module-progress">0/3</span>
-                        </div>
-                        <div class="module-content">
-                            <div class="exercise" data-exercise="1">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">1.</span>
-                                <span class="exercise-title">Using the REPL</span>
-                            </div>
-                            <div class="exercise" data-exercise="2">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">2.</span>
-                                <span class="exercise-title">Simple Function</span>
-                            </div>
-                            <div class="exercise" data-exercise="3">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">3.</span>
-                                <span class="exercise-title">Multiple Parameters</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Module 2: Introduction to Lists -->
-                    <div class="module collapsed">
-                        <div class="module-header">
-                            <span class="module-toggle">▼</span>
-                            <span class="module-title">Module 2: Introduction to Lists</span>
-                            <span class="module-progress">0/2</span>
-                        </div>
-                        <div class="module-content">
-                            <div class="exercise" data-exercise="4">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">4.</span>
-                                <span class="exercise-title">Lists & Ranges</span>
-                            </div>
-                            <div class="exercise" data-exercise="5">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">5.</span>
-                                <span class="exercise-title">Head and Tail</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Module 3: Advanced Lists -->
-                    <div class="module collapsed">
-                        <div class="module-header">
-                            <span class="module-toggle">▼</span>
-                            <span class="module-title">Module 3: Advanced Lists</span>
-                            <span class="module-progress">0/11</span>
-                        </div>
-                        <div class="module-content">
-                            <div class="exercise" data-exercise="6">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">6.</span>
-                                <span class="exercise-title">Factorial</span>
-                            </div>
-                            <div class="exercise" data-exercise="7">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">7.</span>
-                                <span class="exercise-title">Powers ⭐</span>
-                            </div>
-                            <div class="exercise" data-exercise="8">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">8.</span>
-                                <span class="exercise-title">List Sum</span>
-                            </div>
-                            <div class="exercise" data-exercise="9">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">9.</span>
-                                <span class="exercise-title">Safe Head</span>
-                            </div>
-                            <div class="exercise" data-exercise="10">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">10.</span>
-                                <span class="exercise-title">Double List</span>
-                            </div>
-                            <div class="exercise" data-exercise="11">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">11.</span>
-                                <span class="exercise-title">Positive Numbers ⭐</span>
-                            </div>
-                            <div class="exercise" data-exercise="12">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">12.</span>
-                                <span class="exercise-title">Count Elements</span>
-                            </div>
-                            <div class="exercise" data-exercise="13">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">13.</span>
-                                <span class="exercise-title">Member Check</span>
-                            </div>
-                            <div class="exercise" data-exercise="14">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">14.</span>
-                                <span class="exercise-title">List Zip ⭐⭐</span>
-                            </div>
-                            <div class="exercise" data-exercise="15">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">15.</span>
-                                <span class="exercise-title">Quicksort ⭐⭐</span>
-                            </div>
-                            <div class="exercise" data-exercise="16">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">16.</span>
-                                <span class="exercise-title">Grade Classifier ⭐</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Module 4: Higher-Order Functions -->
-                    <div class="module collapsed">
-                        <div class="module-header">
-                            <span class="module-toggle">▼</span>
-                            <span class="module-title">Module 4: Higher-Order Functions</span>
-                            <span class="module-progress">0/6</span>
-                        </div>
-                        <div class="module-content">
-                            <div class="exercise" data-exercise="17">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">17.</span>
-                                <span class="exercise-title">Map Basics</span>
-                            </div>
-                            <div class="exercise" data-exercise="18">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">18.</span>
-                                <span class="exercise-title">Filter Basics</span>
-                            </div>
-                            <div class="exercise" data-exercise="19">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">19.</span>
-                                <span class="exercise-title">Fold Basics</span>
-                            </div>
-                            <div class="exercise" data-exercise="20">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">20.</span>
-                                <span class="exercise-title">Shift Cipher ⭐</span>
-                            </div>
-                            <div class="exercise" data-exercise="21">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">21.</span>
-                                <span class="exercise-title">Data Analysis ⭐⭐</span>
-                            </div>
-                            <div class="exercise" data-exercise="22">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">22.</span>
-                                <span class="exercise-title">Advanced Challenge ⭐⭐⭐</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Module 5: Function Composition -->
-                    <div class="module collapsed">
-                        <div class="module-header">
-                            <span class="module-toggle">▼</span>
-                            <span class="module-title">Module 5: Function Composition</span>
-                            <span class="module-progress">0/2</span>
-                        </div>
-                        <div class="module-content">
-                            <div class="exercise" data-exercise="23">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">23.</span>
-                                <span class="exercise-title">Compose Basics</span>
-                            </div>
-                            <div class="exercise" data-exercise="24">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">24.</span>
-                                <span class="exercise-title">Pipeline Transformation ⭐</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Module 6: Lambda Functions -->
-                    <div class="module collapsed">
-                        <div class="module-header">
-                            <span class="module-toggle">▼</span>
-                            <span class="module-title">Module 6: Lambda Functions</span>
-                            <span class="module-progress">0/1</span>
-                        </div>
-                        <div class="module-content">
-                            <div class="exercise" data-exercise="25">
-                                <span class="exercise-status">⭕</span>
-                                <span class="exercise-number">25.</span>
-                                <span class="exercise-title">Lambda with Map ⭐</span>
-                            </div>
-                        </div>
+            <!-- Exercise Selector Bar -->
+            <div class="exercise-selector-bar">
+                <div class="exercise-buttons-wrapper">
+                    <div class="exercise-buttons-container">
+                        <!-- Module 1: Getting Started -->
+                        <button class="exercise-btn" data-exercise="1" title="Using the REPL">1</button>
+                        <button class="exercise-btn" data-exercise="2" title="Simple Function">2</button>
+                        <button class="exercise-btn" data-exercise="3" title="Multiple Parameters">3</button>
+                        <span class="module-separator"></span>
+                        
+                        <!-- Module 2: Introduction to Lists -->
+                        <button class="exercise-btn" data-exercise="4" title="Lists & Ranges">4</button>
+                        <button class="exercise-btn" data-exercise="5" title="Head and Tail">5</button>
+                        <button class="exercise-btn" data-exercise="6" title="Cons Operator (:)">6</button>
+                        <button class="exercise-btn" data-exercise="7" title="Concatenate Operator (++)">7</button>
+                        <span class="module-separator"></span>
+                        
+                        <!-- Module 3: Advanced Lists -->
+                        <button class="exercise-btn" data-exercise="8" title="Factorial">8</button>
+                        <button class="exercise-btn" data-exercise="9" title="Powers ⭐">9</button>
+                        <button class="exercise-btn" data-exercise="10" title="List Sum">10</button>
+                        <button class="exercise-btn" data-exercise="11" title="Safe Head">11</button>
+                        <button class="exercise-btn" data-exercise="12" title="Double List">12</button>
+                        <button class="exercise-btn" data-exercise="13" title="Positive Numbers ⭐">13</button>
+                        <button class="exercise-btn" data-exercise="14" title="Count Elements">14</button>
+                        <button class="exercise-btn" data-exercise="15" title="Member Check">15</button>
+                        <button class="exercise-btn" data-exercise="16" title="List Zip ⭐⭐">16</button>
+                        <button class="exercise-btn" data-exercise="17" title="Quicksort ⭐⭐">17</button>
+                        <button class="exercise-btn" data-exercise="18" title="Grade Classifier ⭐">18</button>
+                        <span class="module-separator"></span>
+                        
+                        <!-- Module 4: Higher-Order Functions -->
+                        <button class="exercise-btn" data-exercise="19" title="Map Basics">19</button>
+                        <button class="exercise-btn" data-exercise="20" title="Filter Basics">20</button>
+                        <button class="exercise-btn" data-exercise="21" title="Fold Basics">21</button>
+                        <button class="exercise-btn" data-exercise="22" title="Shift Cipher ⭐">22</button>
+                        <button class="exercise-btn" data-exercise="23" title="Data Analysis ⭐⭐">23</button>
+                        <button class="exercise-btn" data-exercise="24" title="Advanced Challenge ⭐⭐⭐">24</button>
+                        <span class="module-separator"></span>
+                        
+                        <!-- Module 5: Function Composition -->
+                        <button class="exercise-btn" data-exercise="25" title="Compose Basics">25</button>
+                        <button class="exercise-btn" data-exercise="26" title="Pipeline Transformation ⭐">26</button>
+                        <span class="module-separator"></span>
+                        
+                        <!-- Module 6: Lambda Functions -->
+                        <button class="exercise-btn" data-exercise="27" title="Lambda with Map ⭐">27</button>
                     </div>
                 </div>
+                <button id="resetProgress" class="btn btn-primary" title="Reset all progress">Reset</button>
+            </div>
 
-                <!-- Hints Panel -->
-                <div class="panel hints-panel">
-                    <div class="panel-header">
-                        <h2>Module Hints</h2>
-                    </div>
-                    <div id="hintsContent" class="hints-content">
-                        <!-- Hints will be dynamically loaded here -->
-                    </div>
+            <!-- Exercise Content Panel (hidden by default) -->
+            <div id="exercisePanel" class="panel exercise-content-panel" style="display: none;">
+                <div class="panel-header">
+                    <h2 id="exerciseTitle">Exercise</h2>
+                    <button id="closeExercise" class="btn btn-secondary">✕</button>
+                </div>
+                <div id="exerciseContent" class="exercise-content">
+                    Click an exercise button above to begin.
                 </div>
             </div>
 
-            <!-- Right Column: Editor and REPL -->
-            <div class="right-column">
-                <!-- Exercise Content Panel (hidden by default) -->
-                <div id="exercisePanel" class="panel exercise-content-panel" style="display: none;">
-                    <div class="panel-header">
-                        <h2 id="exerciseTitle">Exercise</h2>
-                        <button id="closeExercise" class="btn btn-secondary">✕</button>
-                    </div>
-                    <div id="exerciseContent" class="exercise-content">
-                        Select an exercise to see its content here.
-                    </div>
-                </div>
-
+            <!-- Code and REPL Container (side by side) -->
+            <!-- Code and REPL Container (side by side) -->
+            <div class="code-repl-container">
                 <!-- Code Editor Panel -->
                 <div class="panel editor-panel">
                     <div class="panel-header">
@@ -296,6 +138,17 @@
                             <textarea id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])"></textarea>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Hints Panel (collapsible) -->
+            <div class="panel hints-panel">
+                <div class="panel-header hints-header" id="hintsHeader">
+                    <h2>Module Hints</h2>
+                    <button id="toggleHints" class="btn btn-secondary">▼</button>
+                </div>
+                <div id="hintsContent" class="hints-content">
+                    <!-- Hints will be dynamically loaded here -->
                 </div>
             </div>
         </div>
