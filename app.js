@@ -202,7 +202,7 @@ const exerciseData = {
         `
     },
     2: {
-        title: "2. First Function",
+        title: "2. Simple Function",
         content: `
             <h3>Task</h3>
             <p>Write a function called <code>tripleMe</code> that takes a number and returns triple its value.</p>
@@ -214,8 +214,8 @@ const exerciseData = {
 21</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> In the Code Panel above, write:<br>
-                <code>tripleMe x = x * 3</code><br>
+                <strong>💡 Hint:</strong> In the Code Panel above, write your function definition.<br>
+                Use <code>x</code> as the parameter name and multiply it by 3.<br>
                 Click "Run Code", then test in the REPL!
             </div>
         `
@@ -233,26 +233,28 @@ const exerciseData = {
 30</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> <code>doubleAdd x y = 2*x + 2*y</code>
+                <strong>💡 Hint:</strong> Functions can take multiple parameters separated by spaces.<br>
+                Double each parameter and add the results together.
             </div>
         `
     },
     4: {
-        title: "4. Comparison Function",
+        title: "4. Lists & Ranges",
         content: `
             <h3>Task</h3>
-            <p>Write a function <code>isPositive</code> that returns <code>True</code> if a number is greater than 0, <code>False</code> otherwise.</p>
+            <p>Experiment with lists and ranges in the REPL. Try these expressions:</p>
             
-            <h3>Example</h3>
-            <pre><code>> isPositive 5
-True
-> isPositive (-3)
-False
-> isPositive 0
-False</code></pre>
+            <h3>Examples to Try</h3>
+            <pre><code>> [1,2,3,4,5]
+> [1..10]
+> [1..100]
+> head [5,6,7]
+> tail [5,6,7]
+> length [10,20,30,40]</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Use the <code>></code> operator to compare with 0
+                <strong>💡 Remember:</strong> <code>[1..10]</code> creates a range from 1 to 10.<br>
+                <code>head</code> gets the first element, <code>tail</code> gets the rest.
             </div>
         `
     },
@@ -265,85 +267,22 @@ False</code></pre>
             <p>Write a recursive function <code>factorial</code> using pattern matching. Remember: 0! = 1, and n! = n × (n-1)!</p>
             
             <h3>Example</h3>
-            <pre><code>factorial 0 = 1
-factorial n = n * factorial (n - 1)
-
-> factorial 5
+            <pre><code>> factorial 5
 120
 > factorial 10
 3628800</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Define the function twice - once for 0 (base case), once for n (recursive case)
+                <strong>💡 Hint:</strong> Define the function twice - once for the base case (0), once for the recursive case (n).<br>
+                For recursion, multiply n by the factorial of (n-1).
             </div>
         `
     },
     6: {
-        title: "6. Fibonacci",
+        title: "6. Powers ⭐",
         content: `
             <h3>Task</h3>
-            <p>Write a recursive function <code>fib</code> that calculates the nth Fibonacci number using pattern matching.</p>
-            
-            <h3>Example</h3>
-            <pre><code>fib 0 = 0
-fib 1 = 1
-fib n = fib (n-1) + fib (n-2)
-
-> fib 6
-8
-> fib 10
-55</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> You need THREE definitions - for 0, for 1, and for n
-            </div>
-        `
-    },
-    7: {
-        title: "7. Sum To N",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>sumTo</code> that adds all numbers from 0 to n. Try using guards this time!</p>
-            
-            <h3>Example</h3>
-            <pre><code>sumTo n
-  | n == 0    = 0
-  | otherwise = n + sumTo (n-1)
-
-> sumTo 5
-15
-> sumTo 100
-5050</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Guards start with <code>|</code> and can test conditions
-            </div>
-        `
-    },
-    8: {
-        title: "8. Sign Function",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>sign</code> using guards that returns -1 for negative numbers, 0 for zero, and 1 for positive numbers.</p>
-            
-            <h3>Example</h3>
-            <pre><code>> sign (-5)
--1
-> sign 0
-0
-> sign 10
-1</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Use three guards: <code>| n < 0</code>, <code>| n == 0</code>, <code>| otherwise</code>
-            </div>
-        `
-    },
-    9: {
-        title: "9. Power Function",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>power</code> that calculates x raised to the power n (x^n) using recursion.</p>
+            <p>Write a recursive function <code>power</code> that calculates x raised to the power n (x^n). Remember: anything to power 0 is 1!</p>
             
             <h3>Example</h3>
             <pre><code>> power 2 3
@@ -354,89 +293,33 @@ fib n = fib (n-1) + fib (n-2)
 1</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Base case: anything to power 0 is 1. Recursive: x^n = x × x^(n-1)
+                <strong>💡 Challenge:</strong> You need TWO parameters (x and n) and pattern matching.<br>
+                Base case: x^0 = 1. Recursive case: x^n = x × x^(n-1)
             </div>
         `
     },
-
-    // Module 3: Lists & Pattern Matching
-    10: {
-        title: "10. Calculate Length",
+    7: {
+        title: "7. List Sum",
         content: `
             <h3>Task</h3>
-            <p>Write a recursive function <code>calcLength</code> using (x:xs) pattern matching to find the length of a list.</p>
-            
-            <h3>Example</h3>
-            <pre><code>calcLength [] = 0
-calcLength (x:xs) = 1 + calcLength xs
-
-> calcLength [1,2,3,4]
-4
-> calcLength []
-0</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Empty list has length 0. For (x:xs), length is 1 + length of xs
-            </div>
-        `
-    },
-    11: {
-        title: "11. Sum List",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>sumList</code> that sums all elements in a list using (x:xs) pattern matching.</p>
+            <p>Write a recursive function <code>sumList</code> that adds all the numbers in a list. Use (x:xs) pattern matching!</p>
             
             <h3>Example</h3>
             <pre><code>> sumList [2,5,1,9]
 17
 > sumList []
-0</code></pre>
+0
+> sumList [10,20,30]
+60</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> Base case: sum of [] is 0. Recursive: sum of (x:xs) is x + sum of xs
+                <strong>💡 Hint:</strong> Empty list [] sums to 0 (base case).<br>
+                For (x:xs), add x to the sum of xs (recursive case).
             </div>
         `
     },
-    12: {
-        title: "12. Multiply List",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>multList</code> that multiplies all elements in a list together.</p>
-            
-            <h3>Example</h3>
-            <pre><code>> multList [2,3,4]
-24
-> multList [1,2,3,4,5]
-120</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Hint:</strong> Base case: product of [] is 1 (not 0!). Recursive: x * multList xs
-            </div>
-        `
-    },
-    13: {
-        title: "13. Switch Binary ⭐",
-        content: `
-            <h3>Task</h3>
-            <p>Write a function <code>switchBinary</code> that takes a list of 0s and 1s and flips them (0→1, 1→0). Use guards!</p>
-            
-            <h3>Example</h3>
-            <pre><code>switchBinary [] = []
-switchBinary (x:xs)
-  | x == 0    = 1 : switchBinary xs
-  | x == 1    = 0 : switchBinary xs
-  | otherwise = error "not binary"
-
-> switchBinary [1,0,1,0]
-[0,1,0,1]</code></pre>
-            
-            <div class="hint">
-                <strong>💡 Challenge:</strong> Combine pattern matching AND guards!
-            </div>
-        `
-    },
-    14: {
-        title: "14. Count Element",
+    8: {
+        title: "8. Count Elements",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>countElem</code> that counts how many times an element appears in a list.</p>
@@ -445,86 +328,231 @@ switchBinary (x:xs)
             <pre><code>> countElem 3 [1,3,2,3,4,3]
 3
 > countElem 5 [1,2,3,4]
-0</code></pre>
+0
+> countElem "cat" ["dog","cat","bird","cat"]
+2</code></pre>
             
             <div class="hint">
+                <strong>💡 Hint:</strong> Empty list has count 0.<br>
+                For (x:xs), if x matches the element, add 1. Otherwise add 0.
+            </div>
+        `
+    },
+    9: {
+        title: "9. Grade Classifier ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>grade</code> that takes a mark (0-100) and returns a grade string using guards:</p>
+            <ul>
+                <li>70+ → "A"</li>
+                <li>60-69 → "B"</li>
+                <li>50-59 → "C"</li>
+                <li>40-49 → "D"</li>
+                <li>Below 40 → "F"</li>
+            </ul>
+            
+            <h3>Example</h3>
+            <pre><code>> grade 75
+"A"
+> grade 55
+"C"
+> grade 35
+"F"</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Use multiple guards with <code>>=</code> comparisons.<br>
+                Order matters - check from highest grade to lowest!
+            </div>
+        `
+    },
+
+    // Module 3: Lists & Pattern Matching
+    10: {
+        title: "10. Head and Tail",
+        content: `
+            <h3>Task</h3>
+            <p>Try using the built-in <code>head</code> and <code>tail</code> functions to break apart lists in the REPL.</p>
+            
+            <h3>Examples to Try</h3>
+            <pre><code>> head [10,20,30,40]
+10
+> tail [10,20,30,40]
+[20,30,40]
+> head (tail [10,20,30,40])
+20</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Remember:</strong> <code>head</code> gets the first element.<br>
+                <code>tail</code> gets everything except the first element.
+            </div>
+        `
+    },
+    11: {
+        title: "11. Safe Head",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>safeHead</code> that returns the first element of a list, or "empty" for an empty list. Use pattern matching!</p>
+            
+            <h3>Example</h3>
+            <pre><code>> safeHead [5,6,7]
+5
+> safeHead []
+"empty"
+> safeHead ["cat","dog"]
+"cat"</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Write two definitions - one for [], one for (x:xs).<br>
+                For empty list, return "empty". For (x:xs), return x.
+            </div>
+        `
+    },
+    12: {
+        title: "12. Double List",
+        content: `
+            <h3>Task</h3>
+            <p>Write a recursive function <code>doubleList</code> that doubles every number in a list.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> doubleList [1,2,3]
+[2,4,6]
+> doubleList [10,20,30]
+[20,40,60]
+> doubleList []
+[]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Empty list stays empty.<br>
+                For (x:xs), cons (x*2) to the doubled rest of the list.
+            </div>
+        `
+    },
+    13: {
+        title: "13. Positive Numbers ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>onlyPositive</code> that filters out all non-positive numbers from a list (keep only numbers > 0).</p>
+            
+            <h3>Example</h3>
+            <pre><code>> onlyPositive [-2,3,-1,5,0,8]
+[3,5,8]
+> onlyPositive [-5,-10]
+[]
+> onlyPositive [1,2,3]
+[1,2,3]</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Challenge:</strong> Use pattern matching AND guards!<br>
+                If x > 0, cons it to the result. Otherwise, skip it.
+            </div>
+        `
+    },
+    14: {
+        title: "14. Member Check",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>member</code> that checks if an element exists in a list (returns True or False).</p>
+            
+            <h3>Example</h3>
+            <pre><code>> member 3 [1,2,3,4,5]
+True
+> member 10 [1,2,3,4,5]
+False
+> member "cat" ["dog","cat","bird"]
+True</code></pre>
+            
+            <div class="hint">
+                <strong>💡 Hint:</strong> Empty list → False (not found).<br>
+                If x matches, return True. Otherwise, check the rest of the list.
+            </div>
+        `
+    },
                 <strong>💡 Hint:</strong> If x == e, add 1 to the count. Otherwise, add 0
             </div>
         `
     },
     15: {
-        title: "15. Remove All",
+        title: "15. List Zip ⭐⭐",
         content: `
             <h3>Task</h3>
-            <p>Write a function <code>removeAllElem</code> that removes ALL occurrences of an element from a list.</p>
+            <p>Write a function <code>zipLists</code> that combines two lists into pairs. Stop when either list runs out!</p>
             
             <h3>Example</h3>
-            <pre><code>> removeAllElem 2 [0,2,1,2,3]
-[0,1,3]
-> removeAllElem 5 [1,2,3]
-[1,2,3]</code></pre>
+            <pre><code>> zipLists [1,2,3] ["a","b","c"]
+[[1,"a"],[2,"b"],[3,"c"]]
+> zipLists [1,2] ["a","b","c","d"]
+[[1,"a"],[2,"b"]]
+> zipLists [] [1,2,3]
+[]</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> If x == e, skip it (don't cons it). Otherwise, cons x
+                <strong>💡 Challenge:</strong> You need pattern matching for BOTH lists!<br>
+                Use (x:xs) and (y:ys) together. Build pairs with [x,y].
             </div>
         `
     },
     16: {
-        title: "16. Replace Elements ⭐",
+        title: "16. Quicksort ⭐⭐",
         content: `
             <h3>Task</h3>
-            <p>Write a function <code>replace</code> that replaces all instances of one element with another in a list.</p>
+            <p>Write the classic Quicksort algorithm! Pick the first element as pivot, partition the rest into smaller and larger elements, then recursively sort.</p>
             
             <h3>Example</h3>
-            <pre><code>> replace 2 9 [1,2,3,2,4]
-[1,9,3,9,4]
-> replace "cat" "dog" ["cat","hat","cat"]
-["dog","hat","dog"]</code></pre>
+            <pre><code>> qsort [3,1,4,1,5,9,2,6]
+[1,1,2,3,4,5,6,9]
+> qsort [5,4,3,2,1]
+[1,2,3,4,5]</code></pre>
             
             <div class="hint">
-                <strong>💡 Hint:</strong> If x == oldElem, cons newElem. Otherwise, cons x
+                <strong>💡 Challenge:</strong> Base case: empty list is sorted.<br>
+                For (x:xs): Create two lists - elements < x and elements >= x.<br>
+                Then: qsort smaller ++ [x] ++ qsort larger
             </div>
         `
     },
 
     // Module 4: Higher-Order Functions
     17: {
-        title: "17. Using Map",
+        title: "17. Map Basics",
         content: `
             <h3>Task</h3>
-            <p>First, write a function <code>square</code>. Then use <code>map</code> to square every number in a list.</p>
+            <p>First, write a function <code>square</code> that squares a number. Then use <code>map</code> to square every number in a list.</p>
             
             <h3>Example</h3>
-            <pre><code>square x = x * x
-
-> map square [1,2,3,4,5]
-[1,4,9,16,25]</code></pre>
+            <pre><code>> map square [1,2,3,4,5]
+[1,4,9,16,25]
+> map square [10,20]
+[100,400]</code></pre>
             
             <div class="hint">
-                <strong>💡 Remember:</strong> map applies a function to every element
+                <strong>💡 Remember:</strong> <code>map</code> applies a function to every element in a list.<br>
+                Syntax: <code>map functionName listName</code>
             </div>
         `
     },
     18: {
-        title: "18. Using Filter",
+        title: "18. Filter Basics",
         content: `
             <h3>Task</h3>
-            <p>Use <code>filter</code> to get all even numbers from a list. You can use the built-in <code>even</code> function.</p>
+            <p>Write a function <code>isEven</code> that returns True if a number is even. Then use <code>filter</code> to get all even numbers from a list.</p>
             
             <h3>Example</h3>
-            <pre><code>> filter even [1,2,3,4,5,6,7,8,9,10]
-[2,4,6,8,10]</code></pre>
+            <pre><code>> filter isEven [1,2,3,4,5,6,7,8,9,10]
+[2,4,6,8,10]
+> filter isEven [1,3,5,7]
+[]</code></pre>
             
             <div class="hint">
-                <strong>💡 Remember:</strong> filter selects elements where a condition is True
+                <strong>💡 Remember:</strong> <code>filter</code> keeps elements where the function returns True.<br>
+                Hint for isEven: use <code>mod x 2 == 0</code>
             </div>
         `
     },
     19: {
-        title: "19. Using Fold",
+        title: "19. Fold Basics",
         content: `
             <h3>Task</h3>
-            <p>Use <code>fold</code> to multiply all numbers in a list together.</p>
+            <p>Use <code>fold</code> to multiply all numbers in a list together. Remember to use the right initial value!</p>
             
             <h3>Example</h3>
             <pre><code>> fold (*) 1 [1,2,3,4,5]
@@ -533,119 +561,134 @@ switchBinary (x:xs)
 24</code></pre>
             
             <div class="hint">
-                <strong>💡 Remember:</strong> fold combines elements with an operation. Initial value for multiplication is 1!
+                <strong>💡 Remember:</strong> <code>fold</code> combines elements using an operator.<br>
+                Syntax: <code>fold operator initialValue list</code><br>
+                For multiplication, initial value should be 1 (not 0!).
             </div>
         `
     },
     20: {
-        title: "20. Map and Filter ⭐",
+        title: "20. Caesar Cipher ⭐⭐",
         content: `
             <h3>Task</h3>
-            <p>Find the sum of squares of all even numbers in a list. Combine <code>filter</code>, <code>map</code>, and a sum function!</p>
+            <p>Create a simple Caesar cipher! Write a function <code>shift</code> that adds 1 to each number in a list. Then use <code>map</code> to apply it.</p>
             
             <h3>Example</h3>
-            <pre><code>square x = x * x
-mySum xs = fold (+) 0 xs
-
--- Combine them!
-> mySum (map square (filter even [1,2,3,4,5]))
-20</code></pre>
+            <pre><code>> map shift [1,2,3,4,5]
+[2,3,4,5,6]
+> map shift [10,20,30]
+[11,21,31]</code></pre>
             
             <div class="hint">
-                <strong>💡 Challenge:</strong> Think about the order - filter first, then map, then sum
+                <strong>💡 Challenge:</strong> Define <code>shift</code> to add 1 to its input.<br>
+                Then use <code>map shift listName</code> to shift all values.
             </div>
         `
     },
     21: {
-        title: "21. Project Euler Style ⭐⭐",
+        title: "21. Lambda Extension ⭐⭐",
         content: `
-            <h3>Task</h3>
-            <p>Find the sum of all multiples of 3 or 5 below 100. Write a predicate function, then use filter and fold!</p>
+            <h3>Task (Extension)</h3>
+            <p>Try using lambda functions (anonymous functions) with map! Use <code>\\x -> expression</code> syntax.</p>
             
             <h3>Example</h3>
-            <pre><code>multiple3or5 n = mod n 3 == 0 || mod n 5 == 0
-
-> fold (+) 0 (filter multiple3or5 [1..99])
-2318</code></pre>
+            <pre><code>> map (\\x -> x * 2) [1,2,3,4,5]
+[2,4,6,8,10]
+> map (\\x -> x * x) [1,2,3,4]
+[1,4,9,16]
+> filter (\\x -> x > 5) [1,3,7,2,9,4]
+[7,9]</code></pre>
             
             <div class="hint">
-                <strong>💡 Challenge:</strong> This is a classic Project Euler problem!
+                <strong>💡 Extension:</strong> Lambdas let you create functions inline!<br>
+                Syntax: <code>\\parameter -> expression</code><br>
+                Try creating your own lambda functions!
             </div>
         `
     },
 
     // Module 5: Function Composition
     22: {
-        title: "22. Basic Composition",
+        title: "22. Compose Basics",
         content: `
             <h3>Task</h3>
-            <p>Write two functions: <code>double x = x * 2</code> and <code>square x = x * x</code>. Then compose them with the <code>.</code> operator.</p>
+            <p>Write two functions: <code>double</code> (multiply by 2) and <code>addTen</code> (add 10). Then try composing them!</p>
             
             <h3>Example</h3>
-            <pre><code>> (square . double) 3
-36
-> (double . square) 3
-18</code></pre>
+            <pre><code>> (addTen . double) 5
+20
+> (double . addTen) 5
+30</code></pre>
             
             <div class="hint">
-                <strong>💡 Remember:</strong> <code>f . g</code> means "do g first, then f"
+                <strong>💡 Remember:</strong> The <code>.</code> operator composes functions.<br>
+                <code>(f . g) x</code> means "apply g first, then apply f to the result".
             </div>
         `
     },
     23: {
-        title: "23. Understanding Order",
+        title: "23. Pipeline Transformation ⬅0",
         content: `
             <h3>Task</h3>
-            <p>Explain why <code>(square . double) 3</code> gives 36 but <code>(double . square) 3</code> gives 18.</p>
+            <p>Create a data processing pipeline! Write three functions and combine them to transform data in multiple steps.</p>
             
-            <h3>Analysis</h3>
-            <pre><code>(square . double) 3
-= square (double 3)
-= square 6
-= 36
-
-(double . square) 3
-= double (square 3)
-= double 9
-= 18</code></pre>
+            <h3>Example Functions</h3>
+            <ul>
+                <li><code>double</code> - multiply by 2</li>
+                <li><code>addFive</code> - add 5</li>
+                <li><code>square</code> - multiply by itself</li>
+            </ul>
+            
+            <h3>Example</h3>
+            <pre><code>> (square . addFive . double) 3
+121</code></pre>
             
             <div class="hint">
-                <strong>💡 Key:</strong> Order matters! Right function is applied first
+                <strong>💡 Challenge:</strong> Chain three functions together!<br>
+                Remember: rightmost function is applied first.
             </div>
         `
     },
     24: {
-        title: "24. Sum of Evens ⭐",
+        title: "24. Data Analysis ⭐⭐",
         content: `
             <h3>Task</h3>
-            <p>Find the sum of all even numbers between 100 and 300 using function composition.</p>
+            <p>Find the sum of all even numbers between 1 and 100. Combine <code>filter</code> and <code>fold</code>!</p>
             
             <h3>Example</h3>
-            <pre><code>mySum xs = fold (+) 0 xs
-
-> mySum (filter even [100..300])
-20100</code></pre>
+            <pre><code>> fold (+) 0 (filter isEven [1..100])
+2550</code></pre>
+            
             
             <div class="hint">
-                <strong>💡 Challenge:</strong> Can you do it without parentheses using <code>$</code>?
+                <strong>💡 Challenge:</strong> You'll need:<br>
+                1. An <code>isEven</code> function (use <code>mod</code>)<br>
+                2. <code>filter</code> to keep only evens<br>
+                3. <code>fold</code> to sum them up
             </div>
         `
     },
     25: {
-        title: "25. Lambda Extension ⭐⭐",
+        title: "25. Advanced Challenge ⭐⭐",
         content: `
-            <h3>Task (Extension)</h3>
-            <p>Try using lambda functions (anonymous functions) with map and filter!</p>
+            <h3>Task (Advanced)</h3>
+            <p>Combine everything you've learned! Find the sum of squares of all numbers divisible by 3 in the range [1..50].</p>
             
-            <h3>Example</h3>
-            <pre><code>> map (\\x -> x * 2) [1,2,3,4,5]
-[2,4,6,8,10]
-
-> filter (\\x -> mod x 3 == 0) [1..20]
-[3,6,9,12,15,18]</code></pre>
+            <h3>Hint Structure</h3>
+            <ul>
+                <li>Filter for divisibility by 3</li>
+                <li>Map to square each number</li>
+                <li>Fold to sum the results</li>
+            </ul>
+            
+            <h3>Expected Result</h3>
+            <pre><code>> -- Your solution here
+4275</code></pre>
             
             <div class="hint">
-                <strong>💡 Extension:</strong> Lambdas are written as <code>\\parameter -> expression</code>
+                <strong>💡 Extension:</strong> Try using lambda functions!<br>
+                You can write <code>\\x -> mod x 3 == 0</code> instead of defining a separate function.<br>
+                Combine <code>filter</code>, <code>map</code>, and <code>fold</code>.
             </div>
         `
     }
