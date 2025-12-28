@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Operators</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <pre id="output"></pre>
+
+    <script src="haskish.js"></script>
+    <script>
+        const interpreter = new HaskishInterpreter();
+        const output = document.getElementById('output');
+        
+        // Test splitByOperator directly
+        const testExpr = "1==1";
+        output.textContent += `Testing: ${testExpr}\n`;
+        
+        const parts = interpreter.splitByOperator(testExpr, "==");
+        output.textContent += `Split by ==: ${JSON.stringify(parts)}\n`;
+        
+        try {
+            const result = interpreter.evaluate(testExpr);
+            output.textContent += `Result: ${result}\n`;
+        } catch (error) {
+            output.textContent += `Error: ${error.message}\n`;
+        }
+        
+        // Test with strings
+        const testExpr2 = '"hello"=="hello"';
+        output.textContent += `\nTesting: ${testExpr2}\n`;
+        const parts2 = interpreter.splitByOperator(testExpr2, "==");
+        output.textContent += `Split by ==: ${JSON.stringify(parts2)}\n`;
+        
+        try {
+            const result2 = interpreter.evaluate(testExpr2);
+            output.textContent += `Result: ${result2}\n`;
+        } catch (error) {
+            output.textContent += `Error: ${error.message}\n`;
+        }
+    </script>
+</body>
+</html>

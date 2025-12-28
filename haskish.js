@@ -693,19 +693,14 @@ class HaskishInterpreter {
             return parseFloat(expr);
         }
 
-        // String literal (basic support)
-        if (expr.startsWith('"') && expr.endsWith('"')) {
-            return expr.slice(1, -1);
-        }
-
         // Operator sections like (<10) or (+)
-        const opSectionMatch = expr.match(/^\(([+\-*\/<>=]+)\s*(\d+)?\)$/) || 
-                               expr.match(/^\((\d+)\s*([+\-*\/<>=]+)\)$/);
+        const opSectionMatch = expr.match(/^\(([+\-*\/<>=&|]+)\s*(\d+)?\)$/) || 
+                               expr.match(/^\((\d+)\s*([+\-*\/<>=&|]+)\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
         }
 
-        // Binary operations
+        // Binary operations (check BEFORE string literals to handle "a"=="b")
         const binaryOps = [
             { op: '.', fn: (g, f) => {
                 // Function composition operator
@@ -719,6 +714,7 @@ class HaskishInterpreter {
             }},
             { op: '&&', fn: (a, b) => a && b },
             { op: '||', fn: (a, b) => a || b },
+            { op: '/=', fn: (a, b) => a != b },
             { op: '==', fn: (a, b) => a == b },
             { op: '<=', fn: (a, b) => a <= b },
             { op: '>=', fn: (a, b) => a >= b },
@@ -743,6 +739,11 @@ class HaskishInterpreter {
                 const right = this.evaluate(parts[1]);
                 return fn(left, right);
             }
+        }
+
+        // String literal (basic support) - check AFTER binary operations
+        if (expr.startsWith('"') && expr.endsWith('"')) {
+            return expr.slice(1, -1);
         }
 
         // Function application
@@ -838,16 +839,37 @@ class HaskishInterpreter {
     // Helper to split expression by operator
     splitByOperator(expr, op) {
         let depth = 0;
+        let inString = false;
         let lastSplit = 0;
         const parts = [];
 
         for (let i = 0; i < expr.length; i++) {
+            // Track string literals
+            if (expr[i] === '"' && (i === 0 || expr[i-1] !== '\\')) {
+                inString = !inString;
+            }
+            
+            // Don't process operators inside strings
+            if (inString) continue;
+            
             if (expr[i] === '(' || expr[i] === '[') depth++;
             if (expr[i] === ')' || expr[i] === ']') depth--;
 
-            if (depth === 0 && expr.substr(i, op.length) === op) {
-                parts.push(expr.slice(lastSplit, i).trim());
-                lastSplit = i + op.length;
+            if (depth === 0) {
+                // Check if we have the operator at this position
+                let matches = true;
+                for (let j = 0; j < op.length; j++) {
+                    if (i + j >= expr.length || expr[i + j] !== op[j]) {
+                        matches = false;
+                        break;
+                    }
+                }
+                
+                if (matches) {
+                    parts.push(expr.slice(lastSplit, i).trim());
+                    lastSplit = i + op.length;
+                    i += op.length - 1; // Skip past the operator (loop will increment)
+                }
             }
         }
 
@@ -1010,7 +1032,8 @@ class HaskishInterpreter {
             expr = expr.trim().replace(/^let\s+/, '');
             
             // Check if it's a function definition (has parameters before =)
-            const funcMatch = expr.match(/^(\w+)\s+(.+?)\s*=\s*(.+)$/);
+            // Function name must start with a letter (not a number)
+            const funcMatch = expr.match(/^([a-zA-Z_]\w*)\s+(.+?)\s*=\s*(.+)$/);
             if (funcMatch) {
                 const [, funcName, params, body] = funcMatch;
                 
@@ -1027,7 +1050,8 @@ class HaskishInterpreter {
             }
             
             // Check if it's a variable assignment (no parameters before =)
-            const assignMatch = expr.match(/^(\w+)\s*=\s*(.+)$/);
+            // Variable name must start with a letter and only have a single =
+            const assignMatch = expr.match(/^([a-zA-Z_]\w*)\s*=\s*([^=].*)$/);
             if (assignMatch) {
                 const [, varName, value] = assignMatch;
                 
