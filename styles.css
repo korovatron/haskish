@@ -254,6 +254,10 @@ header h1 {
     box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.6);
 }
 
+[data-theme="dark"] .exercise-btn.active {
+    box-shadow: 0 0 0 4px rgba(139, 155, 255, 0.8);
+}
+
 .module-separator {
     width: 1px;
     height: 30px;
