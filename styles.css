@@ -361,8 +361,8 @@ header h1 {
 
 .clear-editor-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 18px;
+    right: 10px;
     z-index: 10;
 }
 
