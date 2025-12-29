@@ -1077,6 +1077,10 @@ footer a:hover {
     color: var(--text-color);
 }
 
+.completion-text-short {
+    display: none;
+}
+
 .completion-toggle input[type="checkbox"] {
     cursor: pointer;
     width: 18px;
@@ -1367,6 +1371,14 @@ footer a:hover {
         width: 28px;
         height: 28px;
         font-size: 0.75em;
+    }
+    
+    .completion-text-full {
+        display: none;
+    }
+    
+    .completion-text-short {
+        display: inline;
     }
     
     .module-separator {
