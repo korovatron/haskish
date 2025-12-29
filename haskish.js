@@ -1135,6 +1135,14 @@ class HaskishInterpreter {
             // Check if funcName refers to a variable holding a special function
             if (this.variables[funcName]) {
                 const varValue = this.variables[funcName];
+                if (varValue instanceof Lambda) {
+                    // Lambda functions take one argument at a time
+                    let result = varValue;
+                    for (const arg of args) {
+                        result = result.apply(arg);
+                    }
+                    return result;
+                }
                 if (varValue instanceof PartialFunction) {
                     return varValue.apply(args);
                 }
