@@ -216,6 +216,7 @@ header h1 {
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+    justify-content: center;
 }
 
 .exercise-btn {
