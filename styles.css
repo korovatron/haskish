@@ -17,6 +17,12 @@ html {
     --success-color: #27ae60;
     --error-color: #e74c3c;
     --nested-highlight: #9333ea;
+    --module1-color: #3b82f6;
+    --module2-color: #8b5cf6;
+    --module3-color: #ec4899;
+    --module4-color: #f59e0b;
+    --module5-color: #10b981;
+    --module6-color: #06b6d4;
     --bg-color: #f5f5f5;
     --panel-bg: #f8f9fa;
     --border-color: #e0e0e0;
@@ -36,6 +42,12 @@ html {
     --success-color: #27ae60;
     --error-color: #e74c3c;
     --nested-highlight: #d946ef;
+    --module1-color: #60a5fa;
+    --module2-color: #a78bfa;
+    --module3-color: #f472b6;
+    --module4-color: #fbbf24;
+    --module5-color: #34d399;
+    --module6-color: #22d3ee;
     --bg-color: #0f0f0f;
     --panel-bg: #1e1e1e;
     --border-color: #444;
@@ -230,6 +242,65 @@ header h1 {
     height: 30px;
     background-color: var(--border-color);
     margin: 0 4px;
+}
+
+/* Module-specific border colors */
+/* Module 1: Exercises 1-5 */
+.exercise-btn[data-exercise="1"],
+.exercise-btn[data-exercise="2"],
+.exercise-btn[data-exercise="3"],
+.exercise-btn[data-exercise="4"],
+.exercise-btn[data-exercise="5"] {
+    border-color: var(--module1-color);
+}
+
+/* Module 2: Exercises 6-9 */
+.exercise-btn[data-exercise="6"],
+.exercise-btn[data-exercise="7"],
+.exercise-btn[data-exercise="8"],
+.exercise-btn[data-exercise="9"] {
+    border-color: var(--module2-color);
+}
+
+/* Module 3: Exercises 10-20 */
+.exercise-btn[data-exercise="10"],
+.exercise-btn[data-exercise="11"],
+.exercise-btn[data-exercise="12"],
+.exercise-btn[data-exercise="13"],
+.exercise-btn[data-exercise="14"],
+.exercise-btn[data-exercise="15"],
+.exercise-btn[data-exercise="16"],
+.exercise-btn[data-exercise="17"],
+.exercise-btn[data-exercise="18"],
+.exercise-btn[data-exercise="19"],
+.exercise-btn[data-exercise="20"] {
+    border-color: var(--module3-color);
+}
+
+/* Module 4: Exercises 21-26 */
+.exercise-btn[data-exercise="21"],
+.exercise-btn[data-exercise="22"],
+.exercise-btn[data-exercise="23"],
+.exercise-btn[data-exercise="24"],
+.exercise-btn[data-exercise="25"],
+.exercise-btn[data-exercise="26"] {
+    border-color: var(--module4-color);
+}
+
+/* Module 5: Exercises 27-31 */
+.exercise-btn[data-exercise="27"],
+.exercise-btn[data-exercise="28"],
+.exercise-btn[data-exercise="29"],
+.exercise-btn[data-exercise="30"],
+.exercise-btn[data-exercise="31"] {
+    border-color: var(--module5-color);
+}
+
+/* Module 6: Exercises 32-34 */
+.exercise-btn[data-exercise="32"],
+.exercise-btn[data-exercise="33"],
+.exercise-btn[data-exercise="34"] {
+    border-color: var(--module6-color);
 }
 
 /* Code and REPL side by side */
