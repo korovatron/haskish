@@ -202,9 +202,15 @@ header h1 {
 }
 
 .exercise-header-row #resetProgress {
-    font-size: 1.2em;
     min-width: 32px;
     padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exercise-header-row #resetProgress svg {
+    display: block;
 }
 
 .exercise-buttons-wrapper {
