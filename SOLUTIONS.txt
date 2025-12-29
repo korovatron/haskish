@@ -1,0 +1,217 @@
+HASKISH - EXERCISE SOLUTIONS
+============================
+
+Module 1: Getting Started
+--------------------------
+
+Exercise 1: Using the REPL
+-- Just try the expressions in the REPL, no function needed
+
+Exercise 2: Simple Function
+tripleMe x = 3 * x
+
+Exercise 3: Multiple Parameters
+doubleAdd x y = 2*x + 2*y
+
+Exercise 4: Circle Area
+pi = 3.14159
+circleArea r = pi * r * r
+
+Exercise 5: Temperature Conversion
+celsiusToFahrenheit c = ((c * 9) / 5) + 32
+fahrenheitToCelsius f = ((f - 32) * 5) / 9
+
+
+Module 2: Introduction to Lists
+--------------------------------
+
+Exercise 6: Lists & Ranges
+-- Just try the expressions in the REPL, no function needed
+
+Exercise 7: Head and Tail
+-- Just try the expressions in the REPL, no function needed
+
+Exercise 8: Cons Operator (:)
+prepend x xs = x : xs
+
+Exercise 9: Concatenate Operator (++)
+join xs ys = xs ++ ys
+
+
+Module 3: Advanced Lists
+------------------------
+
+Exercise 10: Factorial
+factorial 0 = 1
+factorial n = n * factorial (n-1)
+
+Exercise 11: Powers
+power x 0 = 1
+power x n = x * power x (n-1)
+
+Exercise 12: List Sum
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+Exercise 13: Safe Head
+safeHead [] = "empty"
+safeHead (x:xs) = x
+
+Exercise 14: Double List
+doubleList [] = []
+doubleList (x:xs) = (2*x) : doubleList xs
+
+Exercise 15: Positive Numbers
+onlyPositive [] = []
+onlyPositive (x:xs)
+  | x > 0 = x : onlyPositive xs
+  | otherwise = onlyPositive xs
+
+Exercise 16: Count Elements
+countElem e [] = 0
+countElem e (x:xs)
+  | e == x = 1 + countElem e xs
+  | otherwise = countElem e xs
+
+Exercise 17: Member Check
+member e [] = False
+member e (x:xs)
+  | e == x = True
+  | otherwise = member e xs
+
+Exercise 18: List Zip
+zipLists [] ys = []
+zipLists xs [] = []
+zipLists (x:xs) (y:ys) = [x,y] : zipLists xs ys
+
+Exercise 19: Grade Classifier
+grade mark
+  | mark >= 70 = "A"
+  | mark >= 60 = "B"
+  | mark >= 50 = "C"
+  | mark >= 40 = "D"
+  | otherwise = "F"
+
+Exercise 20: Merge Sort
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys)
+  | x <= y = x : merge xs (y:ys)
+  | otherwise = y : merge (x:xs) ys
+
+splitFirst [] = []
+splitFirst [x] = [x]
+splitFirst (x:y:xs) = x : splitFirst xs
+
+splitSecond [] = []
+splitSecond [x] = []
+splitSecond (x:y:xs) = y : splitSecond xs
+
+mergeSort [] = []
+mergeSort [x] = [x]
+mergeSort xs = merge (mergeSort (splitFirst xs)) (mergeSort (splitSecond xs))
+
+
+Module 4: Higher-Order Functions
+---------------------------------
+
+Exercise 21: Map Basics
+square x = x * x
+-- Then use: map square [1,2,3,4,5]
+
+Exercise 22: Filter Basics
+isEven x = (x mod 2) == 0
+-- Then use: filter isEven [1,2,3,4,5,6,7,8,9,10]
+
+Exercise 23: Fold Basics
+-- Use: fold (*) 1 [1,2,3,4,5]
+
+Exercise 24: Shift Cipher
+shift x = x + 1
+-- Then use: map shift [1,2,3,4,5]
+
+Exercise 25: Data Analysis
+isEven x = (x mod 2) == 0
+-- Solution: fold (+) 0 (filter isEven [1..100])
+
+Exercise 26: Advanced Challenge
+isDivBy3 x = (x mod 3) == 0
+square x = x * x
+-- Solution: fold (+) 0 (map square (filter isDivBy3 [1..50]))
+
+
+Module 5: Function Composition
+-------------------------------
+
+Exercise 27: Understanding Composition Order
+double x = x * 2
+addTen x = x + 10
+-- Try: (double . addTen) 5  and  (addTen . double) 5
+
+Exercise 28: Three-Function Pipeline
+double x = x * 2
+addFive x = x + 5
+square x = x * x
+-- Solution: (square . addFive . double) 3
+
+Exercise 29: Composition vs Direct Calls
+double x = x * 2
+square x = x * x
+-- Both give same result:
+-- (square . double) 4
+-- square (double 4)
+
+Exercise 30: Compose with Lists
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+doubleList [] = []
+doubleList (x:xs) = (2*x) : doubleList xs
+
+-- Solution: (sumList . doubleList) [1,2,3,4,5]
+
+Exercise 31: Complex Pipeline
+greaterThan5 x = x > 5
+double x = x * 2
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+pipeline xs = sumList (map double (filter greaterThan5 xs))
+-- Or using composition:
+-- pipeline = sumList . map double . filter greaterThan5
+
+
+Module 6: Lambda Functions
+---------------------------
+
+Exercise 32: Lambda with Map
+-- Solution: map (\x -> x * 3) [1,2,3,4,5]
+
+Exercise 33: Lambda with Filter
+-- Solution: filter (\x -> x > 10) [5,12,8,20,3,15]
+
+Exercise 34: Lambda Challenge
+-- Solution: filter (\x -> (x mod 2) == 0) (map (\x -> x + 5) [1,2,3,4,5,6,7,8,9,10])
+
+
+ADDITIONAL NOTES
+================
+
+Common Helper Functions Used Across Exercises:
+----------------------------------------------
+
+square x = x * x
+double x = x * 2
+isEven x = (x mod 2) == 0
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+Tips for Success:
+-----------------
+1. Cons patterns MUST use parentheses: (x:xs) not x:xs (unlike standard Haskell)
+2. Guards require the | symbol before conditions
+3. otherwise is used as the final guard (catch-all)
+4. Remember: (f . g) x means "apply g first, then f"
+5. Lambdas use \param -> expression syntax
+6. The ++ operator now works with chained operations
+7. Pattern matching like (x:y:xs) now works for nested cons patterns
