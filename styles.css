@@ -1035,14 +1035,30 @@ footer a:hover {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    cursor: pointer;
-    user-select: none;
 }
 
 .exercise-controls {
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.hints-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.panel-toggle-hint {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+    display: none;
+}
+
+.exercise-content-panel.collapsed .panel-toggle-hint,
+.hints-panel.collapsed .panel-toggle-hint {
+    display: inline;
 }
 
 .completion-toggle {
@@ -1202,15 +1218,6 @@ footer a:hover {
 
 .hints-panel.collapsed .hints-content {
     display: none;
-}
-
-.hints-header {
-    cursor: pointer;
-    user-select: none;
-}
-
-.hints-header:hover h2 {
-    color: var(--secondary-color);
 }
 
 .hints-panel .panel-header {

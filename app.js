@@ -1096,18 +1096,10 @@ function initExercises() {
     // Toggle exercise panel button
     const toggleExerciseBtn = document.getElementById('toggleExercisePanel');
     const exercisePanel = document.getElementById('exercisePanel');
-    const exercisePanelHeader = document.getElementById('exercisePanelHeader');
     
     if (toggleExerciseBtn && exercisePanel) {
         // Toggle button should toggle the panel
         toggleExerciseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            exercisePanel.classList.toggle('collapsed');
-            toggleExerciseBtn.textContent = exercisePanel.classList.contains('collapsed') ? '▼' : '▲';
-        });
-        
-        // Header click (excluding button/checkbox) should also toggle
-        exercisePanelHeader.addEventListener('click', () => {
             exercisePanel.classList.toggle('collapsed');
             toggleExerciseBtn.textContent = exercisePanel.classList.contains('collapsed') ? '▼' : '▲';
         });
@@ -1136,12 +1128,11 @@ function initExercises() {
     }
     
     // Hints toggle functionality
-    const hintsHeader = document.getElementById('hintsHeader');
     const toggleHintsBtn = document.getElementById('toggleHints');
     const hintsPanel = document.querySelector('.hints-panel');
     
-    if (hintsHeader && toggleHintsBtn) {
-        hintsHeader.addEventListener('click', () => {
+    if (toggleHintsBtn && hintsPanel) {
+        toggleHintsBtn.addEventListener('click', () => {
             hintsPanel.classList.toggle('collapsed');
             toggleHintsBtn.textContent = hintsPanel.classList.contains('collapsed') ? '▼' : '▲';
         });
@@ -1157,14 +1148,6 @@ function initExercises() {
                 toggleExerciseCompletion(btn);
             }
         });
-        
-        // Prevent checkbox clicks from toggling the panel
-        const completionToggle = document.querySelector('.completion-toggle');
-        if (completionToggle) {
-            completionToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-        }
     }
     
     // Mobile exercise navigation

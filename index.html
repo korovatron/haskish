@@ -132,6 +132,7 @@
                             <input type="checkbox" id="exerciseComplete" />
                             <span>Mark as Complete</span>
                         </label>
+                        <span class="panel-toggle-hint">Click to open</span>
                         <button id="toggleExercisePanel" class="btn btn-primary">▲</button>
                     </div>
                 </div>
@@ -173,7 +174,10 @@
             <div class="panel hints-panel collapsed">
                 <div class="panel-header hints-header" id="hintsHeader">
                     <h2>Module Hints</h2>
-                    <button id="toggleHints" class="btn btn-primary">▼</button>
+                    <div class="hints-controls">
+                        <span class="panel-toggle-hint">Click to open</span>
+                        <button id="toggleHints" class="btn btn-primary">▼</button>
+                    </div>
                 </div>
                 <div id="hintsContent" class="hints-content">
                     <!-- Hints will be dynamically loaded here -->
