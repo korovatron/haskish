@@ -439,7 +439,7 @@ class HaskishInterpreter {
                 continue;
             }
 
-            // Parentheses (including lambdas)
+            // Parentheses (including lambdas and tuples)
             if (expr[i] === '(') {
                 let depth = 1;
                 let j = i + 1;
@@ -449,6 +449,24 @@ class HaskishInterpreter {
                     j++;
                 }
                 const parenContent = expr.slice(i + 1, j - 1).trim();
+                
+                // Check for tuple (contains commas at depth 0)
+                let hasTupleComma = false;
+                let tupleDepth = 0;
+                for (let k = 0; k < parenContent.length; k++) {
+                    if (parenContent[k] === '(' || parenContent[k] === '[') tupleDepth++;
+                    if (parenContent[k] === ')' || parenContent[k] === ']') tupleDepth--;
+                    if (tupleDepth === 0 && parenContent[k] === ',') {
+                        hasTupleComma = true;
+                        break;
+                    }
+                }
+                
+                if (hasTupleComma) {
+                    tokens.push({ type: 'tuple', value: parenContent });
+                    i = j;
+                    continue;
+                }
                 
                 // Check for unary negation: (-x) where x is just an identifier
                 // This transforms (-x) to (0 - x) to handle unary minus
@@ -645,9 +663,80 @@ class HaskishInterpreter {
         return elements;
     }
 
+    // Parse a tuple literal
+    parseTuple(tupleStr) {
+        tupleStr = tupleStr.trim();
+        
+        const elements = [];
+        let current = '';
+        let depth = 0;
+
+        for (let char of tupleStr) {
+            if (char === '(' || char === '[') depth++;
+            if (char === ')' || char === ']') depth--;
+            
+            if (char === ',' && depth === 0) {
+                elements.push(this.evaluate(current.trim()));
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+
+        if (current.trim()) {
+            elements.push(this.evaluate(current.trim()));
+        }
+
+        // Return as a special tuple object
+        return { _isTuple: true, elements: elements };
+    }
+
     // Pattern matching helper
     matchPattern(pattern, value) {
         pattern = pattern.trim();
+
+        // Tuple pattern like (x, y) or (a, b, c)
+        if (pattern.includes(',') && pattern.startsWith('(') && pattern.endsWith(')')) {
+            if (!value || !value._isTuple) return null;
+            
+            // Extract tuple element patterns
+            const patternContent = pattern.slice(1, -1);
+            const patterns = [];
+            let current = '';
+            let depth = 0;
+            
+            for (let char of patternContent) {
+                if (char === '(' || char === '[') depth++;
+                if (char === ')' || char === ']') depth--;
+                
+                if (char === ',' && depth === 0) {
+                    patterns.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            if (current.trim()) {
+                patterns.push(current.trim());
+            }
+            
+            // Check if tuple sizes match
+            if (patterns.length !== value.elements.length) return null;
+            
+            // Match each element
+            const bindings = {};
+            for (let i = 0; i < patterns.length; i++) {
+                const elemPattern = patterns[i];
+                const elemValue = value.elements[i];
+                
+                // Recursively match nested patterns
+                const elemMatch = this.matchPattern(elemPattern, elemValue);
+                if (elemMatch === null) return null;
+                Object.assign(bindings, elemMatch);
+            }
+            
+            return bindings;
+        }
 
         // Empty list pattern
         if (pattern === '[]') {
@@ -880,8 +969,28 @@ class HaskishInterpreter {
             }},
             { op: '&&', fn: (a, b) => a && b },
             { op: '||', fn: (a, b) => a || b },
-            { op: '/=', fn: (a, b) => a != b },
-            { op: '==', fn: (a, b) => a == b },
+            { op: '/=', fn: (a, b) => {
+                // Handle tuple comparison
+                if (a && a._isTuple && b && b._isTuple) {
+                    if (a.elements.length !== b.elements.length) return true;
+                    for (let i = 0; i < a.elements.length; i++) {
+                        if (a.elements[i] != b.elements[i]) return true;
+                    }
+                    return false;
+                }
+                return a != b;
+            }},
+            { op: '==', fn: (a, b) => {
+                // Handle tuple comparison
+                if (a && a._isTuple && b && b._isTuple) {
+                    if (a.elements.length !== b.elements.length) return false;
+                    for (let i = 0; i < a.elements.length; i++) {
+                        if (a.elements[i] != b.elements[i]) return false;
+                    }
+                    return true;
+                }
+                return a == b;
+            }},
             { op: '<=', fn: (a, b) => a <= b },
             { op: '>=', fn: (a, b) => a >= b },
             { op: '<', fn: (a, b) => a < b },
@@ -924,6 +1033,11 @@ class HaskishInterpreter {
         // Function application
         const tokens = this.tokenize(expr);
         
+        // Handle single tuple
+        if (tokens.length === 1 && tokens[0].type === 'tuple') {
+            return this.parseTuple(tokens[0].value);
+        }
+        
         // Handle single parenthesized expression
         if (tokens.length === 1 && tokens[0].type === 'paren') {
             return this.evaluate(tokens[0].value);
@@ -963,6 +1077,7 @@ class HaskishInterpreter {
             const funcName = tokens[0].value;
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
+                if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
                 if (token.type === 'lambda') {
@@ -1202,6 +1317,9 @@ class HaskishInterpreter {
         }
         if (value && value._isOperatorFunction) {
             return value.toString();
+        }
+        if (value && value._isTuple) {
+            return '(' + value.elements.map(v => this.formatOutput(v)).join(',') + ')';
         }
         if (Array.isArray(value)) {
             return '[' + value.map(v => this.formatOutput(v)).join(',') + ']';
