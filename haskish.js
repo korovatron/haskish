@@ -408,7 +408,13 @@ class HaskishInterpreter {
             }
 
             // Numbers (including negative)
-            if (/\d/.test(expr[i]) || (expr[i] === '-' && i + 1 < expr.length && /\d/.test(expr[i + 1]))) {
+            // Negative number if: minus followed by digit AND (no prev token OR prev is not a number/paren)
+            // This allows: describe -6 (function arg) but not: 5 - 6 (binary minus)
+            const prevToken = tokens.length > 0 ? tokens[tokens.length - 1] : null;
+            const canBeNegative = expr[i] === '-' && i + 1 < expr.length && /\d/.test(expr[i + 1]) &&
+                (!prevToken || (prevToken.type !== 'number' && prevToken.type !== 'paren'));
+            
+            if (/\d/.test(expr[i]) || canBeNegative) {
                 let j = i;
                 if (expr[j] === '-') j++;
                 while (j < expr.length && /[\d.]/.test(expr[j])) j++;
@@ -911,6 +917,17 @@ class HaskishInterpreter {
                     const nextChar = i + 1 < expr.length ? expr[i + 1] : '';
                     // Skip if . is between digits (decimal number)
                     if (/\d/.test(prevChar) && /\d/.test(nextChar)) {
+                        matches = false;
+                    }
+                }
+                
+                // Special case: if operator is '-' and it's a negative number, don't split
+                if (matches && op === '-') {
+                    const prevChar = i > 0 ? expr[i - 1] : '';
+                    const nextChar = i + 1 < expr.length ? expr[i + 1] : '';
+                    // It's a negative number if: preceded by space/start and followed by digit
+                    // But NOT if preceded by a digit or closing paren (that's binary minus)
+                    if (/\d/.test(nextChar) && !/[\d)]/.test(prevChar)) {
                         matches = false;
                     }
                 }

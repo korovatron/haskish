@@ -78,11 +78,10 @@ myLength (x:xs) = 1 + myLength xs</code></pre>
 factorial n = n * factorial (n-1)</code></pre>
             
             <h4>Guards (Conditions)</h4>
-            <pre><code>grade mark
-  | mark >= 70 = "A"
-  | mark >= 60 = "B"
-  | mark >= 50 = "C"
-  | otherwise  = "F"</code></pre>
+            <pre><code>describe n
+  | n > 0     = "positive"
+  | n < 0     = "negative"
+  | otherwise = "zero"</code></pre>
             
             <h4>Combining Patterns and Guards</h4>
             <pre><code>positive [] = []
