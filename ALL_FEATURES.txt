@@ -194,12 +194,10 @@ oddNumbers xs = filter (\x -> mod x 2 /= 0) xs
 -- fold examples
 sumFold xs = fold (\acc x -> acc + x) 0 xs
 productFold xs = fold (\acc x -> acc * x) 1 xs
-maxFold xs = fold (\acc x -> if x > acc then x else acc) (head xs) (tail xs)
 
 -- Combining functions
 sumOfSquares xs = fold (\acc x -> acc + x) 0 (map (\x -> x * x) xs)
 evenSquares xs = map (\x -> x * x) (filter (\x -> mod x 2 == 0) xs)
-sumPositive xs = fold (\acc x -> if x > 0 then acc + x else acc) 0 xs
 
 
 -- ============================================
