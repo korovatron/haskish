@@ -941,10 +941,18 @@ class HaskishInterpreter {
             return true;
         }
 
-        // Lambda expression (\param -> body) or (\param -> body)
-        const lambdaMatch = expr.match(/^\(?\\(\w+)\s*->\s*(.+?)\)?$/);
+        // Lambda expression (\param -> body)
+        // Must be the entire expression, not part of a larger expression like composition
+        const lambdaMatch = expr.match(/^\\(\w+)\s*->\s*(.+)$/);
         if (lambdaMatch) {
             const [, param, body] = lambdaMatch;
+            return new Lambda(param, body.trim(), this);
+        }
+        
+        // Lambda with parens: (\param -> body) - only if there's nothing after the closing paren
+        const parenLambdaMatch = expr.match(/^\(\\(\w+)\s*->\s*(.+)\)$/);
+        if (parenLambdaMatch) {
+            const [, param, body] = parenLambdaMatch;
             return new Lambda(param, body.trim(), this);
         }
 
