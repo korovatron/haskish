@@ -106,11 +106,10 @@ header {
 }
 
 .logo {
-    font-size: 3em;
-    font-weight: bold;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    line-height: 1;
+    height: 60px;
+    width: auto;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 header h1 {
@@ -1355,7 +1354,7 @@ footer a:hover {
     }
     
     .logo {
-        font-size: 2em;
+        height: 40px;
     }
     
     header h1 {
