@@ -59,6 +59,41 @@
         </header>
 
         <div class="main-content">
+            <!-- Code and REPL Container (side by side) -->
+            <!-- Code and REPL Container (side by side) -->
+            <div class="code-repl-container">
+                <!-- Code Editor Panel -->
+                <div class="panel editor-panel">
+                    <div class="panel-header">
+                        <h2>Function Definitions</h2>
+                        <div class="button-group">
+                            <button id="loadExamples" class="btn btn-secondary btn-small" title="Load a comprehensive collection of examples demonstrating all Haskish features">Load Examples</button>
+                            <button id="runCode" class="btn btn-primary btn-small">Run Code</button>
+                        </div>
+                    </div>
+                    <textarea id="codeEditor" placeholder="-- Write your function definitions here"></textarea>
+                    <div class="output-container">
+                        <div id="editorOutput" class="output"></div>
+                        <button id="clearEditor" class="btn btn-secondary btn-small clear-editor-btn">Clear</button>
+                    </div>
+                </div>
+
+                <!-- REPL Panel -->
+                <div class="panel repl-panel">
+                    <div class="panel-header">
+                        <h2>Interactive REPL</h2>
+                        <button id="clearRepl" class="btn btn-secondary btn-small">Clear</button>
+                    </div>
+                    <div id="replOutput" class="output repl-history"></div>
+                    <div class="repl-input-container">
+                        <span class="repl-prompt">&gt;</span>
+                        <div id="replInputWrapper">
+                            <textarea id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Mobile Exercise Navigator -->
             <div class="mobile-exercise-nav">
                 <button id="prevExercise" class="nav-arrow" title="Previous exercise">&lt;&lt;</button>
@@ -144,41 +179,6 @@
                 </div>
                 <div id="exerciseContent" class="exercise-content">
                     Click an exercise button above to begin.
-                </div>
-            </div>
-
-            <!-- Code and REPL Container (side by side) -->
-            <!-- Code and REPL Container (side by side) -->
-            <div class="code-repl-container">
-                <!-- Code Editor Panel -->
-                <div class="panel editor-panel">
-                    <div class="panel-header">
-                        <h2>Function Definitions</h2>
-                        <div class="button-group">
-                            <button id="loadExamples" class="btn btn-secondary btn-small" title="Load a comprehensive collection of examples demonstrating all Haskish features">Load Examples</button>
-                            <button id="runCode" class="btn btn-primary btn-small">Run Code</button>
-                        </div>
-                    </div>
-                    <textarea id="codeEditor" placeholder="-- Write your function definitions here"></textarea>
-                    <div class="output-container">
-                        <div id="editorOutput" class="output"></div>
-                        <button id="clearEditor" class="btn btn-secondary btn-small clear-editor-btn">Clear</button>
-                    </div>
-                </div>
-
-                <!-- REPL Panel -->
-                <div class="panel repl-panel">
-                    <div class="panel-header">
-                        <h2>Interactive REPL</h2>
-                        <button id="clearRepl" class="btn btn-secondary btn-small">Clear</button>
-                    </div>
-                    <div id="replOutput" class="output repl-history"></div>
-                    <div class="repl-input-container">
-                        <span class="repl-prompt">&gt;</span>
-                        <div id="replInputWrapper">
-                            <textarea id="replInput" placeholder="Enter expression (e.g., map double [1,2,3])"></textarea>
-                        </div>
-                    </div>
                 </div>
             </div>
 
