@@ -426,6 +426,8 @@ header h1 {
 .CodeMirror {
     height: auto;
     min-height: 300px;
+    max-height: 600px;
+    flex: 1;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -488,7 +490,7 @@ header h1 {
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 300px;
-    max-height: 400px;
+    max-height: 600px;
     padding: 10px;
     background-color: var(--repl-bg);
     border-radius: 5px;
