@@ -259,6 +259,12 @@ header h1 {
     box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
 }
 
+.exercise-btn.completed.active {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+    box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.6);
+}
+
 .module-separator {
     width: 1px;
     height: 30px;
