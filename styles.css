@@ -355,6 +355,17 @@ header h1 {
     font-size: 1.3em;
 }
 
+.output-container {
+    position: relative;
+}
+
+.clear-editor-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    z-index: 10;
+}
+
 .btn {
     padding: 8px 16px;
     border: none;
@@ -376,6 +387,11 @@ header h1 {
     box-shadow: 0 4px 8px rgba(94, 53, 177, 0.3);
 }
 
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
 .btn-secondary {
     background-color: transparent;
     color: var(--text-color);
@@ -395,6 +411,11 @@ header h1 {
     background-color: #d35400;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(230, 126, 34, 0.3);
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85em;
 }
 
 /* CodeMirror integration */

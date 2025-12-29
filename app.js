@@ -949,19 +949,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Helper function to update editor output
+    function updateEditorOutput(html) {
+        editorOutput.innerHTML = html;
+    }
+    
     // Run code from editor
     runCodeBtn.addEventListener('click', () => {
         const code = codeEditor.getValue();
         const result = interpreter.run(code);
         
         if (result.success) {
-            editorOutput.innerHTML = `<div class="success">✓ ${result.message}</div>`;
-            editorOutput.innerHTML += '<div class="info">Now try calling your functions in the REPL below!</div>';
+            updateEditorOutput(`<div class="success">✓ ${result.message}</div><div class="info">Now try calling your functions in the REPL below!</div>`);
         } else {
-            editorOutput.innerHTML = `<div class="error">✗ Error: ${result.error}</div>`;
+            updateEditorOutput(`<div class="error">✗ Error: ${result.error}</div>`);
         }
         
         // Save state after running code
+        if (currentExerciseId) {
+            saveExerciseState();
+        }
+    });
+
+    // Load examples button
+    const loadExamplesBtn = document.getElementById('loadExamples');
+    loadExamplesBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch('ALL_FEATURES.txt');
+            if (!response.ok) {
+                throw new Error('Failed to load examples');
+            }
+            const text = await response.text();
+            codeEditor.setValue(text);
+            codeEditor.setCursor({ line: 0, ch: 0 });
+            updateEditorOutput('<div class="success">✓ Examples loaded! Click "Run Code" to load the functions.</div>');
+        } catch (error) {
+            updateEditorOutput(`<div class="error">✗ Error loading examples: ${error.message}</div>`);
+        }
+    });
+
+    // Clear editor button
+    const clearEditorBtn = document.getElementById('clearEditor');
+    clearEditorBtn.addEventListener('click', () => {
+        codeEditor.setValue('-- Write your function definitions here\n');
+        codeEditor.setCursor({ line: 1, ch: 0 });
+        updateEditorOutput('<div class="info">Editor cleared. Write your functions and click "Run Code".</div>');
+        // Save cleared state
         if (currentExerciseId) {
             saveExerciseState();
         }
@@ -980,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start with empty editor
     codeEditor.setValue('-- Write your function definitions here\n');
     codeEditor.setCursor({ line: 1, ch: 0 });
-    editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
+    updateEditorOutput('<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>');
 
     // Initialize exercises functionality
     initExercises();
