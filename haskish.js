@@ -891,10 +891,9 @@ class HaskishInterpreter {
             expr = expr.replace(/(\d)([a-zA-Z_])/g, '$1*$2');
         }
         
-        // For function objects (Lambda, operator sections, etc), store them temporarily
-        // and replace with a reference, since we can't stringify them
+        // For function objects (Lambda, operator sections, etc), store them in the variables table
+        // during evaluation, since they can't be stringified
         const tempVars = {};
-        const processedBindings = {};
         
         for (let [varName, value] of Object.entries(bindings)) {
             // Check if this is a function object that can't be stringified
@@ -902,32 +901,30 @@ class HaskishInterpreter {
                 (value && value._isOperatorFunction) ||
                 (value && value._isComposedFunction) ||
                 value instanceof PartialFunction) {
-                // Store in temporary variables with a unique name
-                const tempVarName = '__temp_' + varName + '_' + Math.random().toString(36).substr(2, 9);
-                tempVars[tempVarName] = value;
-                processedBindings[varName] = tempVarName;
-            } else {
-                processedBindings[varName] = value;
+                // Store directly in variables table under the binding name
+                tempVars[varName] = value;
             }
         }
         
-        // Temporarily add these to the variables table
+        // Temporarily add function objects to the variables table
         const originalVars = {};
-        for (let [tempName, tempValue] of Object.entries(tempVars)) {
-            originalVars[tempName] = this.variables[tempName];
-            this.variables[tempName] = tempValue;
+        for (let [varName, funcValue] of Object.entries(tempVars)) {
+            originalVars[varName] = this.variables[varName];
+            this.variables[varName] = funcValue;
         }
         
         try {
-            // Replace variables in expression
+            // Replace non-function variables in expression
             let result = expr;
-            for (let [varName, value] of Object.entries(processedBindings)) {
+            for (let [varName, value] of Object.entries(bindings)) {
+                // Skip function objects - they're already in variables table
+                if (tempVars.hasOwnProperty(varName)) {
+                    continue;
+                }
+                
                 const varRegex = new RegExp(`\\b${varName}\\b`, 'g');
                 let replacement;
-                if (typeof value === 'string' && value.startsWith('__temp_')) {
-                    // It's a reference to a temporary variable
-                    replacement = value;
-                } else if (typeof value === 'number' && value < 0) {
+                if (typeof value === 'number' && value < 0) {
                     // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
                     replacement = `(${value})`;
                 } else {
@@ -939,11 +936,11 @@ class HaskishInterpreter {
             return this.evaluate(result);
         } finally {
             // Restore original variables
-            for (let tempName of Object.keys(tempVars)) {
-                if (originalVars[tempName] === undefined) {
-                    delete this.variables[tempName];
+            for (let varName of Object.keys(tempVars)) {
+                if (originalVars[varName] === undefined) {
+                    delete this.variables[varName];
                 } else {
-                    this.variables[tempName] = originalVars[tempName];
+                    this.variables[varName] = originalVars[varName];
                 }
             }
         }
