@@ -1213,6 +1213,21 @@ footer a:hover {
 @media (max-width: 1024px) {
     .code-repl-container {
         grid-template-columns: 1fr;
+        height: auto;
+    }
+    
+    .panel {
+        height: auto;
+        min-height: 400px;
+        max-height: 70vh;
+    }
+    
+    .CodeMirror {
+        max-height: 50vh;
+    }
+    
+    .repl-history {
+        max-height: 50vh;
     }
     
     .exercise-selector-bar {
