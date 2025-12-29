@@ -714,11 +714,6 @@ class HaskishInterpreter {
         // Empty list
         if (expr === '[]') return [];
 
-        // List literal
-        if (expr.startsWith('[') && expr.endsWith(']')) {
-            return this.parseList(expr);
-        }
-
         // Number literal
         if (/^-?\d+(\.\d+)?$/.test(expr)) {
             return parseFloat(expr);
@@ -731,7 +726,7 @@ class HaskishInterpreter {
             return this.createOperatorSection(expr);
         }
 
-        // Binary operations (check BEFORE string literals to handle "a"=="b")
+        // Binary operations (check BEFORE list literals to handle [1,2]++[3,4])
         const binaryOps = [
             { op: '.', fn: (g, f) => {
                 // Function composition operator
@@ -779,6 +774,11 @@ class HaskishInterpreter {
                 const right = this.evaluate(parts[1]);
                 return fn(left, right);
             }
+        }
+
+        // List literal (check AFTER binary operations to handle [1,2]++[3,4])
+        if (expr.startsWith('[') && expr.endsWith(']')) {
+            return this.parseList(expr);
         }
 
         // String literal (basic support) - check AFTER binary operations
