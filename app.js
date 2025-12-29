@@ -1075,7 +1075,7 @@ function initExercises() {
             const toggleHintsBtn = document.getElementById('toggleHints');
             if (hintsPanel && toggleHintsBtn) {
                 hintsPanel.classList.add('collapsed');
-                toggleHintsBtn.textContent = '▶';
+                toggleHintsBtn.textContent = '▼';
             }
             
             // Update mobile navigation
@@ -1101,7 +1101,7 @@ function initExercises() {
     if (toggleExerciseBtn && exercisePanel) {
         exercisePanelHeader.addEventListener('click', () => {
             exercisePanel.classList.toggle('collapsed');
-            toggleExerciseBtn.textContent = exercisePanel.classList.contains('collapsed') ? '▶' : '▼';
+            toggleExerciseBtn.textContent = exercisePanel.classList.contains('collapsed') ? '▼' : '▲';
         });
     }
     
@@ -1135,7 +1135,7 @@ function initExercises() {
     if (hintsHeader && toggleHintsBtn) {
         hintsHeader.addEventListener('click', () => {
             hintsPanel.classList.toggle('collapsed');
-            toggleHintsBtn.textContent = hintsPanel.classList.contains('collapsed') ? '▶' : '▼';
+            toggleHintsBtn.textContent = hintsPanel.classList.contains('collapsed') ? '▼' : '▲';
         });
     }
     
@@ -1165,7 +1165,7 @@ function initExercises() {
             const toggleBtn = document.getElementById('toggleExercisePanel');
             if (panel && toggleBtn) {
                 panel.classList.add('collapsed');
-                toggleBtn.textContent = '▶';
+                toggleBtn.textContent = '▼';
             }
         }, 0);
     }

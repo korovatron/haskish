@@ -1254,9 +1254,10 @@ footer a:hover {
     .module-separator {
         display: none;
     }
-}
-    .main-content {
-        grid-template-columns: 350px 1fr;
+    
+    footer {
+        flex-direction: column;
+        text-align: center;
     }
 }
 
