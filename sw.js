@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-v47';
+const CACHE_NAME = 'haskish-v48';
 const urlsToCache = [
   './',
   './index.html',
@@ -21,6 +21,7 @@ self.addEventListener('install', event => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -36,7 +37,7 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 

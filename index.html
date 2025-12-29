@@ -211,10 +211,34 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('Service Worker registered successfully:', registration.scope);
+                        
+                        // Check for updates every 60 seconds
+                        setInterval(() => {
+                            registration.update();
+                        }, 60000);
+                        
+                        // Check for updates on page load
+                        registration.update();
+                        
+                        // Listen for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'activated') {
+                                    console.log('New version available! Reloading...');
+                                    window.location.reload();
+                                }
+                            });
+                        });
                     })
                     .catch(error => {
                         console.log('Service Worker registration failed:', error);
                     });
+                    
+                // Reload page when new service worker takes control
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
             });
         }
     </script>
