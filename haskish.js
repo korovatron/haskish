@@ -814,6 +814,11 @@ class HaskishInterpreter {
         // Function application
         const tokens = this.tokenize(expr);
         
+        // Handle single parenthesized expression
+        if (tokens.length === 1 && tokens[0].type === 'paren') {
+            return this.evaluate(tokens[0].value);
+        }
+        
         // Handle parenthesized function followed by arguments: (f . g) x
         if (tokens.length > 1 && tokens[0].type === 'paren') {
             const funcExpr = this.evaluate(tokens[0].value);

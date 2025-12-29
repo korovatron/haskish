@@ -18,8 +18,8 @@ pi = 3.14159
 circleArea r = pi * r * r
 
 Exercise 5: Temperature Conversion
-celsiusToFahrenheit c = ((c * 9) / 5) + 32
-fahrenheitToCelsius f = ((f - 32) * 5) / 9
+celsiusToFahrenheit c = c * 9 / 5 + 32
+fahrenheitToCelsius f = (f - 32) * 5 / 9
 
 
 Module 2: Introduction to Lists
