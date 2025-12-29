@@ -208,13 +208,26 @@ class HaskishInterpreter {
         let currentCases = [];
         let currentParams = null;
         let currentGuards = [];
+        let lineNumber = 0;
+        const originalLines = code.split('\n');
 
         for (let line of lines) {
+            // Find the line number in the original code
+            lineNumber = originalLines.findIndex((origLine, idx) => 
+                idx >= lineNumber && origLine.trim() === line.trim()
+            ) + 1;
+
             line = line.trim();
             if (!line) continue;
 
             // Strip optional 'let' keyword at the start
+            const originalLine = line;
             line = line.replace(/^let\s+/, '');
+
+            // Check for invalid assignment operators like -=, +=, *=, /=
+            if (/[+\-*/%]=/.test(line) && !/[=<>!\/]=/.test(line.match(/[+\-*/%]=/)?.[0])) {
+                throw new Error(`Invalid operator on line ${lineNumber}: "${originalLine}". Did you mean '=' instead of '${line.match(/[+\-*/%]=/)?.[0]}'?`);
+            }
 
             // Check if this is a guard line (starts with |)
             // Need to find the = that separates condition from body, not == in comparisons
@@ -238,6 +251,8 @@ class HaskishInterpreter {
                     const body = guardLine.slice(eqIndex + 1).trim();
                     currentGuards.push({ condition, body });
                     continue;
+                } else {
+                    throw new Error(`Invalid guard syntax on line ${lineNumber}: "${originalLine}"`);
                 }
             }
 
@@ -255,6 +270,13 @@ class HaskishInterpreter {
                 // It's a function definition
                 const [, funcName, params, body] = funcMatch;
                 
+                // Validate parameters - should only contain valid pattern syntax
+                // Allow: words, numbers, spaces, parentheses, brackets, colons, commas, underscores
+                // Disallow: operators like +, -, *, /, etc. in parameters
+                if (!/^[\w\s()\[\]:,_]+$/.test(params)) {
+                    throw new Error(`Invalid parameters on line ${lineNumber}: "${originalLine}". Parameters cannot contain operators.`);
+                }
+                
                 if (currentFunction && currentFunction !== funcName) {
                     this.functions[currentFunction] = currentCases;
                     currentCases = [];
@@ -264,59 +286,116 @@ class HaskishInterpreter {
                 currentParams = params.trim();
                 currentCases.push({ params: currentParams, body: body.trim() });
                 currentParams = null; // Reset since this is a complete definition
-            } else {
-                // Check for function header without = (for guard syntax)
-                const headerMatch = line.match(/^(\w+)\s+(.+)$/);
-                if (headerMatch && !line.includes('=')) {
-                    // Save previous guards if any
-                    if (currentGuards.length > 0) {
-                        currentCases.push({ params: currentParams, guards: currentGuards });
-                        currentGuards = [];
-                        currentParams = null;
-                    }
-
-                    const [, funcName, params] = headerMatch;
-                    
-                    if (currentFunction && currentFunction !== funcName) {
-                        this.functions[currentFunction] = currentCases;
-                        currentCases = [];
-                    }
-                    
-                    currentFunction = funcName;
-                    currentParams = params.trim();
-                    // Don't add to cases yet - wait for guards
-                    continue;
-                }
-
-                // Try to match variable binding (no parameters before =)
-                const varMatch = line.match(/^(\w+)\s*=\s*(.+)$/);
-                if (varMatch) {
-                    // Save pending guards first
-                    if (currentGuards.length > 0) {
-                        currentCases.push({ params: currentParams, guards: currentGuards });
-                        currentGuards = [];
-                        currentParams = null;
-                    }
-
-                    // It's a variable binding
-                    if (currentFunction) {
-                        this.functions[currentFunction] = currentCases;
-                        currentFunction = null;
-                        currentCases = [];
-                    }
-                    const [, name, value] = varMatch;
-                    this.variables[name] = this.evaluate(value.trim());
-                }
+                continue;
             }
+
+            // Check for function header without = (for guard syntax)
+            const headerMatch = line.match(/^(\w+)\s+(.+)$/);
+            if (headerMatch && !line.includes('=')) {
+                // Save previous guards if any
+                if (currentGuards.length > 0) {
+                    currentCases.push({ params: currentParams, guards: currentGuards });
+                    currentGuards = [];
+                    currentParams = null;
+                }
+
+                const [, funcName, params] = headerMatch;
+                
+                // Validate parameters - should only contain valid pattern syntax
+                if (!/^[\w\s()\[\]:,_]+$/.test(params)) {
+                    throw new Error(`Invalid parameters on line ${lineNumber}: "${originalLine}". Parameters cannot contain operators.`);
+                }
+                
+                if (currentFunction && currentFunction !== funcName) {
+                    this.functions[currentFunction] = currentCases;
+                    currentCases = [];
+                }
+                
+                currentFunction = funcName;
+                currentParams = params.trim();
+                // Don't add to cases yet - wait for guards
+                continue;
+            }
+
+            // Try to match variable binding (no parameters before =)
+            const varMatch = line.match(/^(\w+)\s*=\s*(.+)$/);
+            if (varMatch) {
+                // Save pending guards first
+                if (currentGuards.length > 0) {
+                    currentCases.push({ params: currentParams, guards: currentGuards });
+                    currentGuards = [];
+                    currentParams = null;
+                }
+
+                // It's a variable binding
+                if (currentFunction) {
+                    this.functions[currentFunction] = currentCases;
+                    currentFunction = null;
+                    currentCases = [];
+                }
+                const [, name, value] = varMatch;
+                this.variables[name] = this.evaluate(value.trim());
+                continue;
+            }
+
+            // If we reach here, the line doesn't match any valid pattern
+            throw new Error(`Invalid syntax on line ${lineNumber}: "${originalLine}"`);
         }
 
         // Save any pending guards
         if (currentGuards.length > 0) {
             currentCases.push({ params: currentParams, guards: currentGuards });
+            currentParams = null; // Reset after saving guards
+        }
+
+        // Check for incomplete function definition (header without guards or body)
+        if (currentFunction && currentParams !== null) {
+            throw new Error(`Incomplete function definition for '${currentFunction}': expected guards (|) or assignment (=) after parameters.`);
         }
 
         if (currentFunction) {
             this.functions[currentFunction] = currentCases;
+        }
+
+        // Validate all function bodies and variable expressions for syntax errors
+        this.validateDefinitions();
+    }
+
+    // Validate function bodies and variable expressions
+    validateDefinitions() {
+        // Validate variable expressions
+        for (const [varName, value] of Object.entries(this.variables)) {
+            // Variables are already evaluated during parsing, so if we got here they're valid
+        }
+
+        // Validate function bodies by attempting to tokenize them
+        for (const [funcName, cases] of Object.entries(this.functions)) {
+            for (let i = 0; i < cases.length; i++) {
+                const funcCase = cases[i];
+                
+                // If this case has guards, validate each guard's condition and body
+                if (funcCase.guards) {
+                    for (const guard of funcCase.guards) {
+                        try {
+                            this.tokenize(guard.condition);
+                        } catch (error) {
+                            throw new Error(`Syntax error in function '${funcName}' guard condition: ${error.message}`);
+                        }
+                        try {
+                            this.tokenize(guard.body);
+                        } catch (error) {
+                            throw new Error(`Syntax error in function '${funcName}' guard body: ${error.message}`);
+                        }
+                    }
+                } else if (funcCase.body) {
+                    // Validate the function body
+                    try {
+                        this.tokenize(funcCase.body);
+                    } catch (error) {
+                        throw new Error(`Syntax error in function '${funcName}': ${error.message}`);
+                    }
+                }
+            }
         }
     }
 
