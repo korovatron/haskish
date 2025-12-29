@@ -1,6 +1,6 @@
 -- HASKISH COMPREHENSIVE FEATURE REFERENCE
 -- Copy and paste these functions to explore all available features
--- After running, test them in the REPL below
+-- After running, test them in the REPL
 
 -- ============================================
 -- BASIC FUNCTIONS
