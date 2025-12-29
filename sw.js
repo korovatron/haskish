@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-v84';
+const CACHE_NAME = 'haskish-v85';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -143,6 +143,7 @@ self.addEventListener('message', (event) => {
         self.skipWaiting();
     }
 });
+
 
 
 
