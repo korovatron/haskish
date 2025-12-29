@@ -67,11 +67,11 @@ circleArea r = 3.14159 * r * r</code></pre>
             <p>Process lists recursively by breaking them into head and tail.</p>
             
             <h4>Pattern Matching with Lists</h4>
-            <pre><code>sumList [] = 0
-sumList (x:xs) = x + sumList xs
+            <pre><code>myLength [] = 0
+myLength (x:xs) = 1 + myLength xs
 
-myLength [] = 0
-myLength (x:xs) = 1 + myLength xs</code></pre>
+productList [] = 1
+productList (x:xs) = x * productList xs</code></pre>
             
             <h4>Pattern Matching (Values)</h4>
             <pre><code>factorial 0 = 1
@@ -568,13 +568,18 @@ mergeSort xs = merge (mergeSort (splitFirst xs)) (mergeSort (splitSecond xs))</c
         title: "23. Fold Basics",
         content: `
             <h3>Task</h3>
-            <p>Use <code>fold</code> to multiply all numbers in a list together. Remember to use the right initial value!</p>
+            <p>Explore how <code>fold</code> works by trying these expressions in the REPL. Notice how fold combines all elements using an operator and initial value.</p>
             
-            <h3>Example</h3>
+            <h3>Try These</h3>
             <pre><code>> fold (*) 1 [1,2,3,4,5]
 120
+> fold (+) 0 [1,2,3,4,5]
+15
 > fold (*) 1 [2,3,4]
 24</code></pre>
+            
+            <h3>Understanding Fold</h3>
+            <p><code>fold (op) initial list</code> applies the operator to combine all elements, starting with the initial value.</p>
         `
     },
     24: {
@@ -619,7 +624,7 @@ mergeSort xs = merge (mergeSort (splitFirst xs)) (mergeSort (splitSecond xs))</c
             
             <h3>Expected Result</h3>
             <pre><code>> -- Your solution here
-4275</code></pre>
+13464</code></pre>
         `
     },
 
@@ -746,7 +751,7 @@ mergeSort xs = merge (mergeSort (splitFirst xs)) (mergeSort (splitSecond xs))</c
             <p>Lambda syntax: <code>\\x -> expression</code></p>
             
             <h3>Expected Result</h3>
-            <pre><code>> map (\\x -> x * 3) [1,2,3,4,5]
+            <pre><code>> -- Your lambda expression here
 [3,6,9,12,15]</code></pre>
             
             <h3>Why Use Lambdas?</h3>
@@ -1055,12 +1060,12 @@ function initExercises() {
             // Get module number from exercise ID
             const exId = parseInt(exerciseId);
             let moduleNum = 1;
-            if (exId <= 3) moduleNum = 1;
-            else if (exId <= 7) moduleNum = 2;
-            else if (exId <= 18) moduleNum = 3;
-            else if (exId <= 24) moduleNum = 4;
-            else if (exId <= 26) moduleNum = 5;
-            else moduleNum = 6;
+            if (exId <= 5) moduleNum = 1;        // Module 1: Exercises 1-5
+            else if (exId <= 9) moduleNum = 2;   // Module 2: Exercises 6-9
+            else if (exId <= 20) moduleNum = 3;  // Module 3: Exercises 10-20
+            else if (exId <= 26) moduleNum = 4;  // Module 4: Exercises 21-26
+            else if (exId <= 31) moduleNum = 5;  // Module 5: Exercises 27-31
+            else moduleNum = 6;                  // Module 6: Exercises 32-34
             
             // Show appropriate module hints
             showModuleHints(moduleNum);

@@ -120,7 +120,7 @@ square x = x * x
 -- Then use: map square [1,2,3,4,5]
 
 Exercise 22: Filter Basics
-isEven x = (x mod 2) == 0
+isEven x = (mod x 2) == 0
 -- Then use: filter isEven [1,2,3,4,5,6,7,8,9,10]
 
 Exercise 23: Fold Basics
@@ -131,11 +131,11 @@ shift x = x + 1
 -- Then use: map shift [1,2,3,4,5]
 
 Exercise 25: Data Analysis
-isEven x = (x mod 2) == 0
+isEven x = (mod x 2) == 0
 -- Solution: fold (+) 0 (filter isEven [1..100])
 
 Exercise 26: Advanced Challenge
-isDivBy3 x = (x mod 3) == 0
+isDivBy3 x = (mod x 3) == 0
 square x = x * x
 -- Solution: fold (+) 0 (map square (filter isDivBy3 [1..50]))
 
@@ -191,7 +191,7 @@ Exercise 33: Lambda with Filter
 -- Solution: filter (\x -> x > 10) [5,12,8,20,3,15]
 
 Exercise 34: Lambda Challenge
--- Solution: filter (\x -> (x mod 2) == 0) (map (\x -> x + 5) [1,2,3,4,5,6,7,8,9,10])
+-- Solution: filter (\x -> (mod x 2) == 0) (map (\x -> x + 5) [1,2,3,4,5,6,7,8,9,10])
 
 
 ADDITIONAL NOTES
@@ -202,7 +202,7 @@ Common Helper Functions Used Across Exercises:
 
 square x = x * x
 double x = x * 2
-isEven x = (x mod 2) == 0
+isEven x = (mod x 2) == 0
 sumList [] = 0
 sumList (x:xs) = x + sumList xs
 

@@ -370,8 +370,18 @@ class HaskishInterpreter {
                     j++;
                 }
                 const parenContent = expr.slice(i + 1, j - 1);
-                // Check if it's a lambda expression
-                if (parenContent.includes('->')) {
+                // Check if it's a lambda expression (-> at top level, not in nested parens/brackets)
+                let isLambda = false;
+                let checkDepth = 0;
+                for (let k = 0; k < parenContent.length - 1; k++) {
+                    if (parenContent[k] === '(' || parenContent[k] === '[') checkDepth++;
+                    if (parenContent[k] === ')' || parenContent[k] === ']') checkDepth--;
+                    if (checkDepth === 0 && parenContent[k] === '-' && parenContent[k + 1] === '>') {
+                        isLambda = true;
+                        break;
+                    }
+                }
+                if (isLambda) {
                     tokens.push({ type: 'lambda', value: parenContent });
                 } else {
                     tokens.push({ type: 'paren', value: parenContent });
@@ -1124,7 +1134,8 @@ class HaskishInterpreter {
             
             // Check if it's a function definition (has parameters before =)
             // Function name must start with a letter (not a number)
-            const funcMatch = expr.match(/^([a-zA-Z_]\w*)\s+(.+?)\s*=\s*(.+)$/);
+            // Use negative lookbehind/lookahead to avoid matching ==, /=, <=, >=
+            const funcMatch = expr.match(/^([a-zA-Z_]\w*)\s+(.+?)\s*(?<![=/<>])=(?![=])(.+)$/);
             if (funcMatch) {
                 const [, funcName, params, body] = funcMatch;
                 
@@ -1142,7 +1153,8 @@ class HaskishInterpreter {
             
             // Check if it's a variable assignment (no parameters before =)
             // Variable name must start with a letter and only have a single =
-            const assignMatch = expr.match(/^([a-zA-Z_]\w*)\s*=\s*([^=].*)$/);
+            // Use negative lookahead to avoid matching ==, /=, <=, >=
+            const assignMatch = expr.match(/^([a-zA-Z_]\w*)\s*(?<![=/<>])=(?![=])\s*(.+)$/);
             if (assignMatch) {
                 const [, varName, value] = assignMatch;
                 
