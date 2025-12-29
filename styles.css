@@ -1058,17 +1058,7 @@ footer a:hover {
     transition: max-height 0.3s ease;
 }
 
-.exercise-content-panel.collapsed {
-    max-height: 120px;
-}
 
-.exercise-content-panel.collapsed .exercise-content {
-    display: none;
-}
-
-.exercise-content-panel.collapsed .completion-toggle {
-    display: none;
-}
 
 .exercise-content-panel .panel-header {
     display: flex;
@@ -1089,16 +1079,7 @@ footer a:hover {
     gap: 1rem;
 }
 
-.panel-toggle-hint {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    font-style: italic;
-    display: none;
-}
 
-.exercise-content-panel.collapsed .panel-toggle-hint {
-    display: inline;
-}
 
 .completion-toggle {
     display: flex;

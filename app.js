@@ -982,18 +982,6 @@ function initExercises() {
         });
     });
     
-    // Toggle exercise panel button
-    const toggleExerciseBtn = document.getElementById('toggleExercisePanel');
-    const exercisePanel = document.getElementById('exercisePanel');
-    
-    if (toggleExerciseBtn && exercisePanel) {
-        // Toggle button should toggle the panel
-        toggleExerciseBtn.addEventListener('click', (e) => {
-            exercisePanel.classList.toggle('collapsed');
-            toggleExerciseBtn.textContent = exercisePanel.classList.contains('collapsed') ? '▼' : '▲';
-        });
-    }
-    
     // Reset progress button
     const resetBtn = document.getElementById('resetProgress');
     if (resetBtn) {
@@ -1036,15 +1024,6 @@ function initExercises() {
     const exerciseToLoad = document.querySelector(`.exercise-btn[data-exercise="${lastExerciseId}"]`);
     if (exerciseToLoad) {
         exerciseToLoad.click();
-        // Start with exercise panel collapsed
-        setTimeout(() => {
-            const panel = document.getElementById('exercisePanel');
-            const toggleBtn = document.getElementById('toggleExercisePanel');
-            if (panel && toggleBtn) {
-                panel.classList.add('collapsed');
-                toggleBtn.textContent = '▼';
-            }
-        }, 0);
     }
 }
 
