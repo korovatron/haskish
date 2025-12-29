@@ -949,8 +949,9 @@ class HaskishInterpreter {
             return new Lambda(param, body.trim(), this);
         }
         
-        // Lambda with parens: (\param -> body) - only if there's nothing after the closing paren
-        const parenLambdaMatch = expr.match(/^\(\\(\w+)\s*->\s*(.+)\)$/);
+        // Lambda with parens: (\param -> body) - only if it's the complete expression
+        // The body cannot contain ) at depth 0 (which would close the lambda early)
+        const parenLambdaMatch = expr.match(/^\(\\(\w+)\s*->\s*([^)]+(?:\([^)]*\)[^)]*)*)\)$/);
         if (parenLambdaMatch) {
             const [, param, body] = parenLambdaMatch;
             return new Lambda(param, body.trim(), this);
