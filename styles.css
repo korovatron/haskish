@@ -1269,6 +1269,11 @@ footer a:hover {
     .logo-container {
         gap: 10px;
         margin-bottom: 5px;
+        justify-content: center;
+    }
+    
+    .header-content {
+        text-align: center;
     }
     
     .exercise-btn {
