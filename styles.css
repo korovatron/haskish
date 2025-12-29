@@ -352,6 +352,7 @@ header h1 {
 .repl-history {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     min-height: 300px;
     max-height: 400px;
     padding: 10px;
@@ -364,6 +365,7 @@ header h1 {
 }
 
 .repl-entry {
+    overflow-wrap: break-word;
     margin-bottom: 8px;
 }
 
@@ -385,6 +387,10 @@ header h1 {
 }
 
 .repl-input-code {
+    display: inline-block;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
     color: var(--repl-text);
 }
 
@@ -394,7 +400,12 @@ header h1 {
 }
 
 .repl-output-code {
-    display: inline-block;
+    display: block;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-all;
+    max-width: 100%;
 }
 
 .repl-error {
@@ -685,6 +696,15 @@ footer a:hover {
     color: #000000 !important;
     font-weight: bold;
 }
+
+/* Force wrapping for all CodeMirror spans in REPL */
+.repl-output-code span,
+.repl-input-code span {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    word-wrap: break-word !important;
+}
+
 /* Exercises Section */
 .exercises-section {
     background: var(--panel-bg);
