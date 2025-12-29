@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-v46';
+const CACHE_NAME = 'haskish-v47';
 const urlsToCache = [
   './',
   './index.html',
