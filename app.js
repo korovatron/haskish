@@ -527,8 +527,8 @@ True</code></pre>
             <h3>Task</h3>
             <p>Find the sum of all even numbers between 1 and 100. Combine <code>filter</code> and <code>fold</code>!</p>
             
-            <h3>Example</h3>
-            <pre><code>> fold (+) 0 (filter isEven [1..100])
+            <h3>Expected Result</h3>
+            <pre><code>> -- Your solution here
 2550</code></pre>
         `
     },
@@ -552,59 +552,112 @@ True</code></pre>
         `
     },
 
-    // Module 5: Function Composition (2 exercises for now)
+    // Module 5: Function Composition (3 exercises)
     25: {
-        title: "25. Compose Basics",
+        title: "25. Understanding Composition Order",
         content: `
             <h3>Task</h3>
-            <p>Write two functions: <code>double</code> (multiply by 2) and <code>addTen</code> (add 10). Then try composing them!</p>
+            <p>Write two functions: <code>double x = x * 2</code> and <code>addTen x = x + 10</code>.</p>
+            <p>Then compare these two compositions with the input 5:</p>
+            <ul>
+                <li><code>(double . addTen) 5</code></li>
+                <li><code>(addTen . double) 5</code></li>
+            </ul>
             
-            <h3>Example</h3>
-            <pre><code>> double 5
-10
-> addTen 5
-15
+            <h3>Question</h3>
+            <p>Why do they give different results? Which function runs first in each case?</p>
+            
+            <h3>Expected Results</h3>
+            <pre><code>> (double . addTen) 5
+30
 > (addTen . double) 5
-20
-> (double . addTen) 5
-30</code></pre>
+20</code></pre>
+            
+            <h3>Remember</h3>
+            <p>In <code>(f . g) x</code>, the rightmost function <code>g</code> is applied first, then <code>f</code>!</p>
         `
     },
     26: {
-        title: "26. Pipeline Transformation ⭐",
+        title: "26. Three-Function Pipeline ⭐",
         content: `
             <h3>Task</h3>
-            <p>Create a data processing pipeline! Write three functions and combine them to transform data in multiple steps.</p>
+            <p>Write three functions: <code>double</code> (×2), <code>addFive</code> (+5), and <code>square</code> (x²).</p>
+            <p>Create a composition that transforms the number 3 like this:</p>
+            <ol>
+                <li>First: double it (3 → 6)</li>
+                <li>Then: add five (6 → 11)</li>
+                <li>Finally: square it (11 → 121)</li>
+            </ol>
             
-            <h3>Functions to Write</h3>
-            <ul>
-                <li><code>double x = x * 2</code></li>
-                <li><code>addFive x = x + 5</code></li>
-                <li><code>square x = x * x</code></li>
-            </ul>
+            <h3>Challenge</h3>
+            <p>Which composition gives the result 121? Think about the order!</p>
             
-            <h3>Example</h3>
-            <pre><code>> (square . addFive . double) 3
+            <h3>Expected Result</h3>
+            <pre><code>> -- Your composition here with input 3
 121</code></pre>
         `
     },
-
-    // Module 6: Lambda Functions (1 exercise for now)
     27: {
-        title: "27. Lambda with Map ⭐",
+        title: "27. Composition vs Direct Calls ⭐",
         content: `
-            <h3>Task (Extension)</h3>
-            <p>Try using lambda functions (anonymous functions) with map! Use <code>\\x -> expression</code> syntax.</p>
+            <h3>Task</h3>
+            <p>Using your <code>double</code> and <code>square</code> functions from before:</p>
+            <p>Show that <code>(square . double) 4</code> gives the same result as <code>square (double 4)</code>.</p>
             
-            <h3>Examples to Try</h3>
-            <pre><code>> map (\\x -> x * 2) [1,2,3,4,5]
-[2,4,6,8,10]
-> map (\\x -> x * x) [1,2,3,4]
-[1,4,9,16]
-> filter (\\x -> x > 5) [1,3,7,2,9,4]
-[7,9]
-> fold (\\x y -> x + y) 0 [1,2,3,4,5]
-15</code></pre>
+            <h3>Both Should Give</h3>
+            <pre><code>> (square . double) 4
+64
+> square (double 4)
+64</code></pre>
+            
+            <h3>Think About It</h3>
+            <p>Composition <code>(f . g)</code> creates a new function. When would you use composition instead of nested calls?</p>
+        `
+    },
+
+    // Module 6: Lambda Functions (3 exercises)
+    28: {
+        title: "28. Lambda with Map",
+        content: `
+            <h3>Task</h3>
+            <p>Use a lambda function with <code>map</code> to triple every number in the list [1,2,3,4,5].</p>
+            <p>Lambda syntax: <code>\\x -> expression</code></p>
+            
+            <h3>Expected Result</h3>
+            <pre><code>> map (\\x -> x * 3) [1,2,3,4,5]
+[3,6,9,12,15]</code></pre>
+            
+            <h3>Why Use Lambdas?</h3>
+            <p>Perfect for simple, one-time operations that don't need a named function!</p>
+        `
+    },
+    29: {
+        title: "29. Lambda with Filter ⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Use a lambda function with <code>filter</code> to keep only numbers greater than 10 from the list [5,12,8,20,3,15].</p>
+            
+            <h3>Expected Result</h3>
+            <pre><code>> -- Your lambda expression here
+[12,20,15]</code></pre>
+            
+            <h3>Hint</h3>
+            <p>The lambda should take a number and return <code>True</code> if it's greater than 10.</p>
+        `
+    },
+    30: {
+        title: "30. Lambda Challenge ⭐⭐",
+        content: `
+            <h3>Task</h3>
+            <p>Use <code>map</code> with a lambda to add 5 to each number, then <code>filter</code> with a lambda to keep only even results.</p>
+            <p>Apply this to the list [1,2,3,4,5,6,7,8,9,10].</p>
+            
+            <h3>Expected Result</h3>
+            <pre><code>> -- Your combined expression here
+[6,8,10,12,14]</code></pre>
+            
+            <h3>Think About It</h3>
+            <p>Which operation happens first - map or filter? Does order matter?</p>
         `
     }
 };
@@ -797,7 +850,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Start with empty editor
-    codeEditor.setValue('-- Write your function definitions here');
+    codeEditor.setValue('-- Write your function definitions here\n');
+    codeEditor.setCursor({ line: 1, ch: 0 });
     editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
 
     // Initialize exercises functionality
@@ -1092,7 +1146,8 @@ function restoreExerciseState(exerciseId) {
         editorOutput.innerHTML = '<div class="info">Restored your previous work. Click "Run Code" to reload functions!</div>';
     } else {
         // Use default state for new exercise
-        codeEditor.setValue('-- Write your function definitions here');
+        codeEditor.setValue('-- Write your function definitions here\n');
+        codeEditor.setCursor({ line: 1, ch: 0 });
         replOutput.innerHTML = '';
         editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
     }
