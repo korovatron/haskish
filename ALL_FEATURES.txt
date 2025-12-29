@@ -209,9 +209,6 @@ timesTwo x = x * 2
 addThenDouble = timesTwo . addOne
 doubleThenAdd = addOne . timesTwo
 
--- Multiple compositions
-tripleCompose = (\x -> x + 1) . (\x -> x * 2) . (\x -> x - 3)
-
 
 -- ============================================
 -- PARTIAL APPLICATION (CURRYING)
