@@ -920,7 +920,8 @@ class HaskishInterpreter {
         }
         
         // Preprocess: Add implicit multiplication (3x becomes 3*x)
-        expr = expr.replace(/(\d)([a-zA-Z_])/g, '$1*$2');
+        // But don't apply when digit follows backslash (avoid corrupting \5 in lambda)
+        expr = expr.replace(/(?<!\\)(\d)([a-zA-Z_])/g, '$1*$2');
 
         // Boolean literals
         if (expr === 'True' || expr === 'true') {
