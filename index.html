@@ -209,24 +209,26 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
+                navigator.serviceWorker.register('./sw.js?v=50')
                     .then(registration => {
                         console.log('Service Worker registered successfully:', registration.scope);
                         
-                        // Check for updates every 60 seconds
+                        // Force update check immediately
+                        registration.update();
+                        
+                        // Check for updates every 10 seconds (more frequent for testing)
                         setInterval(() => {
                             registration.update();
-                        }, 60000);
-                        
-                        // Check for updates on page load
-                        registration.update();
+                        }, 10000);
                         
                         // Listen for updates
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
+                            console.log('New service worker found, installing...');
                             newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'activated') {
-                                    console.log('New version available! Reloading...');
+                                console.log('Service worker state:', newWorker.state);
+                                if (newWorker.state === 'activated' && !navigator.serviceWorker.controller) {
+                                    console.log('New version activated! Reloading...');
                                     window.location.reload();
                                 }
                             });
@@ -237,8 +239,13 @@
                     });
                     
                 // Reload page when new service worker takes control
+                let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    window.location.reload();
+                    if (!refreshing) {
+                        console.log('Controller changed, reloading...');
+                        refreshing = true;
+                        window.location.reload();
+                    }
                 });
             });
         }
