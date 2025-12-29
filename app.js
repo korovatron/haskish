@@ -669,6 +669,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize REPL CodeMirror
     const replInputTextarea = document.getElementById('replInput');
+    let replHistory = [];
+    let replHistoryIndex = -1;
+    let replCurrentInput = '';
+    
     replEditor = CodeMirror.fromTextArea(replInputTextarea, {
         mode: 'haskell',
         theme: 'monokai',
@@ -681,6 +685,11 @@ document.addEventListener('DOMContentLoaded', () => {
             'Enter': function(cm) {
                 const expr = cm.getValue().trim();
                 if (!expr) return;
+                
+                // Add to history
+                replHistory.push(expr);
+                replHistoryIndex = replHistory.length;
+                replCurrentInput = '';
                 
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const themeClass = currentTheme === 'light' ? 'cm-s-eclipse' : 'cm-s-monokai';
@@ -735,6 +744,39 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             'Shift-Enter': function(cm) {
                 cm.replaceSelection('\n');
+            },
+            'Up': function(cm) {
+                if (replHistory.length === 0) return;
+                
+                // Save current input if at the end of history
+                if (replHistoryIndex === replHistory.length) {
+                    replCurrentInput = cm.getValue();
+                }
+                
+                // Move up in history
+                if (replHistoryIndex > 0) {
+                    replHistoryIndex--;
+                    cm.setValue(replHistory[replHistoryIndex]);
+                    // Move cursor to end
+                    cm.setCursor(cm.lineCount(), 0);
+                }
+            },
+            'Down': function(cm) {
+                if (replHistory.length === 0) return;
+                
+                // Move down in history
+                if (replHistoryIndex < replHistory.length - 1) {
+                    replHistoryIndex++;
+                    cm.setValue(replHistory[replHistoryIndex]);
+                    // Move cursor to end
+                    cm.setCursor(cm.lineCount(), 0);
+                } else if (replHistoryIndex === replHistory.length - 1) {
+                    // At the last history item, go back to current input
+                    replHistoryIndex = replHistory.length;
+                    cm.setValue(replCurrentInput);
+                    // Move cursor to end
+                    cm.setCursor(cm.lineCount(), 0);
+                }
             }
         }
     });
