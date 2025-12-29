@@ -891,21 +891,62 @@ class HaskishInterpreter {
             expr = expr.replace(/(\d)([a-zA-Z_])/g, '$1*$2');
         }
         
-        // Replace variables in expression
-        let result = expr;
+        // For function objects (Lambda, operator sections, etc), store them temporarily
+        // and replace with a reference, since we can't stringify them
+        const tempVars = {};
+        const processedBindings = {};
+        
         for (let [varName, value] of Object.entries(bindings)) {
-            const varRegex = new RegExp(`\\b${varName}\\b`, 'g');
-            let replacement;
-            if (typeof value === 'number' && value < 0) {
-                // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
-                replacement = `(${value})`;
+            // Check if this is a function object that can't be stringified
+            if (value instanceof Lambda || 
+                (value && value._isOperatorFunction) ||
+                (value && value._isComposedFunction) ||
+                value instanceof PartialFunction) {
+                // Store in temporary variables with a unique name
+                const tempVarName = '__temp_' + varName + '_' + Math.random().toString(36).substr(2, 9);
+                tempVars[tempVarName] = value;
+                processedBindings[varName] = tempVarName;
             } else {
-                replacement = JSON.stringify(value);
+                processedBindings[varName] = value;
             }
-            result = result.replace(varRegex, replacement);
         }
         
-        return this.evaluate(result);
+        // Temporarily add these to the variables table
+        const originalVars = {};
+        for (let [tempName, tempValue] of Object.entries(tempVars)) {
+            originalVars[tempName] = this.variables[tempName];
+            this.variables[tempName] = tempValue;
+        }
+        
+        try {
+            // Replace variables in expression
+            let result = expr;
+            for (let [varName, value] of Object.entries(processedBindings)) {
+                const varRegex = new RegExp(`\\b${varName}\\b`, 'g');
+                let replacement;
+                if (typeof value === 'string' && value.startsWith('__temp_')) {
+                    // It's a reference to a temporary variable
+                    replacement = value;
+                } else if (typeof value === 'number' && value < 0) {
+                    // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
+                    replacement = `(${value})`;
+                } else {
+                    replacement = JSON.stringify(value);
+                }
+                result = result.replace(varRegex, replacement);
+            }
+            
+            return this.evaluate(result);
+        } finally {
+            // Restore original variables
+            for (let tempName of Object.keys(tempVars)) {
+                if (originalVars[tempName] === undefined) {
+                    delete this.variables[tempName];
+                } else {
+                    this.variables[tempName] = originalVars[tempName];
+                }
+            }
+        }
     }
 
     // Main evaluation function
