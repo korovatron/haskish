@@ -544,15 +544,30 @@ class HaskishInterpreter {
             return Array.isArray(value) && value.length === 0 ? {} : null;
         }
 
-        // List destructuring (x:xs)
-        const consMatch = pattern.match(/^\((.+?):(.+?)\)$/);
+        // List destructuring (x:xs) - handle nested patterns like (x:y:xs)
+        const consMatch = pattern.match(/^\((.+?):(.+)\)$/);
         if (consMatch) {
             if (!Array.isArray(value) || value.length === 0) return null;
             const [, headPat, tailPat] = consMatch;
-            return {
-                [headPat.trim()]: value[0],
-                [tailPat.trim()]: value.slice(1)
-            };
+            const headPatTrimmed = headPat.trim();
+            const tailPatTrimmed = tailPat.trim();
+            
+            // Check if tail pattern is another cons pattern
+            if (tailPatTrimmed.includes(':')) {
+                // Recursively match the tail pattern with the rest of the list
+                const tailMatch = this.matchPattern('(' + tailPatTrimmed + ')', value.slice(1));
+                if (tailMatch === null) return null;
+                return {
+                    [headPatTrimmed]: value[0],
+                    ...tailMatch
+                };
+            } else {
+                // Simple case: just head and tail variable
+                return {
+                    [headPatTrimmed]: value[0],
+                    [tailPatTrimmed]: value.slice(1)
+                };
+            }
         }
 
         // Specific list pattern like [a, b]
@@ -775,10 +790,14 @@ class HaskishInterpreter {
 
         for (let { op, fn } of binaryOps) {
             const parts = this.splitByOperator(expr, op);
-            if (parts.length === 2) {
-                const left = this.evaluate(parts[0]);
-                const right = this.evaluate(parts[1]);
-                return fn(left, right);
+            if (parts.length >= 2) {
+                // Evaluate left-to-right for chained operators (a ++ b ++ c)
+                let result = this.evaluate(parts[0]);
+                for (let i = 1; i < parts.length; i++) {
+                    const right = this.evaluate(parts[i]);
+                    result = fn(result, right);
+                }
+                return result;
             }
         }
 

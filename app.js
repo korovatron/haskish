@@ -179,7 +179,7 @@ fold (\\x y -> x * y) 1 [1..5]    -- 120</code></pre>
 
 // Exercise content data
 const exerciseData = {
-    // Module 1: Getting Started (3 exercises for now)
+    // Module 1: Getting Started (5 exercises)
     1: {
         title: "1. Using the REPL",
         content: `
@@ -222,10 +222,50 @@ const exerciseData = {
 30</code></pre>
         `
     },
+    4: {
+        title: "4. Circle Area",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>circleArea</code> that calculates the area of a circle given its radius.</p>
+            <p>Use the formula: area = π × r²</p>
+            <p>Use 3.14159 for π (we'll call it <code>pi</code>).</p>
+            
+            <h3>Example</h3>
+            <pre><code>> pi = 3.14159
+> circleArea 5
+78.53975
+> circleArea 10
+314.159
+> circleArea 1
+3.14159</code></pre>
+            
+            <h3>Hint</h3>
+            <p>Remember: r² means r × r, and you can write the function as <code>circleArea r = pi * r * r</code></p>
+        `
+    },
+    5: {
+        title: "5. Temperature Conversion",
+        content: `
+            <h3>Task</h3>
+            <p>Write a function <code>celsiusToFahrenheit</code> that converts Celsius to Fahrenheit.</p>
+            <p>Formula: F = (C × 9 / 5) + 32</p>
+            
+            <h3>Example</h3>
+            <pre><code>> celsiusToFahrenheit 0
+32
+> celsiusToFahrenheit 100
+212
+> celsiusToFahrenheit 37
+98.6</code></pre>
+            
+            <h3>Challenge</h3>
+            <p>Can you also write <code>fahrenheitToCelsius</code>? The formula is: C = (F - 32) × 5 / 9</p>
+        `
+    },
 
     // Module 2: Introduction to Lists (4 exercises)
-    4: {
-        title: "4. Lists & Ranges",
+    6: {
+        title: "6. Lists & Ranges",
         content: `
             <h3>Task</h3>
             <p>Experiment with lists and ranges in the REPL. Try these expressions:</p>
@@ -240,8 +280,8 @@ const exerciseData = {
 > drop 3 [1..10]</code></pre>
         `
     },
-    5: {
-        title: "5. Head and Tail",
+    7: {
+        title: "7. Head and Tail",
         content: `
             <h3>Task</h3>
             <p>Try using the built-in <code>head</code> and <code>tail</code> functions to break apart lists in the REPL.</p>
@@ -259,8 +299,8 @@ const exerciseData = {
 [1,2,3,4]</code></pre>
         `
     },
-    6: {
-        title: "6. Cons Operator (:)",
+    8: {
+        title: "8. Cons Operator (:)",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>prepend</code> that adds an element to the front of a list using the <code>:</code> operator.</p>
@@ -277,8 +317,8 @@ const exerciseData = {
             <p>The <code>:</code> operator takes an <strong>element</strong> on the left and a <strong>list</strong> on the right.</p>
         `
     },
-    7: {
-        title: "7. Concatenate Operator (++)",
+    9: {
+        title: "9. Concatenate Operator (++)",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>join</code> that combines two lists using the <code>++</code> operator. Test with both number and string lists.</p>
@@ -297,8 +337,8 @@ const exerciseData = {
     },
 
     // Module 3: Advanced Lists (11 exercises)
-    8: {
-        title: "8. Factorial",
+    10: {
+        title: "10. Factorial",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>factorial</code> using pattern matching. Remember: 0! = 1, and n! = n × (n-1)!</p>
@@ -310,8 +350,8 @@ const exerciseData = {
 3628800</code></pre>
         `
     },
-    9: {
-        title: "9. Powers ⭐",
+    11: {
+        title: "11. Powers",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>power</code> that calculates x raised to the power n (x^n). Remember: anything to power 0 is 1!</p>
@@ -325,8 +365,8 @@ const exerciseData = {
 1</code></pre>
         `
     },
-    10: {
-        title: "10. List Sum",
+    12: {
+        title: "12. List Sum",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>sumList</code> that adds all the numbers in a list. Use (x:xs) pattern matching!</p>
@@ -340,8 +380,8 @@ const exerciseData = {
 60</code></pre>
         `
     },
-    11: {
-        title: "11. Safe Head",
+    13: {
+        title: "13. Safe Head",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>safeHead</code> that returns the first element of a list, or "empty" for an empty list. Use pattern matching!</p>
@@ -355,8 +395,8 @@ const exerciseData = {
 "cat"</code></pre>
         `
     },
-    12: {
-        title: "12. Double List",
+    14: {
+        title: "14. Double List",
         content: `
             <h3>Task</h3>
             <p>Write a recursive function <code>doubleList</code> that doubles every number in a list.</p>
@@ -370,8 +410,8 @@ const exerciseData = {
 []</code></pre>
         `
     },
-    13: {
-        title: "13. Positive Numbers ⭐",
+    15: {
+        title: "15. Positive Numbers",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>onlyPositive</code> that filters out all non-positive numbers from a list (keep only numbers > 0).</p>
@@ -385,8 +425,8 @@ const exerciseData = {
 [1,2,3]</code></pre>
         `
     },
-    14: {
-        title: "14. Count Elements",
+    16: {
+        title: "16. Count Elements",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>countElem</code> that counts how many times an element appears in a list.</p>
@@ -400,8 +440,8 @@ const exerciseData = {
 2</code></pre>
         `
     },
-    15: {
-        title: "15. Member Check",
+    17: {
+        title: "17. Member Check",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>member</code> that checks if an element exists in a list (returns True or False).</p>
@@ -415,8 +455,8 @@ False
 True</code></pre>
         `
     },
-    16: {
-        title: "16. List Zip ⭐⭐",
+    18: {
+        title: "18. List Zip",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>zipLists</code> that combines two lists into pairs. Stop when either list runs out!</p>
@@ -430,21 +470,8 @@ True</code></pre>
 []</code></pre>
         `
     },
-    17: {
-        title: "17. Quicksort ⭐⭐",
-        content: `
-            <h3>Task</h3>
-            <p>Write the classic Quicksort algorithm! Pick the first element as pivot, partition the rest into smaller and larger elements, then recursively sort.</p>
-            
-            <h3>Example</h3>
-            <pre><code>> qsort [3,1,4,1,5,9,2,6]
-[1,1,2,3,4,5,6,9]
-> qsort [5,4,3,2,1]
-[1,2,3,4,5]</code></pre>
-        `
-    },
-    18: {
-        title: "18. Grade Classifier ⭐",
+    19: {
+        title: "19. Grade Classifier",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>grade</code> that takes a mark (0-100) and returns a grade string using guards:</p>
@@ -465,10 +492,54 @@ True</code></pre>
 "F"</code></pre>
         `
     },
+    20: {
+        title: "20. Merge Sort",
+        content: `
+            <h3>Task</h3>
+            <p>Implement the merge sort algorithm! This is a divide-and-conquer sorting algorithm specified by AQA. Follow these steps:</p>
+            
+            <h4>Step 1: Write the merge function</h4>
+            <p>First, create a function <code>merge</code> that combines two <em>already-sorted</em> lists into one sorted list:</p>
+            <pre><code>merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys)
+  | x <= y = ...  -- add x to result, merge rest
+  | otherwise = ... -- add y to result, merge rest</code></pre>
+            
+            <h4>Step 2: Write split functions</h4>
+            <p>Create two functions to split a list into alternating elements:</p>
+            <pre><code>splitFirst [] = []
+splitFirst [x] = [x]
+splitFirst (x:y:xs) = x : splitFirst xs
+
+splitSecond [] = []
+splitSecond [x] = []
+splitSecond (x:y:xs) = y : splitSecond xs</code></pre>
+            
+            <h4>Step 3: Write mergeSort</h4>
+            <p>Finally, combine everything. The base cases are empty lists and single-element lists. For larger lists, split them, recursively sort each half, then merge:</p>
+            <pre><code>mergeSort [] = []
+mergeSort [x] = [x]
+mergeSort xs = merge (mergeSort (splitFirst xs)) (mergeSort (splitSecond xs))</code></pre>
+            
+            <h3>Example</h3>
+            <pre><code>> mergeSort [3,1,4,1,5,9,2,6]
+[1,1,2,3,4,5,6,9]
+> mergeSort [5,4,3,2,1]
+[1,2,3,4,5]
+> merge [1,3,5] [2,4,6]
+[1,2,3,4,5,6]</code></pre>
+            
+            <h3>How it works</h3>
+            <p><code>splitFirst [3,1,4,1,5,9,2,6]</code> gives <code>[3,4,5,2]</code> (positions 0,2,4,6)</p>
+            <p><code>splitSecond [3,1,4,1,5,9,2,6]</code> gives <code>[1,1,9,6]</code> (positions 1,3,5,7)</p>
+            <p>Each half is recursively sorted, then the sorted halves are merged together.</p>
+        `
+    },
 
     // Module 4: Higher-Order Functions (6 exercises)
-    19: {
-        title: "19. Map Basics",
+    21: {
+        title: "21. Map Basics",
         content: `
             <h3>Task</h3>
             <p>First, write a function <code>square</code> that squares a number. Then use <code>map</code> to square every number in a list.</p>
@@ -480,8 +551,8 @@ True</code></pre>
 [100,400]</code></pre>
         `
     },
-    20: {
-        title: "20. Filter Basics",
+    22: {
+        title: "22. Filter Basics",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>isEven</code> that returns True if a number is even. Then use <code>filter</code> to get all even numbers from a list.</p>
@@ -493,8 +564,8 @@ True</code></pre>
 []</code></pre>
         `
     },
-    21: {
-        title: "21. Fold Basics",
+    23: {
+        title: "23. Fold Basics",
         content: `
             <h3>Task</h3>
             <p>Use <code>fold</code> to multiply all numbers in a list together. Remember to use the right initial value!</p>
@@ -506,8 +577,8 @@ True</code></pre>
 24</code></pre>
         `
     },
-    22: {
-        title: "22. Shift Cipher ⭐",
+    24: {
+        title: "24. Shift Cipher",
         content: `
             <h3>Task</h3>
             <p>Write a function <code>shift</code> that adds 1 to a number, then use <code>map</code> to shift all values in a list.</p>
@@ -521,8 +592,8 @@ True</code></pre>
 [11,21,31]</code></pre>
         `
     },
-    23: {
-        title: "23. Data Analysis ⭐⭐",
+    25: {
+        title: "25. Data Analysis",
         content: `
             <h3>Task</h3>
             <p>Find the sum of all even numbers between 1 and 100. Combine <code>filter</code> and <code>fold</code>!</p>
@@ -532,8 +603,8 @@ True</code></pre>
 2550</code></pre>
         `
     },
-    24: {
-        title: "24. Advanced Challenge ⭐⭐⭐",
+    26: {
+        title: "26. Advanced Challenge",
         content: `
             <h3>Task</h3>
             <p>Find the sum of squares of all numbers divisible by 3 in the range [1..50]. Combine filter, map, and fold!</p>
@@ -552,9 +623,9 @@ True</code></pre>
         `
     },
 
-    // Module 5: Function Composition (3 exercises)
-    25: {
-        title: "25. Understanding Composition Order",
+    // Module 5: Function Composition (5 exercises)
+    27: {
+        title: "27. Understanding Composition Order",
         content: `
             <h3>Task</h3>
             <p>Write two functions: <code>double x = x * 2</code> and <code>addTen x = x + 10</code>.</p>
@@ -577,8 +648,8 @@ True</code></pre>
             <p>In <code>(f . g) x</code>, the rightmost function <code>g</code> is applied first, then <code>f</code>!</p>
         `
     },
-    26: {
-        title: "26. Three-Function Pipeline ⭐",
+    28: {
+        title: "28. Three-Function Pipeline",
         content: `
             <h3>Task</h3>
             <p>Write three functions: <code>double</code> (×2), <code>addFive</code> (+5), and <code>square</code> (x²).</p>
@@ -597,8 +668,8 @@ True</code></pre>
 121</code></pre>
         `
     },
-    27: {
-        title: "27. Composition vs Direct Calls ⭐",
+    29: {
+        title: "29. Composition vs Direct Calls",
         content: `
             <h3>Task</h3>
             <p>Using your <code>double</code> and <code>square</code> functions from before:</p>
@@ -614,10 +685,61 @@ True</code></pre>
             <p>Composition <code>(f . g)</code> creates a new function. When would you use composition instead of nested calls?</p>
         `
     },
+    30: {
+        title: "30. Compose with Lists",
+        content: `
+            <h3>Task</h3>
+            <p>Write functions that work with lists, then compose them!</p>
+            <p>Create these functions:</p>
+            <ul>
+                <li><code>sumList</code> - adds all numbers in a list</li>
+                <li><code>doubleList</code> - doubles every number in a list</li>
+            </ul>
+            <p>Then use composition to: double all numbers in a list, then sum them.</p>
+            
+            <h3>Example</h3>
+            <pre><code>> (sumList . doubleList) [1,2,3,4,5]
+30
+> sumList (doubleList [1,2,3,4,5])
+30</code></pre>
+            
+            <h3>Explanation</h3>
+            <p>[1,2,3,4,5] → double → [2,4,6,8,10] → sum → 30</p>
+            
+            <h3>Think About It</h3>
+            <p>Composition creates a pipeline: data flows through doubleList first, then sumList!</p>
+        `
+    },
+    31: {
+        title: "31. Complex Pipeline",
+        content: `
+            <h3>Task</h3>
+            <p>Build a complex data processing pipeline using composition!</p>
+            <p>Create a composed function that takes a list of numbers and:</p>
+            <ol>
+                <li>Filters out numbers less than 5</li>
+                <li>Doubles the remaining numbers</li>
+                <li>Sums them all</li>
+            </ol>
+            
+            <h3>Example</h3>
+            <pre><code>> greaterThan5 x = x > 5
+> double x = x * 2
+> pipeline = sumList . map double . filter greaterThan5
+> pipeline [1,3,6,8,10,2,7]
+62</code></pre>
+            
+            <h3>Explanation</h3>
+            <p>[1,3,6,8,10,2,7] → filter(>5) → [6,8,10,7] → double → [12,16,20,14] → sum → 62</p>
+            
+            <h3>Challenge</h3>
+            <p>Try different orderings! What if you double before filtering? Does it give the same result?</p>
+        `
+    },
 
     // Module 6: Lambda Functions (3 exercises)
-    28: {
-        title: "28. Lambda with Map",
+    32: {
+        title: "32. Lambda with Map",
         content: `
             <h3>Task</h3>
             <p>Use a lambda function with <code>map</code> to triple every number in the list [1,2,3,4,5].</p>
@@ -631,8 +753,8 @@ True</code></pre>
             <p>Perfect for simple, one-time operations that don't need a named function!</p>
         `
     },
-    29: {
-        title: "29. Lambda with Filter ⭐",
+    33: {
+        title: "33. Lambda with Filter",
         content: `
             <h3>Task</h3>
             <p>Use a lambda function with <code>filter</code> to keep only numbers greater than 10 from the list [5,12,8,20,3,15].</p>
@@ -645,8 +767,8 @@ True</code></pre>
             <p>The lambda should take a number and return <code>True</code> if it's greater than 10.</p>
         `
     },
-    30: {
-        title: "30. Lambda Challenge ⭐⭐",
+    34: {
+        title: "34. Lambda Challenge",
         content: `
             <h3>Task</h3>
             <p>Use <code>map</code> with a lambda to add 5 to each number, then <code>filter</code> with a lambda to keep only even results.</p>
@@ -659,7 +781,8 @@ True</code></pre>
             <h3>Think About It</h3>
             <p>Which operation happens first - map or filter? Does order matter?</p>
         `
-    }
+    },
+
 };
 
 // Theme toggle functionality
