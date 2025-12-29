@@ -2,181 +2,6 @@
 
 const interpreter = new HaskishInterpreter();
 
-// Module hints data
-const moduleHints = {
-    1: {
-        title: "Module 1: Getting Started",
-        content: `
-            <h3>Welcome to Haskish!</h3>
-            <p>Learn the basics of functional programming by creating simple functions.</p>
-            
-            <h4>Function Syntax</h4>
-            <pre><code>functionName parameter = expression
-
--- Examples:
-triple x = 3 * x
-doubleAdd x y = 2*x + 2*y
-circleArea r = 3.14159 * r * r</code></pre>
-            
-            <h4>Basic Operators</h4>
-            <ul>
-                <li>Arithmetic: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>mod</code>, <code>div</code></li>
-                <li>Comparison: <code>==</code>, <code>/=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></li>
-                <li>Boolean: <code>&&</code>, <code>||</code>, <code>not</code></li>
-            </ul>
-            
-            <h4>Using the Editor and REPL</h4>
-            <ul>
-                <li>Write function definitions in the Code Panel</li>
-                <li>Click "Run Code" to load your functions</li>
-                <li>Test functions in the REPL below</li>
-            </ul>
-        `
-    },
-    2: {
-        title: "Module 2: Introduction to Lists",
-        content: `
-            <h3>Working with Lists</h3>
-            <p>Lists are fundamental data structures in functional programming.</p>
-            
-            <h4>List Syntax</h4>
-            <pre><code>[1,2,3,4,5]           -- Explicit list
-[1..10]               -- Range from 1 to 10
-[2,4..20]             -- Even numbers 2 to 20
-[]                    -- Empty list</code></pre>
-            
-            <h4>Basic List Functions</h4>
-            <ul>
-                <li><code>head [1,2,3]</code> → 1 (first element)</li>
-                <li><code>tail [1,2,3]</code> → [2,3] (all but first)</li>
-                <li><code>length [1,2,3]</code> → 3</li>
-                <li><code>reverse [1,2,3]</code> → [3,2,1]</li>
-                <li><code>take 3 [1..10]</code> → [1,2,3]</li>
-                <li><code>drop 3 [1..10]</code> → [4,5,6,7,8,9,10]</li>
-            </ul>
-            
-            <h4>List Operators</h4>
-            <pre><code>1:[2,3,4]             -- [1,2,3,4]  (cons)
-[1,2] ++ [3,4]        -- [1,2,3,4]  (concatenate)</code></pre>
-        `
-    },
-    3: {
-        title: "Module 3: Advanced Lists",
-        content: `
-            <h3>Recursion and Pattern Matching</h3>
-            <p>Process lists recursively by breaking them into head and tail.</p>
-            
-            <h4>Pattern Matching with Lists</h4>
-            <pre><code>myLength [] = 0
-myLength (x:xs) = 1 + myLength xs
-
-productList [] = 1
-productList (x:xs) = x * productList xs</code></pre>
-            
-            <h4>Pattern Matching (Values)</h4>
-            <pre><code>factorial 0 = 1
-factorial n = n * factorial (n-1)</code></pre>
-            
-            <h4>Guards (Conditions)</h4>
-            <pre><code>describe n
-  | n > 0     = "positive"
-  | n < 0     = "negative"
-  | otherwise = "zero"</code></pre>
-            
-            <h4>Combining Patterns and Guards</h4>
-            <pre><code>positive [] = []
-positive (x:xs)
-  | x > 0     = x : positive xs
-  | otherwise = positive xs</code></pre>
-        `
-    },
-    4: {
-        title: "Module 4: Higher-Order Functions",
-        content: `
-            <h3>Functions as Values</h3>
-            <p>Pass functions as arguments to other functions!</p>
-            
-            <h4>map - Transform every element</h4>
-            <pre><code>map square [1,2,3]          -- [1,4,9]
-map isEven [1,2,3,4]        -- [False,True,False,True]</code></pre>
-            
-            <h4>filter - Keep matching elements</h4>
-            <pre><code>filter isEven [1..10]       -- [2,4,6,8,10]
-filter (\\x -> x > 5) [1..10]  -- [6,7,8,9,10]</code></pre>
-            
-            <h4>fold - Combine into single value</h4>
-            <pre><code>fold (+) 0 [1,2,3,4]        -- 10
-fold (*) 1 [1,2,3,4]        -- 24</code></pre>
-            
-            <h4>Combining Higher-Order Functions</h4>
-            <pre><code>-- Sum of all even numbers 1-100
-fold (+) 0 (filter isEven [1..100])
-
--- Sum of squares of odd numbers
-fold (+) 0 (map square (filter isOdd [1..20]))</code></pre>
-        `
-    },
-    5: {
-        title: "Module 5: Function Composition",
-        content: `
-            <h3>Building Complex Functions</h3>
-            <p>Combine simple functions to create powerful transformations.</p>
-            
-            <h4>The . (Composition) Operator</h4>
-            <pre><code>double x = x * 2
-square x = x * x
-
-(square . double) 3       -- 36
-(double . square) 3       -- 18</code></pre>
-            
-            <h4>Reading Composition</h4>
-            <p><code>(f . g) x</code> means: apply g first, then f</p>
-            <p>Functions are applied RIGHT to LEFT!</p>
-            
-            <h4>Practical Examples</h4>
-            <pre><code>-- Add 10 then double
-(double . addTen) 5       -- 30
-
--- Square then negate
-(negate . square) 4       -- -16</code></pre>
-            
-            <h4>With Lists</h4>
-            <pre><code>sumSquares = fold (+) 0 . map square
-sumSquares [1,2,3,4]      -- 30</code></pre>
-        `
-    },
-    6: {
-        title: "Module 6: Lambda Functions",
-        content: `
-            <h3>Anonymous Functions</h3>
-            <p>Create functions on-the-fly without naming them.</p>
-            
-            <h4>Lambda Syntax</h4>
-            <pre><code>\\parameter -> expression
-
--- Examples:
-\\x -> x * 2
-\\x -> x * x
-\\x y -> x + y</code></pre>
-            
-            <h4>Using with map</h4>
-            <pre><code>map (\\x -> x * 2) [1,2,3]        -- [2,4,6]
-map (\\x -> x * x) [1,2,3,4]      -- [1,4,9,16]</code></pre>
-            
-            <h4>Using with filter</h4>
-            <pre><code>filter (\\x -> x > 5) [1..10]     -- [6,7,8,9,10]
-filter (\\x -> mod x 2 == 0) [1..10]  -- [2,4,6,8,10]</code></pre>
-            
-            <h4>Using with fold</h4>
-            <pre><code>fold (\\x y -> x + y) 0 [1..5]    -- 15
-fold (\\x y -> x * y) 1 [1..5]    -- 120</code></pre>
-            
-            <h4>When to Use Lambdas</h4>
-            <p>Perfect for simple, one-time operations that don't need a name!</p>
-        `
-    }
-};
-
 // Exercise content data
 const exerciseData = {
     // Module 1: Getting Started (5 exercises)
@@ -1100,17 +925,6 @@ function initExercises() {
             else if (exId <= 31) moduleNum = 5;  // Module 5: Exercises 27-31
             else moduleNum = 6;                  // Module 6: Exercises 32-34
             
-            // Show appropriate module hints
-            showModuleHints(moduleNum);
-            
-            // Collapse the hints panel
-            const hintsPanel = document.querySelector('.hints-panel');
-            const toggleHintsBtn = document.getElementById('toggleHints');
-            if (hintsPanel && toggleHintsBtn) {
-                hintsPanel.classList.add('collapsed');
-                toggleHintsBtn.textContent = '▼';
-            }
-            
             // Update mobile navigation
             updateMobileNavigationLabel();
         });
@@ -1157,17 +971,6 @@ function initExercises() {
                 // Reload the page to reset everything
                 location.reload();
             }
-        });
-    }
-    
-    // Hints toggle functionality
-    const toggleHintsBtn = document.getElementById('toggleHints');
-    const hintsPanel = document.querySelector('.hints-panel');
-    
-    if (toggleHintsBtn && hintsPanel) {
-        toggleHintsBtn.addEventListener('click', () => {
-            hintsPanel.classList.toggle('collapsed');
-            toggleHintsBtn.textContent = hintsPanel.classList.contains('collapsed') ? '▼' : '▲';
         });
     }
     
@@ -1345,30 +1148,9 @@ function hideExerciseContent() {
     panel.style.display = 'none';
 }
 
-function showModuleHints(moduleNumber) {
-    const hintsContent = document.getElementById('hintsContent');
-    if (!hintsContent) return;
-    
-    const hints = moduleHints[moduleNumber];
-    if (hints) {
-        hintsContent.innerHTML = hints.content;
-    }
-}
-
-// Show Module 1 hints by default when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    showModuleHints(1);
-});
-
 // Prevent pinch-to-zoom on mobile devices
-document.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 1) {
-        e.preventDefault();
-    }
-}, { passive: false });
-
 document.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 1) {
+    if (e.scale !== 1) {
         e.preventDefault();
     }
 }, { passive: false });

@@ -359,10 +359,14 @@ header h1 {
     position: relative;
 }
 
+.output-container .output {
+    padding-right: 100px;
+}
+
 .clear-editor-btn {
     position: absolute;
     top: 18px;
-    right: 10px;
+    right: 0;
     z-index: 10;
 }
 
@@ -1084,8 +1088,7 @@ footer a:hover {
     display: none;
 }
 
-.exercise-content-panel.collapsed .panel-toggle-hint,
-.hints-panel.collapsed .panel-toggle-hint {
+.exercise-content-panel.collapsed .panel-toggle-hint {
     display: inline;
 }
 
@@ -1192,11 +1195,6 @@ footer a:hover {
     padding: 4px 8px;
 }
 
-#toggleHints {
-    min-width: 32px;
-    padding: 4px 8px;
-}
-
 /* Responsive design for exercises */
 @media (max-width: 768px) {
     .exercises-section {
@@ -1240,112 +1238,7 @@ footer a:hover {
     }
 }
 
-/* Hints Panel */
-.hints-panel {
-    width: 100%;
-    max-height: 600px;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-}
 
-.hints-panel.collapsed {
-    max-height: 60px;
-    padding: 15px 20px;
-}
-
-.hints-panel.collapsed .hints-content {
-    display: none;
-}
-
-.hints-panel .panel-header {
-    margin-bottom: 15px;
-}
-
-.hints-panel.collapsed .panel-header {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-}
-
-#toggleHints {
-    min-width: 32px;
-    padding: 4px 8px;
-}
-
-.hints-content {
-    line-height: 1.8;
-    color: var(--text-color);
-    overflow-y: auto;
-    max-height: 500px;
-}
-
-.hints-content h3 {
-    color: var(--primary-color);
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    font-size: 1.1rem;
-}
-
-.hints-content h4 {
-    color: var(--secondary-color);
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-}
-
-.hints-content p {
-    margin-bottom: 1rem;
-}
-
-.hints-content code {
-    background: var(--code-bg);
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 0.9em;
-    color: var(--primary-color);
-}
-
-.hints-content pre {
-    background: var(--code-bg);
-    padding: 1rem;
-    border-radius: 5px;
-    overflow-x: auto;
-    margin: 1rem 0;
-    border-left: 4px solid var(--nested-highlight);
-}
-
-.hints-content pre code {
-    background: transparent;
-    padding: 0;
-    color: var(--text-color);
-}
-
-.hints-content ul {
-    margin-left: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.hints-content li {
-    margin-bottom: 0.5rem;
-}
-
-.hints-panel::-webkit-scrollbar {
-    width: 8px;
-}
-
-.hints-panel::-webkit-scrollbar-track {
-    background: var(--panel-bg);
-}
-
-.hints-panel::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
-}
-
-.hints-panel::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
-}
 
 @media (max-width: 1024px) {
     .code-repl-container {
@@ -1425,5 +1318,17 @@ footer a:hover {
     
     .right-column {
         order: 1;
+    }
+    
+    .output-container .output {
+        padding-right: 10px;
+        word-wrap: break-word;
+    }
+    
+    .clear-editor-btn {
+        position: static;
+        display: block;
+        width: 100%;
+        margin-top: 10px;
     }
 }
