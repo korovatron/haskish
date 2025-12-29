@@ -1141,6 +1141,9 @@ class HaskishInterpreter {
                 if (varValue && varValue._isComposedFunction) {
                     return varValue.apply(args);
                 }
+                if (varValue && varValue._isOperatorFunction) {
+                    return varValue.apply(args);
+                }
             }
 
             return this.applyFunction(funcName, args);
