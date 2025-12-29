@@ -892,7 +892,13 @@ class HaskishInterpreter {
         let result = expr;
         for (let [varName, value] of Object.entries(bindings)) {
             const varRegex = new RegExp(`\\b${varName}\\b`, 'g');
-            const replacement = JSON.stringify(value);
+            let replacement;
+            if (typeof value === 'number' && value < 0) {
+                // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
+                replacement = `(${value})`;
+            } else {
+                replacement = JSON.stringify(value);
+            }
             result = result.replace(varRegex, replacement);
         }
         
@@ -902,6 +908,16 @@ class HaskishInterpreter {
     // Main evaluation function
     evaluate(expr) {
         expr = expr.trim();
+        
+        // Guard against empty expressions
+        if (expr === '') {
+            throw new Error('Cannot evaluate empty expression');
+        }
+        
+        // Number literal (check EARLY before preprocessing)
+        if (/^-?\d+(\.\d+)?$/.test(expr)) {
+            return parseFloat(expr);
+        }
         
         // Preprocess: Add implicit multiplication (3x becomes 3*x)
         expr = expr.replace(/(\d)([a-zA-Z_])/g, '$1*$2');
@@ -934,14 +950,25 @@ class HaskishInterpreter {
         // Empty list
         if (expr === '[]') return [];
 
-        // Number literal
-        if (/^-?\d+(\.\d+)?$/.test(expr)) {
-            return parseFloat(expr);
+        // Check for unary negation patterns
+        // Pattern 1: (-5) or (-x) or (-(...)) - parenthesized negation
+        if (/^\(-/.test(expr) && expr.endsWith(')')) {
+            const inner = expr.slice(2, -1).trim();
+            // Check if it's (-number) or (-identifier) or (-(...))
+            if (/^\d/.test(inner) || /^[a-zA-Z_]/.test(inner) || /^\(/.test(inner)) {
+                return this.evaluate('(0-' + inner + ')');
+            }
+        }
+        
+        // Pattern 2: -(expr) - unary minus before a parenthesized expression
+        if (/^-\(/.test(expr)) {
+            const inner = expr.slice(1); // Get everything after the -
+            return this.evaluate('(0-' + inner + ')');
         }
 
-        // Operator sections like (<10) or (+) but not negative numbers
-        const opSectionMatch = expr.match(/^\(([+*\/<>=&|]+)\s*(\d+)?\)$/) || 
-                               expr.match(/^\((\d+)\s*([+*\/<>=&|]+)\)$/);
+        // Operator sections like (<10) or (+) or (+(-1)) but not negative numbers
+        const opSectionMatch = expr.match(/^\(([+*\/<>=&|]+)(\s*\d+|\s*\(.+\))?\)$/) || 
+                               expr.match(/^\((\d+|\(.+\))\s*([+*\/<>=&|]+)\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
         }
@@ -1090,9 +1117,10 @@ class HaskishInterpreter {
                     throw new Error(`Invalid lambda syntax: ${token.value}`);
                 }
                 if (token.type === 'paren') {
-                    // Check if it's an operator section like (*) or (<10)
+                    // Check if it's an operator section like (*) or (<10) or (+(-1)) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
-                    if (/^\(([+\-*\/<>=]+)\s*\d*\)$/.test(fullParen) || /^\(\d+\s*[+\-*\/<>=]+\)$/.test(fullParen)) {
+                    // Match operator sections: operators only, operators with number, or operators with parenthesized expr
+                    if (/^\(([+*\/<>=]+)(\s*\d+|\s*\(.+\))?\)$/.test(fullParen) || /^\((\d+|\(.+\))\s*[+*\/<>=]+\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -1128,7 +1156,7 @@ class HaskishInterpreter {
             }
         }
 
-        throw new Error(`Cannot evaluate expression: ${expr}`);
+        throw new Error(`Cannot evaluate expression: "${expr}"`);
     }
 
     // Helper to split expression by operator
@@ -1182,7 +1210,8 @@ class HaskishInterpreter {
                 }
                 
                 if (matches) {
-                    parts.push(expr.slice(lastSplit, i).trim());
+                    const part = expr.slice(lastSplit, i).trim();
+                    if (part) parts.push(part);  // Only push non-empty parts
                     lastSplit = i + op.length;
                     i += op.length - 1; // Skip past the operator (loop will increment)
                 }
@@ -1190,7 +1219,8 @@ class HaskishInterpreter {
         }
 
         if (parts.length > 0) {
-            parts.push(expr.slice(lastSplit).trim());
+            const lastPart = expr.slice(lastSplit).trim();
+            if (lastPart) parts.push(lastPart);  // Only push non-empty parts
         }
 
         return parts.length > 1 ? parts : [expr];
@@ -1213,11 +1243,27 @@ class HaskishInterpreter {
             return this.createPartialOperatorFunction(op, null, parseFloat(num));
         }
         
+        // Left section with parenthesized expression like (+(..))
+        const leftParenMatch = section.match(/^\(([+*\/<>=]+)\s*(\(.+\))\)$/);
+        if (leftParenMatch) {
+            const [, op, parenExpr] = leftParenMatch;
+            const evaluatedValue = this.evaluate(parenExpr);
+            return this.createPartialOperatorFunction(op, null, evaluatedValue);
+        }
+        
         // Right section like (10+), (5*) but not (-10)
         const rightMatch = section.match(/^\((\d+)\s*([+*\/<>=]+)\)$/);  // Removed -
         if (rightMatch) {
             const [, num, op] = rightMatch;
             return this.createPartialOperatorFunction(op, parseFloat(num), null);
+        }
+        
+        // Right section with parenthesized expression like ((..)+)
+        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/<>=]+)\)$/);
+        if (rightParenMatch) {
+            const [, parenExpr, op] = rightParenMatch;
+            const evaluatedValue = this.evaluate(parenExpr);
+            return this.createPartialOperatorFunction(op, evaluatedValue, null);
         }
         
         return section;
