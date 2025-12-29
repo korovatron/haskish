@@ -1038,16 +1038,16 @@ footer a:hover {
     color: var(--primary-color);
 }
 
-#closeExercise {
-    padding: 0.3rem 0.7rem;
-    font-size: 1.2rem;
-    line-height: 1;
+#closeExercise,
+#toggleExercisePanel {
+    min-width: 32px;
+    padding: 4px 8px;
 }
 
-/* Responsive design for exercises */
-@media (max-width: 768px) {
-    .exercises-section {
-        margin: 0;
+#toggleHints {
+    min-width: 32px;
+    padding: 4px 8px;
+}
     }
 
     .exercises-header {
