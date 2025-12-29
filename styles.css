@@ -468,6 +468,8 @@ header h1 {
     background-color: var(--repl-bg);
     border-radius: 5px;
     margin-bottom: 15px;
+    user-select: text;
+    -webkit-user-select: text;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     transition: background-color 0.3s ease;

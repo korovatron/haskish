@@ -448,7 +448,28 @@ class HaskishInterpreter {
                     if (expr[j] === ')') depth--;
                     j++;
                 }
-                const parenContent = expr.slice(i + 1, j - 1);
+                const parenContent = expr.slice(i + 1, j - 1).trim();
+                
+                // Check for unary negation: (-x) where x is just an identifier
+                // This transforms (-x) to (0 - x) to handle unary minus
+                if (parenContent.startsWith('-') && parenContent.length > 1) {
+                    const afterMinus = parenContent.slice(1).trim();
+                    // Only transform if:
+                    // 1. Not a number literal
+                    // 2. Not an arrow (->)
+                    // 3. Just a simple identifier (no operators or spaces after)
+                    const isSimpleId = /^[a-zA-Z_]\w*$/.test(afterMinus);
+                    const isNestedParen = afterMinus.startsWith('(');
+                    
+                    if (!afterMinus.startsWith('>') && (isSimpleId || isNestedParen)) {
+                        // Transform (-x) to (0 - x) or (-(...)) to (0 - (...))
+                        const transformedContent = '0 - ' + afterMinus;
+                        tokens.push({ type: 'paren', value: transformedContent });
+                        i = j;
+                        continue;
+                    }
+                }
+                
                 // Check if it's a lambda expression (-> at top level, not in nested parens/brackets)
                 let isLambda = false;
                 let checkDepth = 0;
@@ -829,9 +850,9 @@ class HaskishInterpreter {
             return parseFloat(expr);
         }
 
-        // Operator sections like (<10) or (+)
-        const opSectionMatch = expr.match(/^\(([+\-*\/<>=&|]+)\s*(\d+)?\)$/) || 
-                               expr.match(/^\((\d+)\s*([+\-*\/<>=&|]+)\)$/);
+        // Operator sections like (<10) or (+) but not negative numbers
+        const opSectionMatch = expr.match(/^\(([+*\/<>=&|]+)\s*(\d+)?\)$/) || 
+                               expr.match(/^\((\d+)\s*([+*\/<>=&|]+)\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
         }
@@ -1063,19 +1084,22 @@ class HaskishInterpreter {
     // Create operator section function
     createOperatorSection(section) {
         // Match patterns like (*), (+), (<10), (10+), etc.
-        const opOnlyMatch = section.match(/^\(([+\-*\/<>=]+)\)$/);
+        // But NOT negative numbers like (-5) which could be (0 - 5) evaluated
+        const opOnlyMatch = section.match(/^\(([+*\/<>=]+)\)$/);  // Removed - from here
         if (opOnlyMatch) {
             const op = opOnlyMatch[1];
             return this.createOperatorFunction(op);
         }
         
-        const leftMatch = section.match(/^\(([+\-*\/<>=]+)\s*(\d+)\)$/);
+        // Left section like (<10), (>5), (*2) but not (- or (-5)
+        const leftMatch = section.match(/^\(([+*\/<>=]+)\s*(\d+)\)$/);  // Removed -
         if (leftMatch) {
             const [, op, num] = leftMatch;
             return this.createPartialOperatorFunction(op, null, parseFloat(num));
         }
         
-        const rightMatch = section.match(/^\((\d+)\s*([+\-*\/<>=]+)\)$/);
+        // Right section like (10+), (5*) but not (-10)
+        const rightMatch = section.match(/^\((\d+)\s*([+*\/<>=]+)\)$/);  // Removed -
         if (rightMatch) {
             const [, num, op] = rightMatch;
             return this.createPartialOperatorFunction(op, parseFloat(num), null);
