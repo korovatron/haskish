@@ -3,6 +3,7 @@
   "short_name": "Haskish",
   "description": "Free online Haskell-style functional programming playground for AQA A Level Computer Science",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#1e1e1e",
   "theme_color": "#7c3aed",
