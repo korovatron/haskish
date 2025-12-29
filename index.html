@@ -209,44 +209,21 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=50')
+                navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('Service Worker registered successfully:', registration.scope);
                         
-                        // Force update check immediately
+                        // Check for updates on load
                         registration.update();
                         
-                        // Check for updates every 10 seconds (more frequent for testing)
+                        // Check for updates periodically
                         setInterval(() => {
                             registration.update();
-                        }, 10000);
-                        
-                        // Listen for updates
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            console.log('New service worker found, installing...');
-                            newWorker.addEventListener('statechange', () => {
-                                console.log('Service worker state:', newWorker.state);
-                                if (newWorker.state === 'activated' && !navigator.serviceWorker.controller) {
-                                    console.log('New version activated! Reloading...');
-                                    window.location.reload();
-                                }
-                            });
-                        });
+                        }, 60000);
                     })
                     .catch(error => {
                         console.log('Service Worker registration failed:', error);
                     });
-                    
-                // Reload page when new service worker takes control
-                let refreshing = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
-                        console.log('Controller changed, reloading...');
-                        refreshing = true;
-                        window.location.reload();
-                    }
-                });
             });
         }
     </script>

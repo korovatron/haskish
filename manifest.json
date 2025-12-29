@@ -1,9 +1,10 @@
 {
+  "id": "haskish-functional-playground",
   "name": "Haskish - A Level Functional Programming Playground",
   "short_name": "Haskish",
   "description": "Free online Haskell-style functional programming playground for AQA A Level Computer Science",
-  "start_url": "./index.html?v=50",
-  "scope": "./",
+  "start_url": "./index.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#1e1e1e",
   "theme_color": "#7c3aed",
