@@ -664,27 +664,6 @@ footer a:hover {
     color: #e0e0e0;
 }
 
-.theme-toggle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--secondary-color);
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.theme-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
 /* Responsive Design */
 @media (max-width: 968px) {
     .main-content {

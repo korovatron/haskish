@@ -615,29 +615,6 @@ mergeSort xs = merge (mergeSort (splitFirst xs)) (mergeSort (splitSecond xs))</c
 
 };
 
-// Theme toggle functionality
-function initTheme() {
-    const themeToggle = document.getElementById('themeToggle');
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-    
-    themeToggle.addEventListener('click', () => {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeIcon(newTheme);
-    });
-}
-
-function updateThemeIcon(theme) {
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
-}
-
 // Global variables for editor state
 let currentExerciseId = null;
 let codeEditor = null;
@@ -645,8 +622,6 @@ let replEditor = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    
     const runCodeBtn = document.getElementById('runCode');
     const editorOutput = document.getElementById('editorOutput');
     const replOutput = document.getElementById('replOutput');
@@ -781,31 +756,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    const themeToggle = document.getElementById('themeToggle');
-    const originalThemeToggle = themeToggle.onclick;
-    themeToggle.addEventListener('click', () => {
-        setTimeout(() => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'eclipse' : 'monokai';
-            codeEditor.setOption('theme', newTheme);
-            replEditor.setOption('theme', newTheme);
-            
-            // Update all existing REPL output syntax highlighting
-            const themeClass = currentTheme === 'light' ? 'cm-s-eclipse' : 'cm-s-monokai';
-            const oldThemeClass = currentTheme === 'light' ? 'cm-s-monokai' : 'cm-s-eclipse';
-            
-            document.querySelectorAll('.repl-input-code, .repl-output-code').forEach(el => {
-                el.classList.remove(oldThemeClass);
-                el.classList.add(themeClass);
-            });
-        }, 0);
-    });
-    
-    // Set initial theme
-    const initialTheme = document.documentElement.getAttribute('data-theme');
-    const initialEditorTheme = initialTheme === 'light' ? 'eclipse' : 'monokai';
-    codeEditor.setOption('theme', initialEditorTheme);
-    replEditor.setOption('theme', initialEditorTheme);
+    // Set CodeMirror editors to dark theme (monokai)
+    codeEditor.setOption('theme', 'monokai');
+    replEditor.setOption('theme', 'monokai');
 
     // Auto-save on code change (debounced)
     let saveTimeout;
@@ -987,16 +940,8 @@ function initExercises() {
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
             if (confirm('Are you sure you want to reset all progress and clear all saved work? This cannot be undone.')) {
-                // Save theme preference before clearing
-                const currentTheme = localStorage.getItem('theme');
-                
                 // Clear all localStorage data
                 localStorage.clear();
-                
-                // Restore theme preference
-                if (currentTheme) {
-                    localStorage.setItem('theme', currentTheme);
-                }
                 
                 // Reload the page to reset everything
                 location.reload();
