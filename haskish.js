@@ -645,8 +645,8 @@ class HaskishInterpreter {
         let depth = 0;
 
         for (let char of listStr) {
-            if (char === '[') depth++;
-            if (char === ']') depth--;
+            if (char === '[' || char === '(') depth++;
+            if (char === ']' || char === ')') depth--;
             
             if (char === ',' && depth === 0) {
                 elements.push(this.evaluate(current.trim()));
