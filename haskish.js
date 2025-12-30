@@ -2,15 +2,16 @@
 
 // Class to represent a lambda function
 class Lambda {
-    constructor(param, body, interpreter) {
+    constructor(param, body, interpreter, closure = {}) {
         this.param = param;
         this.body = body;
         this.interpreter = interpreter;
+        this.closure = closure; // Captured environment for closures
     }
 
     apply(arg) {
-        // Create a binding for the parameter
-        const bindings = { [this.param]: arg };
+        // Create a binding for the parameter, merging with captured closure
+        const bindings = { ...this.closure, [this.param]: arg };
         return this.interpreter.evaluateWithBindings(this.body, bindings);
     }
 
@@ -948,7 +949,15 @@ class HaskishInterpreter {
                 result = result.replace(varRegex, replacement);
             }
             
-            return this.evaluate(result);
+            const evalResult = this.evaluate(result);
+            
+            // If the result is a Lambda, capture the current bindings as its closure
+            if (evalResult instanceof Lambda && Object.keys(bindings).length > 0) {
+                // Create a new Lambda with captured bindings
+                return new Lambda(evalResult.param, evalResult.body, this, bindings);
+            }
+            
+            return evalResult;
         } finally {
             // Restore original variables
             for (let varName of Object.keys(tempVars)) {
@@ -1199,6 +1208,7 @@ class HaskishInterpreter {
                         for (let i = params.length - 1; i > 0; i--) {
                             bodyStr = `\\${params[i]} -> ${bodyStr}`;
                         }
+                        // Note: No closure here - lambdas as direct arguments don't need to capture outer scope
                         return new Lambda(params[0], bodyStr, this);
                     }
                     throw new Error(`Invalid lambda syntax: ${token.value}`);
