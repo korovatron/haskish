@@ -547,65 +547,6 @@ header h1 {
     margin: 0 4px;
 }
 
-/* Module-specific border colors */
-/* Module 1: Exercises 1-5 */
-.exercise-btn[data-exercise="1"],
-.exercise-btn[data-exercise="2"],
-.exercise-btn[data-exercise="3"],
-.exercise-btn[data-exercise="4"],
-.exercise-btn[data-exercise="5"] {
-    border-color: var(--module1-color);
-}
-
-/* Module 2: Exercises 6-9 */
-.exercise-btn[data-exercise="6"],
-.exercise-btn[data-exercise="7"],
-.exercise-btn[data-exercise="8"],
-.exercise-btn[data-exercise="9"] {
-    border-color: var(--module2-color);
-}
-
-/* Module 3: Exercises 10-20 */
-.exercise-btn[data-exercise="10"],
-.exercise-btn[data-exercise="11"],
-.exercise-btn[data-exercise="12"],
-.exercise-btn[data-exercise="13"],
-.exercise-btn[data-exercise="14"],
-.exercise-btn[data-exercise="15"],
-.exercise-btn[data-exercise="16"],
-.exercise-btn[data-exercise="17"],
-.exercise-btn[data-exercise="18"],
-.exercise-btn[data-exercise="19"],
-.exercise-btn[data-exercise="20"] {
-    border-color: var(--module3-color);
-}
-
-/* Module 4: Exercises 21-26 */
-.exercise-btn[data-exercise="21"],
-.exercise-btn[data-exercise="22"],
-.exercise-btn[data-exercise="23"],
-.exercise-btn[data-exercise="24"],
-.exercise-btn[data-exercise="25"],
-.exercise-btn[data-exercise="26"] {
-    border-color: var(--module4-color);
-}
-
-/* Module 5: Exercises 27-31 */
-.exercise-btn[data-exercise="27"],
-.exercise-btn[data-exercise="28"],
-.exercise-btn[data-exercise="29"],
-.exercise-btn[data-exercise="30"],
-.exercise-btn[data-exercise="31"] {
-    border-color: var(--module5-color);
-}
-
-/* Module 6: Exercises 32-34 */
-.exercise-btn[data-exercise="32"],
-.exercise-btn[data-exercise="33"],
-.exercise-btn[data-exercise="34"] {
-    border-color: var(--module6-color);
-}
-
 /* Code and REPL side by side */
 .panel {
     background: var(--panel-bg);
@@ -1454,9 +1395,9 @@ footer a:hover {
 
 /* Exercise Content Panel */
 .exercise-content-panel {
-    border-left: 4px solid var(--primary-color);
     overflow-y: auto;
     flex: 1;
+    border-top: 2px solid var(--border-color);
 }
 
 
