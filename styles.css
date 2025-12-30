@@ -752,10 +752,10 @@ footer a:hover {
     
     /* Adjust header for mobile with safe areas */
     header {
-        padding: 8px 15px;
-        padding-top: calc(8px + var(--safe-area-top, 0px));
-        padding-left: max(15px, var(--safe-area-left, 0px));
-        padding-right: max(15px, var(--safe-area-right, 0px));
+        padding: 8px 15px !important;
+        padding-top: calc(8px + var(--safe-area-top, 0px)) !important;
+        padding-left: max(15px, var(--safe-area-left, 0px)) !important;
+        padding-right: max(15px, var(--safe-area-right, 0px)) !important;
     }
     
     .main-content {
