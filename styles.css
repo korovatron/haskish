@@ -775,7 +775,7 @@ footer a:hover {
     /* Function and REPL columns take full viewport height */
     .definitions-column,
     .repl-column {
-        height: calc((100vh - 50px) / 2) !important; /* Account for smaller mobile header */
+        height: calc((100vh - 50px - var(--safe-area-top, 0px)) / 2) !important; /* Account for header + safe area */
         flex-shrink: 0;
         overflow: hidden;
     }
