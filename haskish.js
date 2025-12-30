@@ -760,19 +760,23 @@ class HaskishInterpreter {
             const headPatTrimmed = headPat.trim();
             const tailPatTrimmed = tailPat.trim();
             
+            // Recursively match the head pattern (could be a tuple or nested pattern)
+            const headMatch = this.matchPattern(headPatTrimmed, value[0]);
+            if (headMatch === null) return null;
+            
             // Check if tail pattern is another cons pattern
             if (tailPatTrimmed.includes(':')) {
                 // Recursively match the tail pattern with the rest of the list
                 const tailMatch = this.matchPattern('(' + tailPatTrimmed + ')', value.slice(1));
                 if (tailMatch === null) return null;
                 return {
-                    [headPatTrimmed]: value[0],
+                    ...headMatch,
                     ...tailMatch
                 };
             } else {
                 // Simple case: just head and tail variable
                 return {
-                    [headPatTrimmed]: value[0],
+                    ...headMatch,
                     [tailPatTrimmed]: value.slice(1)
                 };
             }
