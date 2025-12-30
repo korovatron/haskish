@@ -27,12 +27,18 @@ function openMenu() {
     menuPanel.classList.add('open');
     menuOverlay.classList.add('visible');
     document.body.style.overflow = 'hidden';
+    // Prevent scroll on iOS
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
 }
 
 function closeMenuFunc() {
     menuPanel.classList.remove('open');
     menuOverlay.classList.remove('visible');
     document.body.style.overflow = '';
+    // Restore scroll on iOS
+    document.body.style.position = '';
+    document.body.style.width = '';
 }
 
 menuToggle.addEventListener('click', openMenu);
