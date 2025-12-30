@@ -7,6 +7,28 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
     document.body.classList.add('standalone-mode');
 }
 
+// Hamburger menu toggle
+const menuToggle = document.getElementById('menuToggle');
+const menuPanel = document.getElementById('menuPanel');
+const menuOverlay = document.getElementById('menuOverlay');
+const closeMenu = document.getElementById('closeMenu');
+
+function openMenu() {
+    menuPanel.classList.add('open');
+    menuOverlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMenuFunc() {
+    menuPanel.classList.remove('open');
+    menuOverlay.classList.remove('visible');
+    document.body.style.overflow = '';
+}
+
+menuToggle.addEventListener('click', openMenu);
+closeMenu.addEventListener('click', closeMenuFunc);
+menuOverlay.addEventListener('click', closeMenuFunc);
+
 // Toggle exercises column
 document.getElementById('toggleExercises').addEventListener('click', function() {
     const exercisesColumn = document.getElementById('exercisesColumn');
@@ -17,12 +39,53 @@ document.getElementById('toggleExercises').addEventListener('click', function() 
         exercisesColumn.style.display = 'none';
         mainContent.classList.remove('exercises-visible');
         document.body.classList.remove('exercises-visible');
-        this.textContent = 'Exercises';
     } else {
         exercisesColumn.style.display = 'flex';
         mainContent.classList.add('exercises-visible');
         document.body.classList.add('exercises-visible');
-        this.textContent = 'Hide Exercises';
+    }
+    
+    // Close menu after toggling
+    closeMenuFunc();
+});
+
+// Built-in Functions overlay
+const builtinsButton = document.getElementById('builtinsButton');
+const builtinsOverlay = document.getElementById('builtinsOverlay');
+const closeBuiltins = document.getElementById('closeBuiltins');
+
+builtinsButton.addEventListener('click', function() {
+    builtinsOverlay.classList.add('visible');
+    closeMenuFunc();
+});
+
+closeBuiltins.addEventListener('click', function() {
+    builtinsOverlay.classList.remove('visible');
+});
+
+builtinsOverlay.addEventListener('click', function(e) {
+    if (e.target === builtinsOverlay) {
+        builtinsOverlay.classList.remove('visible');
+    }
+});
+
+// About overlay
+const aboutButton = document.getElementById('aboutButton');
+const aboutOverlay = document.getElementById('aboutOverlay');
+const closeAbout = document.getElementById('closeAbout');
+
+aboutButton.addEventListener('click', function() {
+    aboutOverlay.classList.add('visible');
+    closeMenuFunc();
+});
+
+closeAbout.addEventListener('click', function() {
+    aboutOverlay.classList.remove('visible');
+});
+
+aboutOverlay.addEventListener('click', function(e) {
+    if (e.target === aboutOverlay) {
+        aboutOverlay.classList.remove('visible');
     }
 });
 

@@ -99,9 +99,12 @@ class HaskishInterpreter {
                 }
                 return list.reduce((accumulator, item) => {
                     if (fn instanceof Lambda) {
-                        // For fold, lambda needs 2 params - we'd need multi-param lambdas
-                        // For now, treat single-param lambda as taking accumulator
-                        return fn.apply(accumulator);
+                        // Multi-parameter lambdas are curried: apply accumulator, then item
+                        const step1 = fn.apply(accumulator);
+                        if (step1 instanceof Lambda) {
+                            return step1.apply(item);
+                        }
+                        return step1;
                     }
                     if (fn instanceof PartialFunction) {
                         return fn.apply([accumulator, item]);
@@ -1182,10 +1185,20 @@ class HaskishInterpreter {
                 if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
-                    const lambdaMatch = token.value.match(/^\\?(\w+)\s*->\s*(.+)$/);
+                    // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
+                    const lambdaMatch = token.value.match(/^\\?([\w\s]+)\s*->\s*(.+)$/);
                     if (lambdaMatch) {
-                        const [, param, body] = lambdaMatch;
-                        return new Lambda(param, body.trim(), this);
+                        const [, paramsStr, body] = lambdaMatch;
+                        const params = paramsStr.trim().split(/\s+/);
+                        
+                        // Create nested lambdas for multi-parameter functions
+                        // \acc x -> acc + x becomes \acc -> (\x -> acc + x)
+                        // Build the body string from inside out
+                        let bodyStr = body.trim();
+                        for (let i = params.length - 1; i > 0; i--) {
+                            bodyStr = `\\${params[i]} -> ${bodyStr}`;
+                        }
+                        return new Lambda(params[0], bodyStr, this);
                     }
                     throw new Error(`Invalid lambda syntax: ${token.value}`);
                 }
