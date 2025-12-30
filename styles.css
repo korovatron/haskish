@@ -780,6 +780,12 @@ footer a:hover {
         overflow: hidden;
     }
     
+    /* In browser mode (not standalone PWA), reduce height to account for Safari chrome */
+    body:not(.standalone-mode) .definitions-column,
+    body:not(.standalone-mode) .repl-column {
+        height: calc((100vh - 100px - var(--safe-area-top, 0px)) / 2) !important; /* Extra space for browser chrome */
+    }
+    
     /* Exercises column goes below - scrollable */
     .exercises-column {
         height: auto !important;

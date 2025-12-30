@@ -2,6 +2,11 @@
 
 const interpreter = new HaskishInterpreter();
 
+// Detect if running in standalone mode (PWA) vs browser
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    document.body.classList.add('standalone-mode');
+}
+
 // Toggle exercises column
 document.getElementById('toggleExercises').addEventListener('click', function() {
     const exercisesColumn = document.getElementById('exercisesColumn');
