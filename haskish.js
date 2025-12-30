@@ -752,33 +752,49 @@ class HaskishInterpreter {
             return Array.isArray(value) && value.length === 0 ? {} : null;
         }
 
-        // List destructuring (x:xs) - handle nested patterns like (x:y:xs)
-        const consMatch = pattern.match(/^\((.+?):(.+)\)$/);
-        if (consMatch) {
-            if (!Array.isArray(value) || value.length === 0) return null;
-            const [, headPat, tailPat] = consMatch;
-            const headPatTrimmed = headPat.trim();
-            const tailPatTrimmed = tailPat.trim();
+        // List destructuring (x:xs) - handle nested patterns like (x:y:xs) or ((x,y):rest)
+        if (pattern.startsWith('(') && pattern.endsWith(')')) {
+            const inner = pattern.slice(1, -1);
             
-            // Recursively match the head pattern (could be a tuple or nested pattern)
-            const headMatch = this.matchPattern(headPatTrimmed, value[0]);
-            if (headMatch === null) return null;
+            // Find the cons operator (:) at depth 0
+            let depth = 0;
+            let consIndex = -1;
+            for (let i = 0; i < inner.length; i++) {
+                if (inner[i] === '(' || inner[i] === '[') depth++;
+                if (inner[i] === ')' || inner[i] === ']') depth--;
+                if (inner[i] === ':' && depth === 0) {
+                    consIndex = i;
+                    break;
+                }
+            }
             
-            // Check if tail pattern is another cons pattern
-            if (tailPatTrimmed.includes(':')) {
-                // Recursively match the tail pattern with the rest of the list
-                const tailMatch = this.matchPattern('(' + tailPatTrimmed + ')', value.slice(1));
-                if (tailMatch === null) return null;
-                return {
-                    ...headMatch,
-                    ...tailMatch
-                };
-            } else {
-                // Simple case: just head and tail variable
-                return {
-                    ...headMatch,
-                    [tailPatTrimmed]: value.slice(1)
-                };
+            // If we found a cons operator, this is a list pattern
+            if (consIndex !== -1) {
+                if (!Array.isArray(value) || value.length === 0) return null;
+                
+                const headPat = inner.slice(0, consIndex).trim();
+                const tailPat = inner.slice(consIndex + 1).trim();
+                
+                // Recursively match the head pattern (could be a tuple or nested pattern)
+                const headMatch = this.matchPattern(headPat, value[0]);
+                if (headMatch === null) return null;
+                
+                // Check if tail pattern is another cons pattern
+                if (tailPat.includes(':')) {
+                    // Recursively match the tail pattern with the rest of the list
+                    const tailMatch = this.matchPattern('(' + tailPat + ')', value.slice(1));
+                    if (tailMatch === null) return null;
+                    return {
+                        ...headMatch,
+                        ...tailMatch
+                    };
+                } else {
+                    // Simple case: just head and tail variable
+                    return {
+                        ...headMatch,
+                        [tailPat]: value.slice(1)
+                    };
+                }
             }
         }
 
