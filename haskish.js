@@ -154,6 +154,12 @@ class HaskishInterpreter {
             'div': (a, b) => {
                 return Math.floor(a / b);
             },
+            'min': (a, b) => {
+                return a < b ? a : b;
+            },
+            'max': (a, b) => {
+                return a > b ? a : b;
+            },
             'compose': (g, f) => {
                 // Function composition: (g . f) x = g(f(x))
                 const interpreter = this;
@@ -801,6 +807,10 @@ class HaskishInterpreter {
             if (args.length < builtinFn.length) {
                 // Return a partially applied function
                 return new PartialFunction(funcName, args, this);
+            }
+            // Check if too many arguments provided
+            if (args.length > builtinFn.length) {
+                throw new Error(`Function '${funcName}' expects ${builtinFn.length} argument${builtinFn.length === 1 ? '' : 's'}, but got ${args.length}`);
             }
             return builtinFn(...args);
         }
