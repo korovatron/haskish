@@ -732,7 +732,7 @@ footer a:hover {
     
     .main-container {
         overflow: visible;
-        min-height: calc(100vh - 50px); /* Minimum height minus smaller header */
+        min-height: calc(100vh - env(safe-area-inset-top) - 50px); /* Account for safe area + header */
     }
     
     /* Show mobile text, hide desktop text */
@@ -742,6 +742,14 @@ footer a:hover {
     
     .mobile-text {
         display: inline;
+    }
+    
+    /* Adjust header for mobile with safe areas */
+    header {
+        padding: 8px 15px;
+        padding-top: calc(8px + env(safe-area-inset-top));
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
     }
     
     .main-content {
