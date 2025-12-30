@@ -1275,16 +1275,6 @@ class HaskishInterpreter {
                     }
                 }
                 
-                // Don't split if operator is surrounded by identifier characters (letters/digits/_)
-                // This prevents splitting identifiers like "multiple3or5" when looking for operators
-                if (matches) {
-                    const prevChar = i > 0 ? expr[i - 1] : '';
-                    const nextChar = i + op.length < expr.length ? expr[i + op.length] : '';
-                    if (/[a-zA-Z0-9_]/.test(prevChar) || /[a-zA-Z0-9_]/.test(nextChar)) {
-                        matches = false;
-                    }
-                }
-                
                 if (matches) {
                     const part = expr.slice(lastSplit, i).trim();
                     if (part) parts.push(part);  // Only push non-empty parts
