@@ -1100,7 +1100,12 @@ class HaskishInterpreter {
                 if (a && a._isTuple && b && b._isTuple) {
                     if (a.elements.length !== b.elements.length) return true;
                     for (let i = 0; i < a.elements.length; i++) {
-                        if (a.elements[i] != b.elements[i]) return true;
+                        // Recursively check each element
+                        const elementsEqual = (() => {
+                            const equalOp = binaryOps.find(op => op.op === '==');
+                            return equalOp.fn(a.elements[i], b.elements[i]);
+                        })();
+                        if (!elementsEqual) return true;
                     }
                     return false;
                 }
@@ -1124,7 +1129,12 @@ class HaskishInterpreter {
                 if (a && a._isTuple && b && b._isTuple) {
                     if (a.elements.length !== b.elements.length) return false;
                     for (let i = 0; i < a.elements.length; i++) {
-                        if (a.elements[i] != b.elements[i]) return false;
+                        // Recursively check each element
+                        const elementsEqual = (() => {
+                            const equalOp = binaryOps.find(op => op.op === '==');
+                            return equalOp.fn(a.elements[i], b.elements[i]);
+                        })();
+                        if (!elementsEqual) return false;
                     }
                     return true;
                 }
