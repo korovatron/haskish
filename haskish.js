@@ -968,12 +968,20 @@ class HaskishInterpreter {
             expr = expr.replace(/(?<![a-zA-Z_])(\d)([a-zA-Z_])/g, '$1*$2');
         }
 
-        // Boolean literals
-        if (expr === 'True' || expr === 'true') {
+        // Boolean literals (only capitalized versions - proper Haskell)
+        if (expr === 'True') {
             return true;
         }
-        if (expr === 'False' || expr === 'false') {
+        if (expr === 'False') {
             return false;
+        }
+        
+        // Helpful error messages for lowercase boolean literals
+        if (expr === 'true') {
+            throw new Error("Unknown identifier 'true'. Did you mean 'True'? In Haskell, boolean constructors must be capitalized.");
+        }
+        if (expr === 'false') {
+            throw new Error("Unknown identifier 'false'. Did you mean 'False'? In Haskell, boolean constructors must be capitalized.");
         }
 
         // Special handling for 'otherwise' keyword
