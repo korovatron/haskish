@@ -914,13 +914,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const text = await response.text();
             
-            // Parse sections separated by === markers
-            const sections = text.split(/===\s*(.+?)\s*===\n/);
+            // Parse sections separated by === markers (handle both \n and \r\n)
+            const sectionRegex = /===\s*(.+?)\s*===[\r\n]+/g;
+            const sections = [];
+            let match;
+            let lastIndex = 0;
             
-            // sections will be: ['', 'Section Name', 'content', 'Section Name 2', 'content2', ...]
-            for (let i = 1; i < sections.length; i += 2) {
-                const sectionName = sections[i].trim();
-                const sectionContent = sections[i + 1].trim();
+            while ((match = sectionRegex.exec(text)) !== null) {
+                const sectionName = match[1].trim();
+                const startIndex = match.index + match[0].length;
+                
+                // Find the next section or end of file
+                const nextMatch = sectionRegex.exec(text);
+                const endIndex = nextMatch ? nextMatch.index : text.length;
+                
+                // Reset regex for next iteration
+                sectionRegex.lastIndex = endIndex;
+                
+                const sectionContent = text.substring(startIndex, endIndex).trim();
                 exampleSections[sectionName] = sectionContent;
             }
             
