@@ -1001,7 +1001,6 @@ footer a:hover {
     
     .column {
         border-right: none;
-        border-bottom: none;
     }
     
     /* Function and REPL columns take full viewport height */
@@ -1010,6 +1009,11 @@ footer a:hover {
         height: calc((100vh - 50px - var(--safe-area-top, 0px)) / 2) !important; /* Account for header + safe area */
         flex-shrink: 0;
         overflow: hidden;
+    }
+    
+    /* Add visible divider between stacked panels */
+    .definitions-column {
+        border-top: 2px solid var(--border-color) !important;
     }
     
     /* In browser mode on iPad (not standalone PWA), reduce height to account for Safari chrome + tab bar */
