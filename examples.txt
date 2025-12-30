@@ -1,0 +1,350 @@
+=== Basic Functions ===
+-- Simple function
+double x = x * 2
+
+-- Multiple parameters
+add x y = x + y
+
+-- Implicit multiplication (3x becomes 3*x)
+triple x = 3x
+
+-- Tests:
+-- double 5  → 10
+-- add 3 4   → 7
+-- triple 6  → 18
+
+=== Pattern Matching ===
+-- Pattern match on specific values
+factorial 0 = 1
+factorial 1 = 1
+factorial n = n * factorial (n - 1)
+
+-- Pattern match with multiple cases
+describe 0 = "zero"
+describe 1 = "one"
+describe n = "many"
+
+-- Tests:
+-- factorial 5  → 120
+-- describe 0   → "zero"
+-- describe 42  → "many"
+
+=== Guards ===
+-- Guards with otherwise
+absolute n
+  | n < 0     = -n
+  | otherwise = n
+
+-- Multiple guard conditions
+classify n
+  | n < 0     = "negative"
+  | n == 0    = "zero"
+  | n > 0     = "positive"
+
+-- Guards with pattern matching
+sign 0 = 0
+sign n
+  | n > 0     = 1
+  | otherwise = -1
+
+-- Tests:
+-- absolute (-5)     → 5
+-- classify (-3)     → "negative"
+-- sign 42           → 1
+
+=== List Operations ===
+-- Empty list and cons pattern
+myLength [] = 0
+myLength (x:xs) = 1 + myLength xs
+
+-- Multiple elements
+firstTwo (x:y:xs) = (x, y)
+
+-- Specific patterns
+sumTwo [x, y] = x + y
+
+-- Cons operator
+prependOne xs = 1:xs
+
+-- Concatenation
+joinLists xs ys = xs ++ ys
+
+-- List indexing
+thirdElement xs = xs !! 2
+
+-- Range generation
+oneToTen = [1..10]
+evens = [2,4..20]
+
+-- Tests:
+-- myLength [1,2,3,4]          → 4
+-- firstTwo [10,20,30]         → (10,20)
+-- prependOne [2,3,4]          → [1,2,3,4]
+-- joinLists [1,2] [3,4]       → [1,2,3,4]
+-- thirdElement [10,20,30,40]  → 30
+-- oneToTen                    → [1,2,3,4,5,6,7,8,9,10]
+
+=== Recursion ===
+-- Process all elements
+doubleAll [] = []
+doubleAll (x:xs) = (2*x) : doubleAll xs
+
+-- Filter with recursion
+positives [] = []
+positives (x:xs)
+  | x > 0     = x : positives xs
+  | otherwise = positives xs
+
+-- Accumulator pattern
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+-- Fibonacci sequence
+fib 0 = 0
+fib 1 = 1
+fib n = fib (n-1) + fib (n-2)
+
+-- Tests:
+-- doubleAll [1,2,3]      → [2,4,6]
+-- positives [-1,2,-3,4]  → [2,4]
+-- sumList [1,2,3,4]      → 10
+-- fib 10                 → 55
+
+=== Higher-Order Functions ===
+-- map examples
+doubleMap xs = map (\x -> x * 2) xs
+squareMap xs = map (\x -> x * x) xs
+
+-- filter examples
+bigNumbers xs = filter (\x -> x > 10) xs
+evensOnly xs = filter (\x -> mod x 2 == 0) xs
+
+-- fold examples
+product xs = fold (\acc x -> acc * x) 1 xs
+sumAll xs = fold (\acc x -> acc + x) 0 xs
+
+-- Combining higher-order functions
+sumOfSquares xs = fold (\acc x -> acc + x) 0 (map (\x -> x * x) xs)
+
+-- Tests:
+-- doubleMap [1,2,3]          → [2,4,6]
+-- bigNumbers [5,15,3,20,8]   → [15,20]
+-- evensOnly [1,2,3,4,5,6]    → [2,4,6]
+-- product [1,2,3,4]          → 24
+-- sumOfSquares [1,2,3]       → 14
+
+=== Lambdas & Composition ===
+-- Lambda with map
+squareAll xs = map (\x -> x * x) xs
+
+-- Lambda with filter
+evensOnly xs = filter (\x -> mod x 2 == 0) xs
+
+-- Lambda with fold
+sumAll xs = fold (\acc x -> acc + x) 0 xs
+
+-- Function Composition
+addOne x = x + 1
+timesTwo x = x * 2
+addThenDouble = timesTwo . addOne
+
+-- Multiple compositions
+tripleCompose = (\x -> x + 1) . (\x -> x * 2) . (\x -> x - 3)
+
+-- Partial Application (Currying)
+multiply x y = x * y
+timesTen = multiply 10
+
+-- Operator sections
+increment = (+1)
+halve = (/2)
+isPositive = (>0)
+
+-- Tests:
+-- squareAll [1,2,3,4]     → [1,4,9,16]
+-- evensOnly [1,2,3,4,5,6] → [2,4,6]
+-- addThenDouble 5         → 12
+-- tripleCompose 10        → 15
+-- timesTen 7              → 70
+-- increment 5             → 6
+-- halve 20                → 10
+
+=== Tuples ===
+-- Tuple creation
+point = (3, 5)
+triple = (1, "hello", True)
+
+-- Tuple pattern matching
+fst (x, y) = x
+snd (x, y) = y
+
+-- Tuples with guards
+distance (x1, y1) (x2, y2) = ((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+
+-- Compare tuples
+comparePoints (x1, y1) (x2, y2)
+  | x1 > x2 && y1 > y2 = "first dominates"
+  | x1 < x2 && y1 < y2 = "second dominates"
+  | x1 == x2 && y1 == y2 = "equal"
+  | otherwise = "incomparable"
+
+-- Nested tuples
+nested = ((1, 2), (3, 4))
+
+-- Lists of tuples
+points = [(0,0), (1,1), (2,4)]
+
+-- Tuples of lists
+segments = ([1,2,3], [4,5,6])
+
+-- Tuple processing
+sumPairs [] = []
+sumPairs ((x,y):rest) = (x+y) : sumPairs rest
+
+-- Tests:
+-- point                       → (3,5)
+-- fst (10,20)                 → 10
+-- comparePoints (5,3) (2,1)   → "first dominates"
+-- points                      → [(0,0),(1,1),(2,4)]
+-- sumPairs [(1,2),(3,4),(5,6)] → [3,7,11]
+
+=== Sorting Algorithms ===
+-- Bubble Sort
+bubblePass [] = []
+bubblePass [x] = [x]
+bubblePass (x:y:xs)
+  | x > y = y : bubblePass (x:xs)
+  | otherwise = x : bubblePass (y:xs)
+
+bubbleSortN 0 xs = xs
+bubbleSortN n xs = bubbleSortN (n - 1) (bubblePass xs)
+
+bubbleSort xs = bubbleSortN (length xs) xs
+
+-- QuickSort (note: without where clauses, using helper)
+qsort [] = []
+qsort (x:xs) = qsort (filter (\y -> y <= x) xs) ++ [x] ++ qsort (filter (\y -> y > x) xs)
+
+-- Merge two sorted lists
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys)
+  | x <= y = x : merge xs (y:ys)
+  | otherwise = y : merge (x:xs) ys
+
+-- Tests:
+-- bubbleSort [5,2,8,1,9]      → [1,2,5,8,9]
+-- bubbleSort [23,56,32,1,-56] → [-56,1,23,32,56]
+-- qsort [3,1,4,1,5,9,2,6]     → [1,1,2,3,4,5,6,9]
+-- merge [1,3,5] [2,4,6]       → [1,2,3,4,5,6]
+
+=== Prime Numbers ===
+-- Check if n is divisible by any number from d to sqrt(n)
+isDivisibleBy n d
+  | d * d > n = False
+  | mod n d == 0 = True
+  | otherwise = isDivisibleBy n (d + 1)
+
+-- Prime test
+isPrime n
+  | n < 2 = False
+  | n == 2 = True
+  | mod n 2 == 0 = False
+  | otherwise = not (isDivisibleBy n 3)
+
+-- Prime factorization (returns list of prime factors)
+primeFactors 1 = []
+primeFactors n = factorHelper n 2
+
+factorHelper 1 d = []
+factorHelper n d
+  | d * d > n = [n]
+  | mod n d == 0 = d : factorHelper (div n d) d
+  | otherwise = factorHelper n (d + 1)
+
+-- Sieve of Eratosthenes (primes up to n)
+sieve [] = []
+sieve (x:xs) = x : sieve (filter (\n -> mod n x /= 0) xs)
+
+primesUpTo n = sieve [2..n]
+
+-- Tests:
+-- isPrime 17                             → True
+-- isPrime 100                            → False
+-- primeFactors 60                        → [2,2,3,5]
+-- primeFactors 17                        → [17]
+-- primesUpTo 30                          → [2,3,5,7,11,13,17,19,23,29]
+-- map isPrime [2,3,4,5,6,7,8,9,10,11]    → [True,True,False,True,False,True,False,False,False,True]
+
+=== List Utilities ===
+-- Remove duplicates from a list
+elem x [] = False
+elem x (y:ys)
+  | x == y = True
+  | otherwise = elem x ys
+
+nub [] = []
+nub (x:xs)
+  | elem x xs = nub xs
+  | otherwise = x : nub xs
+
+-- Fixed-point iteration
+fixedPoint f x
+  | x == f x = x
+  | otherwise = fixedPoint f (f x)
+
+-- Digital root (repeatedly sum digits until single digit)
+sumDigits 0 = 0
+sumDigits n = mod n 10 + sumDigits (div n 10)
+
+digitalRoot n = fixedPoint sumDigits n
+
+-- Reverse using fold
+reverseList xs = fold (\acc x -> x : acc) [] xs
+
+-- Maximum element
+maxList [x] = x
+maxList (x:xs)
+  | x > maxList xs = x
+  | otherwise = maxList xs
+
+-- Tests:
+-- nub [1,2,3,2,4,1,5]                → [3,2,4,1,5]
+-- nub [[1,2], [3,4], [1,2], [5,6]]   → [[5,6],[3,4],[1,2]]
+-- digitalRoot 38                     → 2
+-- digitalRoot 123                    → 6
+-- reverseList [1,2,3,4]              → [4,3,2,1]
+-- maxList [3,7,2,9,1]                → 9
+
+=== Built-in Functions ===
+-- head and tail
+getFirst xs = head xs
+getRest xs = tail xs
+
+-- length and null
+isEmpty xs = null xs
+count xs = length xs
+
+-- reverse
+backwards xs = reverse xs
+
+-- take and drop
+firstThree xs = take 3 xs
+skipTwo xs = drop 2 xs
+
+-- Combining built-ins
+getMiddle xs = drop 1 (take (length xs - 1) xs)
+
+-- Using built-ins with operators
+lastElement xs = head (reverse xs)
+allButLast xs = reverse (tail (reverse xs))
+
+-- Tests:
+-- getFirst [1,2,3]          → 1
+-- getRest [1,2,3]           → [2,3]
+-- isEmpty []                → True
+-- backwards [1,2,3]         → [3,2,1]
+-- firstThree [1,2,3,4,5]    → [1,2,3]
+-- getMiddle [1,2,3,4,5]     → [2,3,4]
+-- lastElement [1,2,3,4,5]   → 5
+-- allButLast [1,2,3,4,5]    → [1,2,3,4]

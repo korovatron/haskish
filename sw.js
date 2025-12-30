@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-cache-v81';
+const CACHE_NAME = 'haskish-cache-v82';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -8,18 +8,7 @@ const ASSETS_TO_CACHE = [
     './manifest.json',
     './sw.js',
     './headerLogo.png',
-    './examples/01-basic-functions.txt',
-    './examples/02-pattern-matching.txt',
-    './examples/03-guards.txt',
-    './examples/04-list-operations.txt',
-    './examples/05-recursion.txt',
-    './examples/06-higher-order-functions.txt',
-    './examples/07-lambdas-composition.txt',
-    './examples/08-tuples.txt',
-    './examples/09-sorting-algorithms.txt',
-    './examples/10-prime-numbers.txt',
-    './examples/11-list-utilities.txt',
-    './examples/12-built-in-functions.txt',
+    './examples.txt',
     'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css',

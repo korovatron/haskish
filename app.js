@@ -903,38 +903,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const examplesToggle = document.getElementById('examplesToggle');
     const examplesSubmenu = document.getElementById('examplesSubmenu');
     
-    // List of example files (dynamically populated would be better, but hardcoding for simplicity)
-    const exampleFiles = [
-        '01-basic-functions.txt',
-        '02-pattern-matching.txt',
-        '03-guards.txt',
-        '04-list-operations.txt',
-        '05-recursion.txt',
-        '06-higher-order-functions.txt',
-        '07-lambdas-composition.txt',
-        '08-tuples.txt',
-        '09-sorting-algorithms.txt',
-        '10-prime-numbers.txt',
-        '11-list-utilities.txt',
-        '12-built-in-functions.txt'
-    ];
+    let exampleSections = {};
     
-    // Populate examples submenu
-    exampleFiles.forEach(filename => {
-        const button = document.createElement('button');
-        button.className = 'submenu-item';
-        // Convert filename to display name: "01-basic-functions.txt" -> "Basic Functions"
-        const displayName = filename
-            .replace(/^\d+-/, '')  // Remove leading number and dash
-            .replace('.txt', '')    // Remove extension
-            .replace(/-/g, ' ')     // Replace dashes with spaces
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))  // Capitalize
-            .join(' ');
-        button.textContent = displayName;
-        button.addEventListener('click', () => loadExample(filename));
-        examplesSubmenu.appendChild(button);
-    });
+    // Load and parse examples file
+    async function loadExamplesFile() {
+        try {
+            const response = await fetch('examples.txt');
+            if (!response.ok) {
+                throw new Error('Failed to load examples');
+            }
+            const text = await response.text();
+            
+            // Parse sections separated by === markers
+            const sections = text.split(/===\s*(.+?)\s*===\n/);
+            
+            // sections will be: ['', 'Section Name', 'content', 'Section Name 2', 'content2', ...]
+            for (let i = 1; i < sections.length; i += 2) {
+                const sectionName = sections[i].trim();
+                const sectionContent = sections[i + 1].trim();
+                exampleSections[sectionName] = sectionContent;
+            }
+            
+            // Populate submenu with section names
+            Object.keys(exampleSections).forEach(sectionName => {
+                const button = document.createElement('button');
+                button.className = 'submenu-item';
+                button.textContent = sectionName;
+                button.addEventListener('click', () => loadExampleSection(sectionName));
+                examplesSubmenu.appendChild(button);
+            });
+        } catch (error) {
+            console.error('Error loading examples:', error);
+            addSystemMessage(`✗ Error loading examples: ${error.message}`, 'error');
+        }
+    }
+    
+    // Load examples on page load
+    loadExamplesFile();
     
     // Toggle examples submenu
     examplesToggle.addEventListener('click', () => {
@@ -942,21 +947,14 @@ document.addEventListener('DOMContentLoaded', () => {
         examplesSubmenu.classList.toggle('expanded');
     });
     
-    // Load a specific example file
-    async function loadExample(filename) {
-        try {
-            const response = await fetch(`examples/${filename}`);
-            if (!response.ok) {
-                throw new Error(`Failed to load ${filename}`);
-            }
-            const text = await response.text();
-            codeEditor.setValue(text);
+    // Load a specific example section
+    function loadExampleSection(sectionName) {
+        const content = exampleSections[sectionName];
+        if (content) {
+            codeEditor.setValue(content);
             codeEditor.setCursor({ line: 0, ch: 0 });
-            const displayName = filename.replace(/^\d+-/, '').replace('.txt', '').replace(/-/g, ' ');
-            addSystemMessage(`✓ Loaded example: ${displayName}! Click "Run Code" to define the functions.`, 'result');
+            addSystemMessage(`✓ Loaded example: ${sectionName}! Click "Run Code" to define the functions.`, 'result');
             closeMenuFunc(); // Close menu after loading
-        } catch (error) {
-            addSystemMessage(`✗ Error loading example: ${error.message}`, 'error');
         }
     }
 
