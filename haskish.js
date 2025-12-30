@@ -1083,6 +1083,19 @@ class HaskishInterpreter {
             { op: '&&', fn: (a, b) => a && b },
             { op: '||', fn: (a, b) => a || b },
             { op: '/=', fn: (a, b) => {
+                // Handle array comparison (lists)
+                if (Array.isArray(a) && Array.isArray(b)) {
+                    if (a.length !== b.length) return true;
+                    for (let i = 0; i < a.length; i++) {
+                        // Recursively check each element
+                        const elementsEqual = (() => {
+                            const equalOp = binaryOps.find(op => op.op === '==');
+                            return equalOp.fn(a[i], b[i]);
+                        })();
+                        if (!elementsEqual) return true;
+                    }
+                    return false;
+                }
                 // Handle tuple comparison
                 if (a && a._isTuple && b && b._isTuple) {
                     if (a.elements.length !== b.elements.length) return true;
@@ -1094,6 +1107,19 @@ class HaskishInterpreter {
                 return a != b;
             }},
             { op: '==', fn: (a, b) => {
+                // Handle array comparison (lists)
+                if (Array.isArray(a) && Array.isArray(b)) {
+                    if (a.length !== b.length) return false;
+                    for (let i = 0; i < a.length; i++) {
+                        // Recursively check each element
+                        const elementsEqual = (() => {
+                            const equalOp = binaryOps.find(op => op.op === '==');
+                            return equalOp.fn(a[i], b[i]);
+                        })();
+                        if (!elementsEqual) return false;
+                    }
+                    return true;
+                }
                 // Handle tuple comparison
                 if (a && a._isTuple && b && b._isTuple) {
                     if (a.elements.length !== b.elements.length) return false;
