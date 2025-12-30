@@ -48,21 +48,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-content">
-                <div class="logo-container">
-                    <img src="headerLogo.png" alt="Haskish Logo" class="logo">
-                    <h1>Haskish</h1>
-                </div>
+    <header>
+        <div class="header-content">
+            <div class="logo-container">
+                <img src="headerLogo.png" alt="Haskish Logo" class="logo">
+                <h1>Haskish</h1>
             </div>
-        </header>
+            <span id="widthIndicator" style="font-size: 0.9em; opacity: 0.7;"></span>
+            <button id="toggleExercises" class="btn btn-secondary btn-small" title="Toggle exercises panel">Exercises</button>
+        </div>
+    </header>
 
-        <div class="main-content">
-            <!-- Code and REPL Container (side by side) -->
-            <!-- Code and REPL Container (side by side) -->
-            <div class="code-repl-container">
-                <!-- Code Editor Panel -->
+    <div class="main-container">
+        <div class="main-content" id="mainContent">
+            <!-- Code Editor Panel (Column 1) -->
+            <div class="column definitions-column">
                 <div class="panel editor-panel">
                     <div class="panel-header">
                         <h2>Function Definitions</h2>
@@ -77,8 +77,10 @@
                         <button id="clearEditor" class="btn btn-secondary btn-small clear-editor-btn">Clear</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- REPL Panel -->
+            <!-- REPL Panel (Column 2) -->
+            <div class="column repl-column">
                 <div class="panel repl-panel">
                     <div class="panel-header">
                         <h2>Interactive REPL</h2>
@@ -94,100 +96,97 @@
                 </div>
             </div>
 
-            <!-- Mobile Exercise Navigator -->
+            <!-- Exercises Panel (Column 3) -->
+            <div class="column exercises-column" id="exercisesColumn" style="display: none;">
+                <!-- Exercise Selector Bar -->
+                <div class="exercise-selector-bar">
+                    <div class="exercise-header-row">
+                        <h2>Exercises</h2>
+                        <button id="resetProgress" class="btn btn-danger" title="Reset all progress">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C9.84556 2 11.4882 2.85777 12.5607 4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M12 1V4.5H8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="exercise-buttons-wrapper">
+                        <div class="exercise-buttons-container">
+                            <!-- Module 1: Getting Started -->
+                            <button class="exercise-btn" data-exercise="1" title="Using the REPL">1</button>
+                            <button class="exercise-btn" data-exercise="2" title="Simple Function">2</button>
+                            <button class="exercise-btn" data-exercise="3" title="Multiple Parameters">3</button>
+                            <button class="exercise-btn" data-exercise="4" title="Circle Area">4</button>
+                            <button class="exercise-btn" data-exercise="5" title="Temperature Conversion">5</button>
+                            
+                            <!-- Module 2: Introduction to Lists -->
+                            <button class="exercise-btn" data-exercise="6" title="Lists & Ranges">6</button>
+                            <button class="exercise-btn" data-exercise="7" title="Head and Tail">7</button>
+                            <button class="exercise-btn" data-exercise="8" title="Cons Operator (:)">8</button>
+                            <button class="exercise-btn" data-exercise="9" title="Concatenate Operator (++)">9</button>
+                            
+                            <!-- Module 3: Advanced Lists -->
+                            <button class="exercise-btn" data-exercise="10" title="Factorial">10</button>
+                            <button class="exercise-btn" data-exercise="11" title="Powers">11</button>
+                            <button class="exercise-btn" data-exercise="12" title="List Sum">12</button>
+                            <button class="exercise-btn" data-exercise="13" title="Safe Head">13</button>
+                            <button class="exercise-btn" data-exercise="14" title="Double List">14</button>
+                            <button class="exercise-btn" data-exercise="15" title="Positive Numbers">15</button>
+                            <button class="exercise-btn" data-exercise="16" title="Count Elements">16</button>
+                            <button class="exercise-btn" data-exercise="17" title="Member Check">17</button>
+                            <button class="exercise-btn" data-exercise="18" title="List Zip">18</button>
+                            <button class="exercise-btn" data-exercise="19" title="Grade Classifier">19</button>
+                            <button class="exercise-btn" data-exercise="20" title="Merge Sort">20</button>
+                            
+                            <!-- Module 4: Higher-Order Functions -->
+                            <button class="exercise-btn" data-exercise="21" title="Map Basics">21</button>
+                            <button class="exercise-btn" data-exercise="22" title="Filter Basics">22</button>
+                            <button class="exercise-btn" data-exercise="23" title="Fold Basics">23</button>
+                            <button class="exercise-btn" data-exercise="24" title="Shift Cipher">24</button>
+                            <button class="exercise-btn" data-exercise="25" title="Data Analysis">25</button>
+                            <button class="exercise-btn" data-exercise="26" title="Advanced Challenge">26</button>
+                            
+                            <!-- Module 5: Function Composition -->
+                            <button class="exercise-btn" data-exercise="27" title="Understanding Composition Order">27</button>
+                            <button class="exercise-btn" data-exercise="28" title="Three-Function Pipeline">28</button>
+                            <button class="exercise-btn" data-exercise="29" title="Composition vs Direct Calls">29</button>
+                            <button class="exercise-btn" data-exercise="30" title="Compose with Lists">30</button>
+                            <button class="exercise-btn" data-exercise="31" title="Complex Pipeline">31</button>
+                            
+                            <!-- Module 6: Lambda Functions -->
+                            <button class="exercise-btn" data-exercise="32" title="Lambda with Map">32</button>
+                            <button class="exercise-btn" data-exercise="33" title="Lambda with Filter">33</button>
+                            <button class="exercise-btn" data-exercise="34" title="Lambda Challenge">34</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise Content Panel -->
+                <div id="exercisePanel" class="panel exercise-content-panel">
+                    <div class="panel-header" id="exercisePanelHeader">
+                        <h2 id="exerciseTitle">Exercise</h2>
+                        <div class="exercise-controls">
+                            <label class="completion-toggle">
+                                <input type="checkbox" id="exerciseComplete" />
+                                <span class="completion-text-full">Mark as Complete</span>
+                                <span class="completion-text-short">Complete?</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="exerciseContent" class="exercise-content">
+                        Click an exercise button above to begin.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Exercise Navigator (hidden on desktop) -->
+    <div class="mobile-exercise-nav" style="display: none;">
             <div class="mobile-exercise-nav">
                 <button id="prevExercise" class="nav-arrow" title="Previous exercise">&lt;&lt;</button>
                 <span id="currentExerciseLabel" class="exercise-label">Select an exercise</span>
                 <button id="nextExercise" class="nav-arrow" title="Next exercise">&gt;&gt;</button>
             </div>
-            
-            <!-- Exercise Selector Bar -->
-            <div class="exercise-selector-bar">
-                <div class="exercise-header-row">
-                    <h2>Exercises</h2>
-                    <button id="resetProgress" class="btn btn-danger" title="Reset all progress">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C9.84556 2 11.4882 2.85777 12.5607 4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 1V4.5H8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="exercise-buttons-wrapper">
-                    <div class="exercise-buttons-container">
-                        <!-- Module 1: Getting Started -->
-                        <button class="exercise-btn" data-exercise="1" title="Using the REPL">1</button>
-                        <button class="exercise-btn" data-exercise="2" title="Simple Function">2</button>
-                        <button class="exercise-btn" data-exercise="3" title="Multiple Parameters">3</button>
-                        <button class="exercise-btn" data-exercise="4" title="Circle Area">4</button>
-                        <button class="exercise-btn" data-exercise="5" title="Temperature Conversion">5</button>
-                        
-                        <!-- Module 2: Introduction to Lists -->
-                        <button class="exercise-btn" data-exercise="6" title="Lists & Ranges">6</button>
-                        <button class="exercise-btn" data-exercise="7" title="Head and Tail">7</button>
-                        <button class="exercise-btn" data-exercise="8" title="Cons Operator (:)">8</button>
-                        <button class="exercise-btn" data-exercise="9" title="Concatenate Operator (++)">9</button>
-                        
-                        <!-- Module 3: Advanced Lists -->
-                        <button class="exercise-btn" data-exercise="10" title="Factorial">10</button>
-                        <button class="exercise-btn" data-exercise="11" title="Powers">11</button>
-                        <button class="exercise-btn" data-exercise="12" title="List Sum">12</button>
-                        <button class="exercise-btn" data-exercise="13" title="Safe Head">13</button>
-                        <button class="exercise-btn" data-exercise="14" title="Double List">14</button>
-                        <button class="exercise-btn" data-exercise="15" title="Positive Numbers">15</button>
-                        <button class="exercise-btn" data-exercise="16" title="Count Elements">16</button>
-                        <button class="exercise-btn" data-exercise="17" title="Member Check">17</button>
-                        <button class="exercise-btn" data-exercise="18" title="List Zip">18</button>
-                        <button class="exercise-btn" data-exercise="19" title="Grade Classifier">19</button>
-                        <button class="exercise-btn" data-exercise="20" title="Merge Sort">20</button>
-                        
-                        <!-- Module 4: Higher-Order Functions -->
-                        <button class="exercise-btn" data-exercise="21" title="Map Basics">21</button>
-                        <button class="exercise-btn" data-exercise="22" title="Filter Basics">22</button>
-                        <button class="exercise-btn" data-exercise="23" title="Fold Basics">23</button>
-                        <button class="exercise-btn" data-exercise="24" title="Shift Cipher">24</button>
-                        <button class="exercise-btn" data-exercise="25" title="Data Analysis">25</button>
-                        <button class="exercise-btn" data-exercise="26" title="Advanced Challenge">26</button>
-                        
-                        <!-- Module 5: Function Composition -->
-                        <button class="exercise-btn" data-exercise="27" title="Understanding Composition Order">27</button>
-                        <button class="exercise-btn" data-exercise="28" title="Three-Function Pipeline">28</button>
-                        <button class="exercise-btn" data-exercise="29" title="Composition vs Direct Calls">29</button>
-                        <button class="exercise-btn" data-exercise="30" title="Compose with Lists">30</button>
-                        <button class="exercise-btn" data-exercise="31" title="Complex Pipeline">31</button>
-                        
-                        <!-- Module 6: Lambda Functions -->
-                        <button class="exercise-btn" data-exercise="32" title="Lambda with Map">32</button>
-                        <button class="exercise-btn" data-exercise="33" title="Lambda with Filter">33</button>
-                        <button class="exercise-btn" data-exercise="34" title="Lambda Challenge">34</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Exercise Content Panel (hidden by default) -->
-            <div id="exercisePanel" class="panel exercise-content-panel" style="display: none;">
-                <div class="panel-header" id="exercisePanelHeader">
-                    <h2 id="exerciseTitle">Exercise</h2>
-                    <div class="exercise-controls">
-                        <label class="completion-toggle">
-                            <input type="checkbox" id="exerciseComplete" />
-                            <span class="completion-text-full">Mark as Complete</span>
-                            <span class="completion-text-short">Complete?</span>
-                        </label>
-                    </div>
-                </div>
-                <div id="exerciseContent" class="exercise-content">
-                    Click an exercise button above to begin.
-                </div>
-            </div>
-
-        </div>
-
-        <footer>
-            <div class="footer-content">
-                <p>© 2025 Neil Kendall. More @ <a href="https://www.korovatron.co.uk/" target="_blank">www.korovatron.co.uk</a></p>
-            </div>
-        </footer>
-    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js"></script>

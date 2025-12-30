@@ -2,6 +2,35 @@
 
 const interpreter = new HaskishInterpreter();
 
+// Width indicator
+function updateWidthIndicator() {
+    const indicator = document.getElementById('widthIndicator');
+    if (indicator) {
+        indicator.textContent = window.innerWidth + 'px';
+    }
+}
+updateWidthIndicator();
+window.addEventListener('resize', updateWidthIndicator);
+
+// Toggle exercises column
+document.getElementById('toggleExercises').addEventListener('click', function() {
+    const exercisesColumn = document.getElementById('exercisesColumn');
+    const mainContent = document.getElementById('mainContent');
+    const isVisible = exercisesColumn.style.display !== 'none';
+    
+    if (isVisible) {
+        exercisesColumn.style.display = 'none';
+        mainContent.classList.remove('exercises-visible');
+        document.body.classList.remove('exercises-visible');
+        this.textContent = 'Exercises';
+    } else {
+        exercisesColumn.style.display = 'flex';
+        mainContent.classList.add('exercises-visible');
+        document.body.classList.add('exercises-visible');
+        this.textContent = 'Hide Exercises';
+    }
+});
+
 // Exercise content data
 const exerciseData = {
     // Module 1: Getting Started (5 exercises)
