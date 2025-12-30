@@ -1019,9 +1019,9 @@ class HaskishInterpreter {
             return this.evaluate('(0-' + inner + ')');
         }
 
-        // Operator sections like (<10) or (+) or (+(-1)) but not negative numbers
-        const opSectionMatch = expr.match(/^\(([+*\/<>=&|]+)(\s*\d+|\s*\(.+\))?\)$/) || 
-                               expr.match(/^\((\d+|\(.+\))\s*([+*\/<>=&|]+)\)$/);
+        // Operator sections like (<10) or (+) or (+(-1)) or (== "cat") but not negative numbers
+        const opSectionMatch = expr.match(/^\(([+*\/<>=&|]+)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/) || 
+                               expr.match(/^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=&|]+)\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
         }
@@ -1170,10 +1170,10 @@ class HaskishInterpreter {
                     throw new Error(`Invalid lambda syntax: ${token.value}`);
                 }
                 if (token.type === 'paren') {
-                    // Check if it's an operator section like (*) or (<10) or (+(-1)) but NOT (- ...) which is unary negation
+                    // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
-                    // Match operator sections: operators only, operators with number, or operators with parenthesized expr
-                    if (/^\(([+*\/<>=]+)(\s*\d+|\s*\(.+\))?\)$/.test(fullParen) || /^\((\d+|\(.+\))\s*[+*\/<>=]+\)$/.test(fullParen)) {
+                    // Match operator sections: operators only, operators with number, string, or parenthesized expr
+                    if (/^\(([+*\/<>=]+|&&|\|\|)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=]+|&&|\|\|)\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -1292,12 +1292,20 @@ class HaskishInterpreter {
 
     // Create operator section function
     createOperatorSection(section) {
-        // Match patterns like (*), (+), (<10), (10+), etc.
+        // Match patterns like (*), (+), (<10), (10+), (&&), (||), etc.
         // But NOT negative numbers like (-5) which could be (0 - 5) evaluated
-        const opOnlyMatch = section.match(/^\(([+*\/<>=]+)\)$/);  // Removed - from here
+        const opOnlyMatch = section.match(/^\(([+*\/<>=]+|&&|\|\|)\)$/);  // Removed - from here
         if (opOnlyMatch) {
             const op = opOnlyMatch[1];
             return this.createOperatorFunction(op);
+        }
+        
+        // Left section with string literal like (== "cat") or (== 'cat')
+        const leftStringMatch = section.match(/^\(([+*\/<>=]+)\s*(["'][^"']*["'])\)$/);
+        if (leftStringMatch) {
+            const [, op, str] = leftStringMatch;
+            const stringValue = this.evaluate(str);
+            return this.createPartialOperatorFunction(op, null, stringValue);
         }
         
         // Left section like (<10), (>5), (*2) but not (- or (-5)
@@ -1313,6 +1321,14 @@ class HaskishInterpreter {
             const [, op, parenExpr] = leftParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
             return this.createPartialOperatorFunction(op, null, evaluatedValue);
+        }
+        
+        // Right section with string literal like ("cat" ==) or ('cat' ==)
+        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/<>=]+)\)$/);
+        if (rightStringMatch) {
+            const [, str, op] = rightStringMatch;
+            const stringValue = this.evaluate(str);
+            return this.createPartialOperatorFunction(op, stringValue, null);
         }
         
         // Right section like (10+), (5*) but not (-10)
@@ -1345,6 +1361,8 @@ class HaskishInterpreter {
             '<=': (a, b) => a <= b,
             '>=': (a, b) => a >= b,
             '==': (a, b) => a == b,
+            '&&': (a, b) => a && b,
+            '||': (a, b) => a || b,
             ':': (a, b) => {
                 if (!Array.isArray(b)) {
                     throw new Error('(:) requires a list as the second argument');
@@ -1385,7 +1403,9 @@ class HaskishInterpreter {
             '>': (a, b) => a > b,
             '<=': (a, b) => a <= b,
             '>=': (a, b) => a >= b,
-            '==': (a, b) => a == b
+            '==': (a, b) => a == b,
+            '&&': (a, b) => a && b,
+            '||': (a, b) => a || b
         };
         
         if (!opMap[op]) {
