@@ -707,10 +707,19 @@ let currentExerciseId = null;
 let codeEditor = null;
 let replEditor = null;
 
+// Helper function to add system messages to REPL
+function addSystemMessage(message, type = 'info') {
+    const replOutput = document.getElementById('replOutput');
+    const outputDiv = document.createElement('div');
+    outputDiv.className = `repl-${type}`;
+    outputDiv.innerHTML = message;
+    replOutput.appendChild(outputDiv);
+    replOutput.scrollTop = replOutput.scrollHeight;
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     const runCodeBtn = document.getElementById('runCode');
-    const editorOutput = document.getElementById('editorOutput');
     const replOutput = document.getElementById('replOutput');
     const clearReplBtn = document.getElementById('clearRepl');
     
@@ -856,20 +865,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Helper function to update editor output
-    function updateEditorOutput(html) {
-        editorOutput.innerHTML = html;
-    }
-    
     // Run code from editor
     runCodeBtn.addEventListener('click', () => {
         const code = codeEditor.getValue();
         const result = interpreter.run(code);
         
         if (result.success) {
-            updateEditorOutput(`<div class="success">✓ ${result.message}</div><div class="info">Now try calling your functions in the REPL below!</div>`);
+            addSystemMessage(`✓ ${result.message}`, 'result');
+            addSystemMessage('Now try calling your functions by typing their name below!', 'info');
         } else {
-            updateEditorOutput(`<div class="error">✗ Error: ${result.error}</div>`);
+            addSystemMessage(`✗ Error: ${result.error}`, 'error');
         }
         
         // Save state after running code
@@ -889,9 +894,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = await response.text();
             codeEditor.setValue(text);
             codeEditor.setCursor({ line: 0, ch: 0 });
-            updateEditorOutput('<div class="success">✓ Examples loaded! Click "Run Code" to load the functions.</div>');
+            addSystemMessage('✓ Examples loaded into editor! Click "Run Code" to define the functions.', 'result');
+            closeMenuFunc(); // Close menu after loading examples
         } catch (error) {
-            updateEditorOutput(`<div class="error">✗ Error loading examples: ${error.message}</div>`);
+            addSystemMessage(`✗ Error loading examples: ${error.message}`, 'error');
         }
     });
 
@@ -900,7 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearEditorBtn.addEventListener('click', () => {
         codeEditor.setValue('-- Write your function definitions here\n');
         codeEditor.setCursor({ line: 1, ch: 0 });
-        updateEditorOutput('<div class="info">Editor cleared. Write your functions and click "Run Code".</div>');
+        addSystemMessage('Editor cleared. Write your functions and click "Run Code".', 'info');
         // Save cleared state
         if (currentExerciseId) {
             saveExerciseState();
@@ -917,12 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Start with empty editor
-    codeEditor.setValue('-- Write your function definitions here\n');
-    codeEditor.setCursor({ line: 1, ch: 0 });
-    updateEditorOutput('<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>');
-
-    // Initialize exercises functionality
+    // Initialize exercises functionality (this will set up initial editor state)
     initExercises();
 });
 
@@ -1152,20 +1153,19 @@ function toggleExerciseCompletion(btn) {
 
 function restoreExerciseState(exerciseId) {
     const state = loadExerciseState(exerciseId);
-    const editorOutput = document.getElementById('editorOutput');
     const replOutput = document.getElementById('replOutput');
     
     if (state) {
         // Restore saved state
         codeEditor.setValue(state.code);
         replOutput.innerHTML = state.replHistory;
-        editorOutput.innerHTML = '<div class="info">Restored your previous work. Click "Run Code" to reload functions!</div>';
+        addSystemMessage('Restored your previous work. Click "Run Code" to reload functions!', 'info');
     } else {
         // Use default state for new exercise
-        codeEditor.setValue('-- Write your function definitions here\n');
-        codeEditor.setCursor({ line: 1, ch: 0 });
+        codeEditor.setValue('-- Write your function definitions here\nadd x y = x + y\n');
+        codeEditor.setCursor({ line: 2, ch: 0 });
         replOutput.innerHTML = '';
-        editorOutput.innerHTML = '<div class="info">Click "Run Code" to load the functions, then test them in the REPL!</div>';
+        addSystemMessage('Click "Run Code" to load the example function, then try typing "add 5 7" in the input box below! (More examples available in the menu ☰)', 'info');
     }
     
     // Scroll REPL to bottom if there's history

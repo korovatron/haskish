@@ -942,7 +942,8 @@ class HaskishInterpreter {
                     // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
                     replacement = `(${value})`;
                 } else {
-                    replacement = JSON.stringify(value);
+                    // Use formatOutput to properly handle booleans (True/False) and other types
+                    replacement = this.formatOutput(value);
                 }
                 result = result.replace(varRegex, replacement);
             }
