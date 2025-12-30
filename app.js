@@ -7,6 +7,16 @@ if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.
     document.body.classList.add('standalone-mode');
 }
 
+// Detect iPad (modern iPads report as Mac but have touch)
+function isIPad() {
+    return (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform)) ||
+           /iPad/.test(navigator.userAgent);
+}
+
+if (isIPad()) {
+    document.body.classList.add('ipad-device');
+}
+
 // Hamburger menu toggle
 const menuToggle = document.getElementById('menuToggle');
 const menuPanel = document.getElementById('menuPanel');

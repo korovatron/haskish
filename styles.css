@@ -1012,9 +1012,9 @@ footer a:hover {
         overflow: hidden;
     }
     
-    /* In browser mode (not standalone PWA), reduce height to account for Safari chrome */
-    body:not(.standalone-mode) .definitions-column,
-    body:not(.standalone-mode) .repl-column {
+    /* In browser mode on iPad (not standalone PWA), reduce height to account for Safari chrome + tab bar */
+    body.ipad-device:not(.standalone-mode) .definitions-column,
+    body.ipad-device:not(.standalone-mode) .repl-column {
         height: calc((100vh - 130px - var(--safe-area-top, 0px)) / 2) !important; /* Extra space for browser chrome + tab bar */
     }
     
