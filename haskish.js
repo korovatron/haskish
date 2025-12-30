@@ -536,13 +536,12 @@ class HaskishInterpreter {
             }
 
             // Numbers (including negative)
-            // Negative number if: minus followed by digit AND (no prev token OR prev is not a number/paren)
-            // This allows: describe -6 (function arg) but not: 5 - 6 (binary minus)
+            // Don't parse as number if preceded by a letter or underscore (it's part of an identifier)
             const prevToken = tokens.length > 0 ? tokens[tokens.length - 1] : null;
             const canBeNegative = expr[i] === '-' && i + 1 < expr.length && /\d/.test(expr[i + 1]) &&
                 (!prevToken || (prevToken.type !== 'number' && prevToken.type !== 'paren'));
             
-            if (/\d/.test(expr[i]) || canBeNegative) {
+            if (((/\d/.test(expr[i]) || canBeNegative) && (i === 0 || !/[a-zA-Z_]/.test(expr[i - 1])))) {
                 let j = i;
                 if (expr[j] === '-') j++;
                 while (j < expr.length && /[\d.]/.test(expr[j])) j++;
@@ -887,8 +886,10 @@ class HaskishInterpreter {
     evaluateWithBindings(expr, bindings) {
         // Preprocess: Add implicit multiplication (3x becomes 3*x) BEFORE substitution
         // Skip this if expression contains lambda syntax to avoid corruption
+        // Also be careful not to insert * in the middle of identifiers (like multiple3or5)
         if (!expr.includes('\\')) {
-            expr = expr.replace(/(\d)([a-zA-Z_])/g, '$1*$2');
+            // Only insert * if the digit is NOT preceded by a letter or underscore
+            expr = expr.replace(/(?<![a-zA-Z_])(\d)([a-zA-Z_])/g, '$1*$2');
         }
         
         // For function objects (Lambda, operator sections, etc), store them in the variables table
@@ -962,8 +963,9 @@ class HaskishInterpreter {
         
         // Preprocess: Add implicit multiplication (3x becomes 3*x)
         // Skip this if expression contains lambda syntax to avoid corruption
+        // Also be careful not to insert * in the middle of identifiers (like multiple3or5)
         if (!expr.includes('\\')) {
-            expr = expr.replace(/(\d)([a-zA-Z_])/g, '$1*$2');
+            expr = expr.replace(/(?<![a-zA-Z_])(\d)([a-zA-Z_])/g, '$1*$2');
         }
 
         // Boolean literals
@@ -1269,6 +1271,16 @@ class HaskishInterpreter {
                     // It's a negative number if: preceded by space/start and followed by digit
                     // But NOT if preceded by a digit or closing paren (that's binary minus)
                     if (/\d/.test(nextChar) && !/[\d)]/.test(prevChar)) {
+                        matches = false;
+                    }
+                }
+                
+                // Don't split if operator is surrounded by identifier characters (letters/digits/_)
+                // This prevents splitting identifiers like "multiple3or5" when looking for operators
+                if (matches) {
+                    const prevChar = i > 0 ? expr[i - 1] : '';
+                    const nextChar = i + op.length < expr.length ? expr[i + op.length] : '';
+                    if (/[a-zA-Z0-9_]/.test(prevChar) || /[a-zA-Z0-9_]/.test(nextChar)) {
                         matches = false;
                     }
                 }
