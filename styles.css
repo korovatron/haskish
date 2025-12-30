@@ -234,6 +234,57 @@ header h1 {
     flex: 1;
 }
 
+/* Expandable menu items */
+.menu-item-group {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.menu-item-expandable {
+    position: relative;
+}
+
+.menu-item-expandable .expand-icon {
+    transition: transform 0.3s ease;
+    margin-left: auto;
+}
+
+.menu-item-expandable.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: var(--code-bg);
+}
+
+.submenu.expanded {
+    max-height: 600px;
+}
+
+.submenu-item {
+    width: 100%;
+    padding: 12px 20px 12px 52px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: block;
+    text-align: left;
+}
+
+.submenu-item:hover {
+    background: var(--header-bg);
+}
+
+.submenu-item:last-child {
+    border-bottom: none;
+}
+
 /* About Overlay */
 .about-overlay {
     position: fixed;

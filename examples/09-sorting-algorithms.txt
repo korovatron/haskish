@@ -1,0 +1,29 @@
+-- Sorting Algorithms
+-- Bubble Sort
+bubblePass [] = []
+bubblePass [x] = [x]
+bubblePass (x:y:xs)
+  | x > y = y : bubblePass (x:xs)
+  | otherwise = x : bubblePass (y:xs)
+
+bubbleSortN 0 xs = xs
+bubbleSortN n xs = bubbleSortN (n - 1) (bubblePass xs)
+
+bubbleSort xs = bubbleSortN (length xs) xs
+
+-- QuickSort (note: without where clauses, using helper)
+qsort [] = []
+qsort (x:xs) = qsort (filter (\y -> y <= x) xs) ++ [x] ++ qsort (filter (\y -> y > x) xs)
+
+-- Merge two sorted lists
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys)
+  | x <= y = x : merge xs (y:ys)
+  | otherwise = y : merge (x:xs) ys
+
+-- Tests:
+-- bubbleSort [5,2,8,1,9]      → [1,2,5,8,9]
+-- bubbleSort [23,56,32,1,-56] → [-56,1,23,32,56]
+-- qsort [3,1,4,1,5,9,2,6]     → [1,1,2,3,4,5,6,9]
+-- merge [1,3,5] [2,4,6]       → [1,2,3,4,5,6]

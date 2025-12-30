@@ -1,0 +1,22 @@
+-- Higher-Order Functions
+-- map examples
+doubleMap xs = map (\x -> x * 2) xs
+squareMap xs = map (\x -> x * x) xs
+
+-- filter examples
+bigNumbers xs = filter (\x -> x > 10) xs
+evensOnly xs = filter (\x -> mod x 2 == 0) xs
+
+-- fold examples
+product xs = fold (\acc x -> acc * x) 1 xs
+sumAll xs = fold (\acc x -> acc + x) 0 xs
+
+-- Combining higher-order functions
+sumOfSquares xs = fold (\acc x -> acc + x) 0 (map (\x -> x * x) xs)
+
+-- Tests:
+-- doubleMap [1,2,3]          → [2,4,6]
+-- bigNumbers [5,15,3,20,8]   → [15,20]
+-- evensOnly [1,2,3,4,5,6]    → [2,4,6]
+-- product [1,2,3,4]          → 24
+-- sumOfSquares [1,2,3]       → 14

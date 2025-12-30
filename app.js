@@ -899,23 +899,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Load examples button
-    const loadExamplesBtn = document.getElementById('loadExamples');
-    loadExamplesBtn.addEventListener('click', async () => {
+    // Examples menu functionality
+    const examplesToggle = document.getElementById('examplesToggle');
+    const examplesSubmenu = document.getElementById('examplesSubmenu');
+    
+    // List of example files (dynamically populated would be better, but hardcoding for simplicity)
+    const exampleFiles = [
+        '01-basic-functions.txt',
+        '02-pattern-matching.txt',
+        '03-guards.txt',
+        '04-list-operations.txt',
+        '05-recursion.txt',
+        '06-higher-order-functions.txt',
+        '07-lambdas-composition.txt',
+        '08-tuples.txt',
+        '09-sorting-algorithms.txt',
+        '10-prime-numbers.txt',
+        '11-list-utilities.txt',
+        '12-built-in-functions.txt'
+    ];
+    
+    // Populate examples submenu
+    exampleFiles.forEach(filename => {
+        const button = document.createElement('button');
+        button.className = 'submenu-item';
+        // Convert filename to display name: "01-basic-functions.txt" -> "Basic Functions"
+        const displayName = filename
+            .replace(/^\d+-/, '')  // Remove leading number and dash
+            .replace('.txt', '')    // Remove extension
+            .replace(/-/g, ' ')     // Replace dashes with spaces
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))  // Capitalize
+            .join(' ');
+        button.textContent = displayName;
+        button.addEventListener('click', () => loadExample(filename));
+        examplesSubmenu.appendChild(button);
+    });
+    
+    // Toggle examples submenu
+    examplesToggle.addEventListener('click', () => {
+        examplesToggle.classList.toggle('expanded');
+        examplesSubmenu.classList.toggle('expanded');
+    });
+    
+    // Load a specific example file
+    async function loadExample(filename) {
         try {
-            const response = await fetch('ALL_FEATURES.txt');
+            const response = await fetch(`examples/${filename}`);
             if (!response.ok) {
-                throw new Error('Failed to load examples');
+                throw new Error(`Failed to load ${filename}`);
             }
             const text = await response.text();
             codeEditor.setValue(text);
             codeEditor.setCursor({ line: 0, ch: 0 });
-            addSystemMessage('✓ Examples loaded into editor! Click "Run Code" to define the functions.', 'result');
-            closeMenuFunc(); // Close menu after loading examples
+            const displayName = filename.replace(/^\d+-/, '').replace('.txt', '').replace(/-/g, ' ');
+            addSystemMessage(`✓ Loaded example: ${displayName}! Click "Run Code" to define the functions.`, 'result');
+            closeMenuFunc(); // Close menu after loading
         } catch (error) {
-            addSystemMessage(`✗ Error loading examples: ${error.message}`, 'error');
+            addSystemMessage(`✗ Error loading example: ${error.message}`, 'error');
         }
-    });
+    }
 
     // Clear editor button
     const clearEditorBtn = document.getElementById('clearEditor');

@@ -1,0 +1,25 @@
+-- Recursion with Lists
+-- Process all elements
+doubleAll [] = []
+doubleAll (x:xs) = (2*x) : doubleAll xs
+
+-- Filter with recursion
+positives [] = []
+positives (x:xs)
+  | x > 0     = x : positives xs
+  | otherwise = positives xs
+
+-- Accumulator pattern
+sumList [] = 0
+sumList (x:xs) = x + sumList xs
+
+-- Fibonacci sequence
+fib 0 = 0
+fib 1 = 1
+fib n = fib (n-1) + fib (n-2)
+
+-- Tests:
+-- doubleAll [1,2,3]      → [2,4,6]
+-- positives [-1,2,-3,4]  → [2,4]
+-- sumList [1,2,3,4]      → 10
+-- fib 10                 → 55

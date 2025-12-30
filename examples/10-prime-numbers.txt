@@ -1,0 +1,37 @@
+-- Prime Numbers
+-- Check if n is divisible by any number from d to sqrt(n)
+isDivisibleBy n d
+  | d * d > n = False
+  | mod n d == 0 = True
+  | otherwise = isDivisibleBy n (d + 1)
+
+-- Prime test
+isPrime n
+  | n < 2 = False
+  | n == 2 = True
+  | mod n 2 == 0 = False
+  | otherwise = not (isDivisibleBy n 3)
+
+-- Prime factorization (returns list of prime factors)
+primeFactors 1 = []
+primeFactors n = factorHelper n 2
+
+factorHelper 1 d = []
+factorHelper n d
+  | d * d > n = [n]
+  | mod n d == 0 = d : factorHelper (div n d) d
+  | otherwise = factorHelper n (d + 1)
+
+-- Sieve of Eratosthenes (primes up to n)
+sieve [] = []
+sieve (x:xs) = x : sieve (filter (\n -> mod n x /= 0) xs)
+
+primesUpTo n = sieve [2..n]
+
+-- Tests:
+-- isPrime 17                             → True
+-- isPrime 100                            → False
+-- primeFactors 60                        → [2,2,3,5]
+-- primeFactors 17                        → [17]
+-- primesUpTo 30                          → [2,3,5,7,11,13,17,19,23,29]
+-- map isPrime [2,3,4,5,6,7,8,9,10,11]    → [True,True,False,True,False,True,False,False,False,True]

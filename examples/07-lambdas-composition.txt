@@ -1,0 +1,35 @@
+-- Lambda Functions and Composition
+-- Lambda with map
+squareAll xs = map (\x -> x * x) xs
+
+-- Lambda with filter
+evensOnly xs = filter (\x -> mod x 2 == 0) xs
+
+-- Lambda with fold
+sumAll xs = fold (\acc x -> acc + x) 0 xs
+
+-- Function Composition
+addOne x = x + 1
+timesTwo x = x * 2
+addThenDouble = timesTwo . addOne
+
+-- Multiple compositions
+tripleCompose = (\x -> x + 1) . (\x -> x * 2) . (\x -> x - 3)
+
+-- Partial Application (Currying)
+multiply x y = x * y
+timesTen = multiply 10
+
+-- Operator sections
+increment = (+1)
+halve = (/2)
+isPositive = (>0)
+
+-- Tests:
+-- squareAll [1,2,3,4]     → [1,4,9,16]
+-- evensOnly [1,2,3,4,5,6] → [2,4,6]
+-- addThenDouble 5         → 12
+-- tripleCompose 10        → 15
+-- timesTen 7              → 70
+-- increment 5             → 6
+-- halve 20                → 10
