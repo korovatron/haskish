@@ -1,0 +1,134 @@
+=== Using the REPL ===
+Get familiar with the Interactive REPL (Read-Eval-Print Loop). Try these expressions:
+
+```
+> 15 + 12
+> 3 * 56
+> True && False
+> not (False && True)
+> 5 == 5
+> 5 /= 5
+> "hello" == "hello"
+```
+
+The REPL shows results immediately. Experiment!
+
+=== Simple Function ===
+Write a function called `tripleMe` that takes a number and returns triple its value.
+
+Example:
+```
+> tripleMe 10
+30
+> tripleMe 7
+21
+```
+
+Remember: function definitions go in the editor above, then click "Run Code".
+
+=== Multiple Parameters ===
+Write a function `doubleAdd` that takes two values, doubles each of them, and adds them together.
+
+Example:
+```
+> doubleAdd 3 4
+14
+> doubleAdd 10 5
+30
+```
+
+=== Working with Lists ===
+Experiment with lists and ranges in the REPL:
+
+```
+> [1,2,3,4,5]
+> [1..10]
+> [2,4..20]
+> reverse ["cat","dog","bird"]
+> take 2 ["red","green","blue"]
+> drop 3 [1..10]
+```
+
+Lists are fundamental in functional programming!
+
+=== Head and Tail ===
+Try using `head` and `tail` to break apart lists:
+
+```
+> head [10,20,30,40]
+10
+> tail [10,20,30,40]
+[20,30,40]
+> head (tail [10,20,30,40])
+20
+```
+
+What happens with an empty list? Try it!
+
+=== Pattern Matching - Factorial ===
+Write a recursive `factorial` function using pattern matching.
+
+Remember: 0! = 1, and n! = n × (n-1)!
+
+```
+> factorial 5
+120
+> factorial 0
+1
+> factorial 10
+3628800
+```
+
+Hint: Define the base case first (`factorial 0 = 1`), then the recursive case.
+
+=== Guards ===
+Write a function `classify` that uses guards to classify a number as "negative", "zero", or "positive".
+
+Example:
+```
+> classify (-5)
+"negative"
+> classify 0
+"zero"
+> classify 42
+"positive"
+```
+
+Use the guard syntax with `|` and `otherwise`.
+
+=== Map Function ===
+Use `map` to apply a function to every element in a list.
+
+Try these:
+```
+> map double [1,2,3,4,5]
+> map (\x -> x * x) [1..10]
+> map reverse ["cat","dog","bird"]
+```
+
+First define `double x = x * 2` in the editor!
+
+=== Filter Function ===
+Use `filter` to keep only elements that match a condition.
+
+Examples:
+```
+> filter (\x -> x > 10) [5,12,8,20,3,15]
+[12,20,15]
+> filter even [1..20]
+[2,4,6,8,10,12,14,16,18,20]
+```
+
+The function you pass to `filter` should return `True` or `False`.
+
+=== Combining Functions ===
+Combine `map`, `filter`, and other functions to solve problems.
+
+Challenge: Get all even numbers from 1 to 20, then square them.
+
+```
+> map (\x -> x * x) (filter even [1..20])
+[4,16,36,64,100,144,196,256,324,400]
+```
+
+Try different combinations! Can you reverse the order of operations?

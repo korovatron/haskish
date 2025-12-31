@@ -709,13 +709,18 @@ header h1 {
     flex: 1;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace !important;
     font-size: 14px;
     line-height: 1.5;
     background-color: var(--repl-bg) !important;
     overflow: auto;
     max-width: 100%;
     min-width: 0; /* Allow shrinking below content width */
+}
+
+/* Force consistent font in CodeMirror content */
+.CodeMirror * {
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace !important;
 }
 
 .CodeMirror-focused {
@@ -800,9 +805,15 @@ header h1 {
 
 .repl-input-code,
 .repl-output-code {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace !important;
     font-size: 14px;
     line-height: 1.5;
+}
+
+/* Force consistent font rendering across all code elements */
+.repl-input-code *,
+.repl-output-code * {
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace !important;
 }
 
 .repl-input-code {
