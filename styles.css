@@ -274,15 +274,14 @@ header h1 {
 
 .submenu {
     max-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
     transition: max-height 0.3s ease;
     background: var(--code-bg);
+    -webkit-overflow-scrolling: touch;
 }
 
 .submenu.expanded {
     max-height: 1200px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .submenu-item {
