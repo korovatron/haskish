@@ -555,10 +555,21 @@ class HaskishInterpreter {
                 let j = i;
                 if (expr[j] === '-') j++;
                 while (j < expr.length && /[\d.]/.test(expr[j])) j++;
+                
+                // Handle scientific notation (e.g., 1.5e-10, 2E+5)
+                let hasScientificNotation = false;
+                if (j < expr.length && /[eE]/.test(expr[j])) {
+                    hasScientificNotation = true;
+                    j++; // consume 'e' or 'E'
+                    if (j < expr.length && /[+\-]/.test(expr[j])) j++; // optional sign
+                    while (j < expr.length && /\d/.test(expr[j])) j++; // exponent digits
+                }
+                
                 tokens.push({ type: 'number', value: parseFloat(expr.slice(i, j)) });
                 
                 // Implicit multiplication: if number is directly followed by identifier, insert *
-                if (j < expr.length && /[a-zA-Z_]/.test(expr[j])) {
+                // But NOT if we just parsed scientific notation (the 'e' was part of the number)
+                if (!hasScientificNotation && j < expr.length && /[a-zA-Z_]/.test(expr[j])) {
                     tokens.push({ type: 'operator', value: '*' });
                 }
                 
