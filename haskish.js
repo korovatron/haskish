@@ -1018,8 +1018,19 @@ class HaskishInterpreter {
         // Preprocess: Add implicit multiplication (3x becomes 3*x)
         // Skip this if expression contains lambda syntax to avoid corruption
         // Also be careful not to insert * in the middle of identifiers (like multiple3or5)
+        // Also skip scientific notation (1e-5, 2E+3)
         if (!expr.includes('\\')) {
-            expr = expr.replace(/(?<![a-zA-Z_])(\d)([a-zA-Z_])/g, '$1*$2');
+            // Don't insert * between digit and e/E if it looks like scientific notation
+            expr = expr.replace(/(?<![a-zA-Z_])(\d)([a-zA-Z_])/g, (match, digit, letter, offset) => {
+                // Check if this is scientific notation: digit followed by e/E followed by optional +/- and digits
+                if (/[eE]/.test(letter)) {
+                    const rest = expr.slice(offset + match.length);
+                    if (/^[+\-]?\d/.test(rest)) {
+                        return match; // Keep as-is, it's scientific notation
+                    }
+                }
+                return digit + '*' + letter;
+            });
         }
 
         // Boolean literals (only capitalized versions - proper Haskell)
@@ -1212,6 +1223,11 @@ class HaskishInterpreter {
 
         // Function application
         const tokens = this.tokenize(expr);
+        
+        // Handle single number token
+        if (tokens.length === 1 && tokens[0].type === 'number') {
+            return tokens[0].value;
+        }
         
         // Handle single tuple
         if (tokens.length === 1 && tokens[0].type === 'tuple') {
