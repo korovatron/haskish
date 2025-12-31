@@ -266,6 +266,15 @@ document.addEventListener('DOMContentLoaded', () => {
     codeEditor.setOption('theme', 'monokai');
     replEditor.setOption('theme', 'monokai');
 
+    // Auto-save on code editor changes (debounced)
+    let saveTimeout;
+    codeEditor.on('change', () => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            saveUniversalState();
+        }, 1000); // Save 1 second after user stops typing
+    });
+
     // iOS fix: Handle Enter key more reliably on virtual keyboard
     replEditor.getInputField().addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -447,12 +456,14 @@ document.addEventListener('DOMContentLoaded', () => {
         codeEditor.setValue('-- Write your function definitions here\n');
         codeEditor.setCursor({ line: 1, ch: 0 });
         addSystemMessage('Editor cleared. Write your functions and click "Run Code".', 'info');
+        saveUniversalState(); // Save cleared state
     });
 
     // Clear REPL history
     clearReplBtn.addEventListener('click', () => {
         replOutput.innerHTML = '';
         replEditor.focus();
+        saveUniversalState(); // Save cleared state
     });
 
     // Initialize exercises functionality (this will set up initial editor state)
@@ -483,7 +494,7 @@ function loadUniversalState() {
 
 // Auto-save universal state periodically
 setInterval(() => {
-    if (codeEditor && codeEditor.getValue()) {
+    if (codeEditor) {
         saveUniversalState();
     }
 }, 5000); // Save every 5 seconds
@@ -492,11 +503,17 @@ setInterval(() => {
 function initExercises() {
     // Load universal state on startup
     const savedState = loadUniversalState();
+    const replOutput = document.getElementById('replOutput');
+    
     if (savedState) {
         codeEditor.setValue(savedState.code || '-- Write your function definitions here\n');
-        document.getElementById('replOutput').innerHTML = savedState.replHistory || '';
+        replOutput.innerHTML = savedState.replHistory || '';
+        // Scroll REPL to bottom if there's history
         if (savedState.replHistory) {
+            replOutput.scrollTop = replOutput.scrollHeight;
             addSystemMessage('Previous session restored!', 'info');
+        } else {
+            addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! (Examples available in the menu ☰)', 'info');
         }
     } else {
         codeEditor.setValue('-- Write your function definitions here\n');

@@ -842,12 +842,16 @@ header h1 {
     color: var(--error-color);
     margin-left: 20px;
     margin-bottom: 12px;
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
 }
 
 .repl-info,
 .repl-result {
     color: var(--success-color);
     margin-left: 20px;
+    margin-bottom: 12px;
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+}
     margin-bottom: 12px;
     font-style: italic;
 }
