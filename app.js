@@ -37,9 +37,15 @@ function openMenu() {
     document.documentElement.classList.add('menu-open');
     document.body.classList.add('menu-open');
     
-    // Block touch events on main content
+    // Block touch events on main content and all scrollable children
     if (mainContent) {
         mainContent.addEventListener('touchmove', preventContentScroll, { passive: false });
+        
+        // Also block on all output areas that can scroll
+        const scrollables = mainContent.querySelectorAll('.output, .repl-history, .column');
+        scrollables.forEach(el => {
+            el.addEventListener('touchmove', preventContentScroll, { passive: false });
+        });
     }
 }
 
@@ -52,6 +58,12 @@ function closeMenuFunc() {
     // Restore touch events on main content
     if (mainContent) {
         mainContent.removeEventListener('touchmove', preventContentScroll);
+        
+        // Remove from all output areas
+        const scrollables = mainContent.querySelectorAll('.output, .repl-history, .column');
+        scrollables.forEach(el => {
+            el.removeEventListener('touchmove', preventContentScroll);
+        });
     }
     
     // Collapse the examples submenu when closing the menu
