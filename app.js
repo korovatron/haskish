@@ -51,28 +51,42 @@ closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
 // Prevent rubber-band scroll on menu from affecting content behind (iOS PWA fix)
-let touchStartY = 0;
-
-menuPanel.addEventListener('touchstart', (e) => {
-    touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
 menuPanel.addEventListener('touchmove', (e) => {
-    const menuContent = menuPanel;
-    const scrollTop = menuContent.scrollTop;
-    const scrollHeight = menuContent.scrollHeight;
-    const clientHeight = menuContent.clientHeight;
-    const touchY = e.touches[0].clientY;
-    const deltaY = touchY - touchStartY;
+    const scrollTop = menuPanel.scrollTop;
+    const scrollHeight = menuPanel.scrollHeight;
+    const clientHeight = menuPanel.clientHeight;
     
-    const isAtTop = scrollTop <= 0;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight;
+    const isAtTop = scrollTop <= 1;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
     
-    // Only prevent if trying to scroll beyond boundaries
-    if ((isAtTop && deltaY > 0) || (isAtBottom && deltaY < 0)) {
+    // If can't scroll (content fits), prevent all scroll
+    if (scrollHeight <= clientHeight) {
         e.preventDefault();
+        return;
+    }
+    
+    // Only prevent rubber-band at boundaries
+    if (isAtTop || isAtBottom) {
+        // Let a tiny bit of movement to determine direction, then prevent
+        const touch = e.touches[0];
+        if (!menuPanel._lastY) {
+            menuPanel._lastY = touch.clientY;
+            return;
+        }
+        
+        const deltaY = touch.clientY - menuPanel._lastY;
+        
+        if ((isAtTop && deltaY > 0) || (isAtBottom && deltaY < 0)) {
+            e.preventDefault();
+        }
+        
+        menuPanel._lastY = touch.clientY;
     }
 }, { passive: false });
+
+menuPanel.addEventListener('touchend', () => {
+    delete menuPanel._lastY;
+}, { passive: true });
 
 // Toggle exercises column
 document.getElementById('toggleExercises').addEventListener('click', function() {
