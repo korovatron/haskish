@@ -522,14 +522,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 addSystemMessage('✓ Functions saved successfully!', 'result');
             } else {
-                // Fallback: download file
+                // Fallback: download file (iOS-compatible)
                 const blob = new Blob([code], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
+                
+                // iOS Safari requires the link to be in the DOM
+                document.body.appendChild(a);
                 a.click();
-                URL.revokeObjectURL(url);
+                
+                // Clean up after a delay to ensure download starts
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
                 
                 addSystemMessage('✓ Functions downloaded to your Downloads folder!', 'result');
             }
