@@ -39,6 +39,14 @@ function closeMenuFunc() {
     // Restore scroll on iOS
     document.body.style.position = '';
     document.body.style.width = '';
+    
+    // Collapse the examples submenu when closing the menu
+    const examplesToggle = document.getElementById('examplesToggle');
+    const examplesSubmenu = document.getElementById('examplesSubmenu');
+    if (examplesToggle && examplesSubmenu) {
+        examplesToggle.classList.remove('expanded');
+        examplesSubmenu.classList.remove('expanded');
+    }
 }
 
 menuToggle.addEventListener('click', openMenu);
