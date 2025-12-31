@@ -463,7 +463,14 @@ header h1 {
 }
 
 /* Prevent scrolling main content when menu is open */
-body.menu-open .main-content,
+body.menu-open .main-content {
+    position: fixed;
+    width: 100%;
+    touch-action: none;
+    pointer-events: none;
+    overflow: hidden !important;
+}
+
 body.menu-open .column {
     touch-action: none;
     pointer-events: none;
