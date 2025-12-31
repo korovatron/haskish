@@ -23,38 +23,19 @@ const menuPanel = document.getElementById('menuPanel');
 const menuOverlay = document.getElementById('menuOverlay');
 const closeMenu = document.getElementById('closeMenu');
 
-let scrollPosition = 0;
-
 function openMenu() {
-    // Save current scroll position
-    scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-    
     menuPanel.classList.add('open');
     menuOverlay.classList.add('visible');
-    
-    // Prevent scroll on iOS - lock position
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollPosition}px`;
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.width = '100%';
+    document.documentElement.classList.add('menu-open');
+    document.body.classList.add('menu-open');
 }
 
 function closeMenuFunc() {
     menuPanel.classList.remove('open');
     menuOverlay.classList.remove('visible');
-    
-    // Restore scroll on iOS
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.width = '';
-    
-    // Restore scroll position
-    window.scrollTo(0, scrollPosition);
+    document.documentElement.classList.remove('menu-open');
+    document.body.classList.remove('menu-open');
+
     
     // Collapse the examples submenu when closing the menu
     const examplesToggle = document.getElementById('examplesToggle');
