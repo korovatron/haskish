@@ -464,6 +464,12 @@ body.menu-open .main-content,
 body.menu-open .column {
     touch-action: none;
     pointer-events: none;
+    overflow: hidden !important;
+}
+
+body.menu-open .output,
+body.menu-open .repl-history {
+    overflow: hidden !important;
 }
 
 /* Column containers */
