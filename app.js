@@ -50,24 +50,26 @@ menuToggle.addEventListener('click', openMenu);
 closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
-// Prevent touch events on menu from scrolling content behind (iOS PWA fix)
+// Prevent rubber-band scroll on menu from affecting content behind (iOS PWA fix)
 let touchStartY = 0;
 
 menuPanel.addEventListener('touchstart', (e) => {
     touchStartY = e.touches[0].clientY;
-});
+}, { passive: true });
 
 menuPanel.addEventListener('touchmove', (e) => {
-    // Only prevent scroll if menu itself isn't scrollable or is at scroll bounds
-    const menuContent = e.currentTarget;
+    const menuContent = menuPanel;
     const scrollTop = menuContent.scrollTop;
     const scrollHeight = menuContent.scrollHeight;
     const clientHeight = menuContent.clientHeight;
     const touchY = e.touches[0].clientY;
     const deltaY = touchY - touchStartY;
     
-    // If scrolling up and already at top, or scrolling down and already at bottom
-    if ((deltaY > 0 && scrollTop === 0) || (deltaY < 0 && scrollTop + clientHeight >= scrollHeight)) {
+    const isAtTop = scrollTop <= 0;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight;
+    
+    // Only prevent if trying to scroll beyond boundaries
+    if ((isAtTop && deltaY > 0) || (isAtBottom && deltaY < 0)) {
         e.preventDefault();
     }
 }, { passive: false });
