@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-v5';
+const CACHE_NAME = 'haskish-v6';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,6 +6,10 @@ const urlsToCache = [
   './haskish.js',
   './styles.css',
   './manifest.json',
+  './images/headerLogo.png',
+  './favicon.png',
+  './icon-192.png',
+  './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css',
