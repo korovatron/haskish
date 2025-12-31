@@ -281,6 +281,8 @@ header h1 {
 
 .submenu.expanded {
     max-height: 1200px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .submenu-item {

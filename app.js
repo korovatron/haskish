@@ -45,6 +45,9 @@ function openMenu() {
     document.documentElement.classList.add('menu-open');
     document.body.classList.add('menu-open');
     
+    // Force reflow to ensure menu scroll container is established (iOS fix)
+    void menuPanel.offsetHeight;
+    
     // Block touch events on main content and all scrollable children
     if (mainContent) {
         mainContent.addEventListener('touchmove', preventContentScroll, { passive: false, capture: true });
