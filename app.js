@@ -493,6 +493,100 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // File save/load functionality
+    let fileHandle = null; // Store file handle for File System Access API
+
+    // Check if File System Access API is available
+    const hasFileSystemAPI = 'showOpenFilePicker' in window;
+
+    // Save file
+    document.getElementById('saveFile').addEventListener('click', async () => {
+        const code = codeEditor.getValue();
+        const filename = 'functions.haskish';
+        
+        try {
+            if (hasFileSystemAPI) {
+                // Use File System Access API (modern browsers)
+                const options = {
+                    suggestedName: filename,
+                    types: [{
+                        description: 'Haskish Files',
+                        accept: { 'text/plain': ['.haskish', '.hs', '.txt'] }
+                    }]
+                };
+                
+                fileHandle = await window.showSaveFilePicker(options);
+                const writable = await fileHandle.createWritable();
+                await writable.write(code);
+                await writable.close();
+                
+                addSystemMessage('✓ Functions saved successfully!', 'result');
+            } else {
+                // Fallback: download file
+                const blob = new Blob([code], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                addSystemMessage('✓ Functions downloaded to your Downloads folder!', 'result');
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Save error:', error);
+                addSystemMessage('Error saving file: ' + error.message, 'error');
+            }
+        }
+    });
+
+    // Load file
+    document.getElementById('loadFile').addEventListener('click', async () => {
+        try {
+            if (hasFileSystemAPI) {
+                // Use File System Access API (modern browsers)
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Haskish Files',
+                        accept: { 'text/plain': ['.haskish', '.hs', '.txt'] }
+                    }],
+                    multiple: false
+                });
+                
+                fileHandle = handle;
+                const file = await handle.getFile();
+                const code = await file.text();
+                
+                codeEditor.setValue(code);
+                addSystemMessage(`✓ Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
+                saveUniversalState();
+            } else {
+                // Fallback: use file input
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.haskish,.hs,.txt';
+                
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const code = await file.text();
+                        codeEditor.setValue(code);
+                        addSystemMessage(`✓ Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
+                        saveUniversalState();
+                    }
+                };
+                
+                input.click();
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Load error:', error);
+                addSystemMessage('Error loading file: ' + error.message, 'error');
+            }
+        }
+    });
+
     // Clear editor button
     const clearEditorBtn = document.getElementById('clearEditor');
     clearEditorBtn.addEventListener('click', () => {
