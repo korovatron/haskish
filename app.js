@@ -31,7 +31,15 @@ function preventContentScroll(e) {
     e.stopPropagation();
 }
 
+let scrollPosition = 0;
+
 function openMenu() {
+    // Save current scroll position and lock body
+    scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollPosition}px`;
+    document.body.style.width = '100%';
+    
     menuPanel.classList.add('open');
     menuOverlay.classList.add('visible');
     document.documentElement.classList.add('menu-open');
@@ -54,6 +62,12 @@ function closeMenuFunc() {
     menuOverlay.classList.remove('visible');
     document.documentElement.classList.remove('menu-open');
     document.body.classList.remove('menu-open');
+    
+    // Restore body scroll position
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollPosition);
 
     // Restore touch events on main content
     if (mainContent) {
