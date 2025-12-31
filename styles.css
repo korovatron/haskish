@@ -459,6 +459,13 @@ header h1 {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
+/* Prevent scrolling main content when menu is open */
+body.menu-open .main-content,
+body.menu-open .column {
+    touch-action: none;
+    pointer-events: none;
+}
+
 /* Column containers */
 .column {
     display: flex;
