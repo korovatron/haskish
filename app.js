@@ -266,6 +266,17 @@ document.addEventListener('DOMContentLoaded', () => {
     codeEditor.setOption('theme', 'monokai');
     replEditor.setOption('theme', 'monokai');
 
+    // iOS fix: Handle Enter key more reliably on virtual keyboard
+    replEditor.getInputField().addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const enterHandler = replEditor.getOption('extraKeys')['Enter'];
+            if (enterHandler) {
+                enterHandler(replEditor);
+            }
+        }
+    });
+
     // Run code from editor
     runCodeBtn.addEventListener('click', () => {
         const code = codeEditor.getValue();
