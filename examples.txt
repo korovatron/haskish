@@ -348,3 +348,69 @@ allButLast xs = reverse (tail (reverse xs))
 -- getMiddle [1,2,3,4,5]     → [2,3,4]
 -- lastElement [1,2,3,4,5]   → 5
 -- allButLast [1,2,3,4,5]    → [1,2,3,4]
+
+=== Test Section 1 ===
+-- Test functions
+testFunc1 x = x + 10
+testFunc2 x y = x * y + 5
+testFunc3 xs = map (* 2) xs
+
+-- Tests:
+-- testFunc1 5  → 15
+-- testFunc2 3 4  → 17
+-- testFunc3 [1,2,3]  → [2,4,6]
+
+=== Test Section 2 ===
+-- More test functions
+square x = x * x
+cube x = x * x * x
+isEven n = mod n 2 == 0
+
+-- Tests:
+-- square 5  → 25
+-- cube 3  → 27
+-- isEven 4  → True
+
+=== Test Section 3 ===
+-- List operations
+doubleAll xs = map (* 2) xs
+sumList xs = foldl (+) 0 xs
+productList xs = foldl (*) 1 xs
+
+-- Tests:
+-- doubleAll [1,2,3]  → [2,4,6]
+-- sumList [1,2,3,4]  → 10
+-- productList [2,3,4]  → 24
+
+=== Test Section 4 ===
+-- String functions
+greeting name = "Hello, " ++ name
+shout text = map toUpper text
+firstChar str = head str
+
+-- Tests:
+-- greeting "World"  → "Hello, World"
+-- shout "hello"  → "HELLO"
+-- firstChar "test"  → 't'
+
+=== Test Section 5 ===
+-- Numeric functions
+half x = x / 2
+percentage x total = (x / total) * 100
+average xs = sumList xs / length xs
+
+-- Tests:
+-- half 10  → 5.0
+-- percentage 25 100  → 25.0
+-- average [10,20,30]  → 20.0
+
+=== Test Section 6 ===
+-- Comparison functions
+maximum' xs = foldl max (head xs) xs
+minimum' xs = foldl min (head xs) xs
+between low high x = x >= low && x <= high
+
+-- Tests:
+-- maximum' [1,5,3,9,2]  → 9
+-- minimum' [1,5,3,9,2]  → 1
+-- between 5 10 7  → True
