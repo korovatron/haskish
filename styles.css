@@ -98,6 +98,10 @@ body.menu-open {
     position: relative;
 }
 
+html.menu-open {
+    background-color: var(--bg-color);
+}
+
 /* Header - sticky at top */
 header {
     padding: 12px 20px;
