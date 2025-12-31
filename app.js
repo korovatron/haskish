@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load and parse examples file
     async function loadExamplesFile() {
         try {
-            const response = await fetch('examples.txt');
+            const response = await fetch('data/examples.txt');
             if (!response.ok) {
                 throw new Error('Failed to load examples');
             }
@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load and parse exercises file
     async function loadExercisesFile() {
         try {
-            const response = await fetch('exercises.txt');
+            const response = await fetch('data/exercises.txt');
             if (!response.ok) {
                 throw new Error('Failed to load exercises');
             }
