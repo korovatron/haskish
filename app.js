@@ -50,18 +50,27 @@ menuToggle.addEventListener('click', openMenu);
 closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
-// Prevent touch events on menu from reaching content behind (iOS PWA fix)
+// Prevent touch events on menu from scrolling content behind (iOS PWA fix)
+let touchStartY = 0;
+
 menuPanel.addEventListener('touchstart', (e) => {
-    e.stopPropagation();
-}, { passive: true });
+    touchStartY = e.touches[0].clientY;
+});
 
 menuPanel.addEventListener('touchmove', (e) => {
-    e.stopPropagation();
-}, { passive: true });
-
-menuPanel.addEventListener('touchend', (e) => {
-    e.stopPropagation();
-}, { passive: true });
+    // Only prevent scroll if menu itself isn't scrollable or is at scroll bounds
+    const menuContent = e.currentTarget;
+    const scrollTop = menuContent.scrollTop;
+    const scrollHeight = menuContent.scrollHeight;
+    const clientHeight = menuContent.clientHeight;
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchY - touchStartY;
+    
+    // If scrolling up and already at top, or scrolling down and already at bottom
+    if ((deltaY > 0 && scrollTop === 0) || (deltaY < 0 && scrollTop + clientHeight >= scrollHeight)) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
 // Toggle exercises column
 document.getElementById('toggleExercises').addEventListener('click', function() {
