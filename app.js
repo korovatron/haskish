@@ -23,11 +23,24 @@ const menuPanel = document.getElementById('menuPanel');
 const menuOverlay = document.getElementById('menuOverlay');
 const closeMenu = document.getElementById('closeMenu');
 
+// Prevent scrolling content behind menu in iOS PWA
+const mainContent = document.querySelector('.main-content');
+
+function preventContentScroll(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
 function openMenu() {
     menuPanel.classList.add('open');
     menuOverlay.classList.add('visible');
     document.documentElement.classList.add('menu-open');
     document.body.classList.add('menu-open');
+    
+    // Block touch events on main content
+    if (mainContent) {
+        mainContent.addEventListener('touchmove', preventContentScroll, { passive: false });
+    }
 }
 
 function closeMenuFunc() {
@@ -36,6 +49,10 @@ function closeMenuFunc() {
     document.documentElement.classList.remove('menu-open');
     document.body.classList.remove('menu-open');
 
+    // Restore touch events on main content
+    if (mainContent) {
+        mainContent.removeEventListener('touchmove', preventContentScroll);
+    }
     
     // Collapse the examples submenu when closing the menu
     const examplesToggle = document.getElementById('examplesToggle');
@@ -50,45 +67,34 @@ menuToggle.addEventListener('click', openMenu);
 closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
-// Prevent rubber-band scroll on menu from affecting content behind (iOS PWA fix)
-menuPanel.addEventListener('touchmove', (e) => {
-    const scrollTop = menuPanel.scrollTop;
-    const scrollHeight = menuPanel.scrollHeight;
-    const clientHeight = menuPanel.clientHeight;
-    
-    const isAtTop = scrollTop <= 1;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-    
-    // If can't scroll (content fits), prevent all scroll
-    if (scrollHeight <= clientHeight) {
-        e.preventDefault();
-        return;
-    }
-    
-    // Only prevent rubber-band at boundaries
-    if (isAtTop || isAtBottom) {
-        // Let a tiny bit of movement to determine direction, then prevent
-        const touch = e.touches[0];
-        if (!menuPanel._lastY) {
-            menuPanel._lastY = touch.clientY;
-            return;
-        }
-        
-        const deltaY = touch.clientY - menuPanel._lastY;
-        
-        if ((isAtTop && deltaY > 0) || (isAtBottom && deltaY < 0)) {
-            e.preventDefault();
-        }
-        
-        menuPanel._lastY = touch.clientY;
-    }
-}, { passive: false });
+// Prevent scrolling content behind menu in iOS PWA
+const mainContent = document.querySelector('.main-content');
 
-menuPanel.addEventListener('touchend', () => {
-    delete menuPanel._lastY;
-}, { passive: true });
+function preventContentScroll(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
 
-// Toggle exercises column
+function openMenu() {
+    menuPanel.classList.add('open');
+    menuOverlay.classList.add('visible');
+    document.documentElement.classList.add('menu-open');
+    document.body.classList.add('menu-open');
+    
+    // Block touch events on main content
+    mainContent.addEventListener('touchmove', preventContentScroll, { passive: false });
+}
+
+function closeMenuFunc() {
+    menuPanel.classList.remove('open');
+    menuOverlay.classList.remove('visible');
+    document.documentElement.classList.remove('menu-open');
+    document.body.classList.remove('menu-open');
+
+    // Restore touch events on main content
+    mainContent.removeEventListener('touchmove', preventContentScroll);
+    
+    // Collapse the examples submenu when closing the menu
 document.getElementById('toggleExercises').addEventListener('click', function() {
     const exercisesColumn = document.getElementById('exercisesColumn');
     const mainContent = document.getElementById('mainContent');
