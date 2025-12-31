@@ -348,3 +348,45 @@ allButLast xs = reverse (tail (reverse xs))
 -- getMiddle [1,2,3,4,5]     → [2,3,4]
 -- lastElement [1,2,3,4,5]   → 5
 -- allButLast [1,2,3,4,5]    → [1,2,3,4]
+
+=== Trigonometry ===
+factorial 0 = 1
+factorial n = n * factorial (n - 1)
+
+power x 0 = 1
+power x n = x * power x (n - 1)
+
+pi = 3.141592654
+
+abs x
+  | x < 0  = -x
+  | x >= 0 = x
+
+-- sign: 1, -1, 1, -1, ...
+sign n
+  | mod n 2 == 0 = 1
+  | otherwise = -1
+
+-- nth term of Taylor series for sin(x)
+sinTerm x n = sign n * power x (2*n + 1) / factorial (2*n + 1)
+
+sinHelper x n acc
+  | abs (sinTerm x n) < 1e-12 = acc
+  | otherwise = sinHelper x (n + 1) (acc + sinTerm x n)
+
+mySin x = sinHelper x 0 0
+
+-- nth term of Taylor series for cos(x)
+cosTerm x n = sign n * power x (2*n) / factorial (2*n)
+
+cosHelper x n acc
+  | abs (cosTerm x n) < 1e-12 = acc
+  | otherwise = cosHelper x (n + 1) (acc + cosTerm x n)
+
+myCos x = cosHelper x 0 0
+
+myTan x = (mySin x) / (myCos x)
+
+
+
+-- try mySin (pi/6) etc
