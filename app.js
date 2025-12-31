@@ -2,6 +2,11 @@
 
 const interpreter = new HaskishInterpreter();
 
+// REPL command history (for up/down arrow navigation)
+let replHistory = [];
+let replHistoryIndex = -1;
+let replCurrentInput = '';
+
 // Detect if running in standalone mode (PWA) vs browser
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
     document.body.classList.add('standalone-mode');
@@ -198,9 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize REPL CodeMirror
     const replInputTextarea = document.getElementById('replInput');
-    let replHistory = [];
-    let replHistoryIndex = -1;
-    let replCurrentInput = '';
     
     replEditor = CodeMirror.fromTextArea(replInputTextarea, {
         mode: 'haskell',
@@ -215,8 +217,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expr = cm.getValue().trim();
                 if (!expr) return;
                 
-                // Add to history
-                replHistory.push(expr);
+                // Add to history (limit to last 100 commands, avoid consecutive duplicates)
+                if (replHistory.length === 0 || replHistory[replHistory.length - 1] !== expr) {
+                    replHistory.push(expr);
+                    // Keep only last 100 commands
+                    if (replHistory.length > 100) {
+                        replHistory.shift();
+                    }
+                }
                 replHistoryIndex = replHistory.length;
                 replCurrentInput = '';
                 
@@ -259,8 +267,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 replOutput.appendChild(outputDiv);
                 
+                // Limit REPL output history to last 50 interactions
+                // Each interaction creates 2 divs (input + output), so keep last 100 divs
+                const maxDivs = 100;
+                while (replOutput.children.length > maxDivs) {
+                    // Remove oldest entries (but keep system messages at top)
+                    const firstChild = replOutput.firstElementChild;
+                    if (firstChild && !firstChild.classList.contains('repl-info') && 
+                        !firstChild.classList.contains('repl-error') && 
+                        !firstChild.classList.contains('repl-result')) {
+                        replOutput.removeChild(firstChild);
+                    } else if (firstChild && firstChild.classList.contains('repl-entry')) {
+                        replOutput.removeChild(firstChild);
+                        // Also remove the following result/error div if it exists
+                        if (replOutput.firstElementChild) {
+                            replOutput.removeChild(replOutput.firstElementChild);
+                        }
+                    } else {
+                        break; // Stop if we hit system messages
+                    }
+                }
+                
                 // Scroll to bottom
                 replOutput.scrollTop = replOutput.scrollHeight;
+                
+                // Save state (including command history)
+                saveUniversalState();
                 
                 // Clear input
                 cm.setValue('');
@@ -607,6 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear REPL history
     clearReplBtn.addEventListener('click', () => {
         replOutput.innerHTML = '';
+        replHistory = [];  // Clear command history
+        replHistoryIndex = -1;
         replEditor.focus();
         saveUniversalState(); // Save cleared state
     });
@@ -626,7 +660,8 @@ function escapeHtml(text) {
 function saveUniversalState() {
     const state = {
         code: codeEditor.getValue(),
-        replHistory: document.getElementById('replOutput').innerHTML
+        replHistory: document.getElementById('replOutput').innerHTML,
+        replCommandHistory: replHistory  // Save command history for up/down arrows
     };
     localStorage.setItem('haskishState', JSON.stringify(state));
 }
@@ -653,6 +688,13 @@ function initExercises() {
     if (savedState) {
         codeEditor.setValue(savedState.code || '-- Write your function definitions here\n');
         replOutput.innerHTML = savedState.replHistory || '';
+        
+        // Restore command history for up/down arrows
+        if (savedState.replCommandHistory && Array.isArray(savedState.replCommandHistory)) {
+            replHistory = savedState.replCommandHistory;
+            replHistoryIndex = replHistory.length;
+        }
+        
         // Scroll REPL to bottom if there's history
         if (savedState.replHistory) {
             replOutput.scrollTop = replOutput.scrollHeight;
@@ -664,6 +706,11 @@ function initExercises() {
         codeEditor.setValue('-- Write your function definitions here\n');
         addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! (Examples available in the menu ☰)', 'info');
     }
+    
+    // Focus REPL input on startup
+    setTimeout(() => {
+        replEditor.focus();
+    }, 100);
     
     // Exercise button click - show exercise content
     const exerciseButtons = document.querySelectorAll('.exercise-btn');
