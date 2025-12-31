@@ -50,6 +50,19 @@ menuToggle.addEventListener('click', openMenu);
 closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
+// Prevent touch events on menu from reaching content behind (iOS PWA fix)
+menuPanel.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+}, { passive: true });
+
+menuPanel.addEventListener('touchmove', (e) => {
+    e.stopPropagation();
+}, { passive: true });
+
+menuPanel.addEventListener('touchend', (e) => {
+    e.stopPropagation();
+}, { passive: true });
+
 // Toggle exercises column
 document.getElementById('toggleExercises').addEventListener('click', function() {
     const exercisesColumn = document.getElementById('exercisesColumn');
