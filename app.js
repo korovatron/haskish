@@ -39,12 +39,12 @@ function openMenu() {
     
     // Block touch events on main content and all scrollable children
     if (mainContent) {
-        mainContent.addEventListener('touchmove', preventContentScroll, { passive: false });
+        mainContent.addEventListener('touchmove', preventContentScroll, { passive: false, capture: true });
         
         // Also block on all output areas that can scroll
         const scrollables = mainContent.querySelectorAll('.output, .repl-history, .column');
         scrollables.forEach(el => {
-            el.addEventListener('touchmove', preventContentScroll, { passive: false });
+            el.addEventListener('touchmove', preventContentScroll, { passive: false, capture: true });
         });
     }
 }
@@ -57,12 +57,12 @@ function closeMenuFunc() {
 
     // Restore touch events on main content
     if (mainContent) {
-        mainContent.removeEventListener('touchmove', preventContentScroll);
+        mainContent.removeEventListener('touchmove', preventContentScroll, { capture: true });
         
         // Remove from all output areas
         const scrollables = mainContent.querySelectorAll('.output, .repl-history, .column');
         scrollables.forEach(el => {
-            el.removeEventListener('touchmove', preventContentScroll);
+            el.removeEventListener('touchmove', preventContentScroll, { capture: true });
         });
     }
     
