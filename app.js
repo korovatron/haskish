@@ -67,34 +67,7 @@ menuToggle.addEventListener('click', openMenu);
 closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
-// Prevent scrolling content behind menu in iOS PWA
-const mainContent = document.querySelector('.main-content');
-
-function preventContentScroll(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-function openMenu() {
-    menuPanel.classList.add('open');
-    menuOverlay.classList.add('visible');
-    document.documentElement.classList.add('menu-open');
-    document.body.classList.add('menu-open');
-    
-    // Block touch events on main content
-    mainContent.addEventListener('touchmove', preventContentScroll, { passive: false });
-}
-
-function closeMenuFunc() {
-    menuPanel.classList.remove('open');
-    menuOverlay.classList.remove('visible');
-    document.documentElement.classList.remove('menu-open');
-    document.body.classList.remove('menu-open');
-
-    // Restore touch events on main content
-    mainContent.removeEventListener('touchmove', preventContentScroll);
-    
-    // Collapse the examples submenu when closing the menu
+// Toggle exercises column
 document.getElementById('toggleExercises').addEventListener('click', function() {
     const exercisesColumn = document.getElementById('exercisesColumn');
     const mainContent = document.getElementById('mainContent');
