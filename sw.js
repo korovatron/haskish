@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-cache-v87';
+const CACHE_NAME = 'haskish-cache-v88';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [
     './sw.js',
     './headerLogo.png',
     './examples.txt',
+    './exercises.txt',
     'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css',
