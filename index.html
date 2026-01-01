@@ -321,6 +321,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/runmode/runmode.min.js"></script>
+    
+    <!-- Override Haskell mode to treat single quotes as strings, not character literals -->
+    <script>
+        (function() {
+            const haskellMode = CodeMirror.getMode({}, 'haskell');
+            CodeMirror.defineMode('haskish', function(config) {
+                return {
+                    startState: function() {
+                        return haskellMode.startState();
+                    },
+                    copyState: function(state) {
+                        return CodeMirror.copyState(haskellMode, state);
+                    },
+                    token: function(stream, state) {
+                        // Try to match single-quoted string first (entire string at once)
+                        // This prevents Haskell mode from seeing it as a char literal
+                        const match = stream.match(/'(?:[^'\\]|\\.)+'/, false);
+                        if (match) {
+                            stream.match(/'(?:[^'\\]|\\.)+'/);
+                            return 'string';
+                        }
+                        
+                        // Otherwise delegate to Haskell mode
+                        return haskellMode.token(stream, state);
+                    }
+                };
+            });
+        })();
+    </script>
+    
     <script src="haskish.js"></script>
     <script src="app.js"></script>
     

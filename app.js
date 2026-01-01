@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize CodeMirror
     const codeEditorTextarea = document.getElementById('codeEditor');
     codeEditor = CodeMirror.fromTextArea(codeEditorTextarea, {
-        mode: 'haskell',
+        mode: 'haskish',
         theme: 'monokai',
         lineNumbers: true,
         indentUnit: 2,
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const replInputTextarea = document.getElementById('replInput');
     
     replEditor = CodeMirror.fromTextArea(replInputTextarea, {
-        mode: 'haskell',
+        mode: 'haskish',
         theme: 'monokai',
         lineNumbers: false,
         indentUnit: 2,
@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 replOutput.appendChild(inputDiv);
                 
                 // Apply syntax highlighting to input
-                CodeMirror.runMode(expr, 'haskell', inputCode);
+                CodeMirror.runMode(expr, 'haskish', inputCode);
 
                 // Evaluate expression
                 const result = interpreter.evaluateRepl(expr);
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     outputCode.className = `repl-output-code ${themeClass}`;
                     outputDiv.appendChild(outputCode);
                     // Apply syntax highlighting to output
-                    CodeMirror.runMode(result.result, 'haskell', outputCode);
+                    CodeMirror.runMode(result.result, 'haskish', outputCode);
                 } else {
                     outputDiv.className = 'repl-error';
                     outputDiv.textContent = `Error: ${result.error}`;
