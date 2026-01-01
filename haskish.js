@@ -88,7 +88,14 @@ class InfiniteRange {
 
     toString() {
         const preview = this.take(20);
-        return `[${preview.join(',')}...]`;
+        // Format values properly (handles tuples, etc.)
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) {
+                return '(' + v.elements.map(String).join(',') + ')';
+            }
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
     }
 }
 
@@ -158,7 +165,14 @@ class MappedInfiniteRange {
 
     toString() {
         const preview = this.take(20);
-        return `[${preview.join(',')}...]`;
+        // Format values properly (handles tuples, etc.)
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) {
+                return '(' + v.elements.map(String).join(',') + ')';
+            }
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
     }
 }
 
@@ -273,7 +287,14 @@ class FilteredInfiniteRange {
 
     toString() {
         const preview = this.take(20);
-        return `[${preview.join(',')}...]`;
+        // Format values properly (handles tuples, etc.)
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) {
+                return '(' + v.elements.map(String).join(',') + ')';
+            }
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
     }
 }
 
@@ -344,7 +365,14 @@ class ConsedInfiniteRange {
 
     toString() {
         const preview = this.take(20);
-        return `[${preview.join(',')}...]`;
+        // Format values properly (handles tuples, etc.)
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) {
+                return '(' + v.elements.map(String).join(',') + ')';
+            }
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
     }
 }
 
@@ -1227,6 +1255,43 @@ class HaskishInterpreter {
     
     // Evaluate list comprehension with nested generators and guards
     evaluateListComprehension(outputExpr, generators, guards, bindings = {}, genIndex = 0) {
+        // Special case: single generator from infinite range with guards
+        // Return a lazy filtered infinite range instead of materializing
+        if (genIndex === 0 && generators.length === 1 && Object.keys(bindings).length === 0) {
+            const generator = generators[0];
+            const listExpr = this.evaluate(generator.list);
+            
+            // Check if we can create a lazy filtered/mapped infinite range
+            if (listExpr && listExpr._isInfiniteRange) {
+                const varName = generator.variable;
+                
+                // Check if output expression is just the variable (simple identity)
+                const isIdentity = outputExpr.trim() === varName;
+                
+                // If we have guards, create a combined predicate
+                if (guards.length > 0) {
+                    const combinedPredicate = new Lambda(varName, guards.map(g => `(${g})`).join(' && '), this, {});
+                    
+                    if (isIdentity) {
+                        // Just filter: [x | x <- [n..], guard(x)]
+                        return new FilteredInfiniteRange(listExpr, combinedPredicate, this);
+                    } else {
+                        // Filter and map: [expr | x <- [n..], guard(x)]
+                        const filtered = new FilteredInfiniteRange(listExpr, combinedPredicate, this);
+                        const mapLambda = new Lambda(varName, outputExpr, this, {});
+                        return new MappedInfiniteRange(filtered, mapLambda, this);
+                    }
+                } else if (!isIdentity) {
+                    // Just map, no filter: [expr | x <- [n..]]
+                    const mapLambda = new Lambda(varName, outputExpr, this, {});
+                    return new MappedInfiniteRange(listExpr, mapLambda, this);
+                } else {
+                    // Identity with no guards: [x | x <- [n..]] - just return the range
+                    return listExpr;
+                }
+            }
+        }
+        
         if (genIndex >= generators.length) {
             // Base case: all generators exhausted, check guards and produce output
             // Check all guards

@@ -1,0 +1,75 @@
+-- Test Cases for Infinite List Comprehensions
+
+-- Test 1: Simple filter with identity (should return FilteredInfiniteRange)
+[x | x <- [1..], x>6]
+-- Expected: [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21...]
+
+-- Test 2: Filter with different threshold
+[n | n <- [1..], n>10]
+-- Expected: [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31...]
+
+-- Test 3: Filter with modulo (odd numbers from infinite range)
+[x | x <- [1..], x `mod` 2 == 1]
+-- Expected: [1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41...]
+
+-- Test 4: Map with filter (double all numbers > 5)
+[x*2 | x <- [1..], x>5]
+-- Expected: [12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52...]
+
+-- Test 5: Map with expression and filter
+[x^2 | x <- [1..], x>3]
+-- Expected: [16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400...]
+
+-- Test 6: Map without filter (should return MappedInfiniteRange)
+[x+10 | x <- [1..]]
+-- Expected: [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31...]
+
+-- Test 7: Identity without filter (should return original range)
+[x | x <- [1..]]
+-- Expected: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21...]
+
+-- Test 8: Multiple guards (AND condition)
+[x | x <- [1..], x>5, x<100]
+-- Expected: [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26...]
+
+-- Test 9: Verify it works with take
+take 5 [x | x <- [1..], x>10]
+-- Expected: [11,12,13,14,15]
+
+-- Test 10: Verify it works with head
+head [x | x <- [1..], x>100]
+-- Expected: 101
+
+-- Test 11: Verify it works with tail
+take 5 (tail [x | x <- [1..], x>10])
+-- Expected: [12,13,14,15,16]
+
+-- Test 12: Verify it works with drop
+take 5 (drop 10 [x | x <- [1..], x>5])
+-- Expected: [16,17,18,19,20]
+
+-- Test 13: Complex expression with filter
+[(x,x^2) | x <- [1..], x>3]
+-- Expected: [(4,16),(5,25),(6,36),(7,49),(8,64),(9,81),(10,100),(11,121)...]
+
+-- Test 14: Arithmetic sequence with step
+[x | x <- [2,4..], x>10]
+-- Expected: [12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52...]
+
+-- Test 15: Nested operations
+map (*3) [x | x <- [1..], x>5]
+-- Expected: [18,21,24,27,30,33,36,39,42,45,48,51,54,57,60,63,66,69,72,75,78...]
+
+-- Edge cases that should still work with finite lists:
+
+-- Test 16: Finite list comprehension
+[x*2 | x <- [1,2,3,4,5], x>2]
+-- Expected: [6,8,10]
+
+-- Test 17: Multiple generators (should materialize, not infinite)
+[(x,y) | x <- [1..], y <- [1..3], x<3]
+-- Expected: [(1,1),(1,2),(1,3),(2,1),(2,2),(2,3)]
+
+-- Test 18: String comprehension (note: use double quotes, not single quotes)
+[c | c <- "Hello", c /= "l"]
+-- Expected: ["H","e","o"]
