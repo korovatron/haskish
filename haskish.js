@@ -87,7 +87,7 @@ class InfiniteRange {
     }
 
     toString() {
-        const preview = this.take(10);
+        const preview = this.take(20);
         return `[${preview.join(',')}...]`;
     }
 }
@@ -157,7 +157,7 @@ class MappedInfiniteRange {
     }
 
     toString() {
-        const preview = this.take(10);
+        const preview = this.take(20);
         return `[${preview.join(',')}...]`;
     }
 }
@@ -272,7 +272,78 @@ class FilteredInfiniteRange {
     }
 
     toString() {
-        const preview = this.take(10);
+        const preview = this.take(20);
+        return `[${preview.join(',')}...]`;
+    }
+}
+
+// Class to represent an infinite range with prepended elements (cons)
+class ConsedInfiniteRange {
+    constructor(prependedElements, tailRange) {
+        this.prependedElements = Array.isArray(prependedElements) ? prependedElements : [prependedElements];
+        this.tailRange = tailRange;
+        this._isInfiniteRange = true;
+    }
+
+    // Generator for lazy iteration
+    *[Symbol.iterator]() {
+        // Yield prepended elements first
+        for (const elem of this.prependedElements) {
+            yield elem;
+        }
+        // Then yield from the tail range
+        for (const elem of this.tailRange) {
+            yield elem;
+        }
+    }
+
+    // Take first n elements
+    take(n) {
+        const result = [];
+        let count = 0;
+        for (const elem of this) {
+            if (count >= n) break;
+            result.push(elem);
+            count++;
+        }
+        return result;
+    }
+
+    // Get element at index
+    at(index) {
+        if (index < this.prependedElements.length) {
+            return this.prependedElements[index];
+        }
+        return this.tailRange.at(index - this.prependedElements.length);
+    }
+
+    // Drop first n elements
+    drop(n) {
+        if (n <= 0) return this;
+        if (n < this.prependedElements.length) {
+            return new ConsedInfiniteRange(this.prependedElements.slice(n), this.tailRange);
+        }
+        return this.tailRange.drop(n - this.prependedElements.length);
+    }
+
+    // Get first element
+    head() {
+        if (this.prependedElements.length > 0) {
+            return this.prependedElements[0];
+        }
+        return this.tailRange.head();
+    }
+
+    // Get tail (all but first)
+    tail() {
+        if (this.prependedElements.length > 1) {
+            return new ConsedInfiniteRange(this.prependedElements.slice(1), this.tailRange);
+        }
+        return this.tailRange;
+    }
+
+    toString() {
+        const preview = this.take(20);
         return `[${preview.join(',')}...]`;
     }
 }
@@ -1426,7 +1497,8 @@ class HaskishInterpreter {
                     if (!Array.isArray(a)) {
                         throw new Error('(++) requires two lists');
                     }
-                    throw new Error('(++) cannot append to infinite range (can only prepend finite list)');
+                    // Prepend finite list to infinite range using ConsedInfiniteRange
+                    return new ConsedInfiniteRange(a, b);
                 }
                 if (a && a._isInfiniteRange) {
                     throw new Error('(++) cannot append to infinite range');
@@ -1506,7 +1578,8 @@ class HaskishInterpreter {
             { op: '/', fn: (a, b) => a / b },
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
-                    throw new Error('(:) cannot cons onto infinite range');
+                    // Create a new ConsedInfiniteRange
+                    return new ConsedInfiniteRange(a, b);
                 }
                 if (!Array.isArray(b)) {
                     throw new Error('(:) requires a list as the second argument');
@@ -1518,13 +1591,25 @@ class HaskishInterpreter {
         for (let { op, fn } of binaryOps) {
             const parts = this.splitByOperator(expr, op);
             if (parts.length >= 2) {
-                // Evaluate left-to-right for chained operators (a ++ b ++ c)
-                let result = this.evaluate(parts[0]);
-                for (let i = 1; i < parts.length; i++) {
-                    const right = this.evaluate(parts[i]);
-                    result = fn(result, right);
+                // Cons (:) is right-associative: 1:2:3:[] means 1:(2:(3:[]))
+                // All other operators are left-associative
+                if (op === ':') {
+                    // Evaluate right-to-left for cons
+                    let result = this.evaluate(parts[parts.length - 1]);
+                    for (let i = parts.length - 2; i >= 0; i--) {
+                        const left = this.evaluate(parts[i]);
+                        result = fn(left, result);
+                    }
+                    return result;
+                } else {
+                    // Evaluate left-to-right for other operators (a ++ b ++ c)
+                    let result = this.evaluate(parts[0]);
+                    for (let i = 1; i < parts.length; i++) {
+                        const right = this.evaluate(parts[i]);
+                        result = fn(result, right);
+                    }
+                    return result;
                 }
-                return result;
             }
         }
 
