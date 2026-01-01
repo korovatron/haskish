@@ -92,6 +92,76 @@ class InfiniteRange {
     }
 }
 
+// Class to represent a mapped infinite range (lazy map over infinite range)
+class MappedInfiniteRange {
+    constructor(sourceRange, mapFn, interpreter) {
+        this.sourceRange = sourceRange;
+        this.mapFn = mapFn;
+        this.interpreter = interpreter;
+        this._isInfiniteRange = true;
+    }
+
+    // Apply the mapping function to a value
+    _applyFn(value) {
+        const fn = this.mapFn;
+        if (fn instanceof Lambda) {
+            return fn.apply(value);
+        }
+        if (fn instanceof PartialFunction) {
+            return fn.apply([value]);
+        }
+        if (fn && fn._isOperatorFunction) {
+            return fn.apply([value]);
+        }
+        return this.interpreter.applyFunction(fn, [value]);
+    }
+
+    // Generator for lazy iteration
+    *[Symbol.iterator]() {
+        for (const value of this.sourceRange) {
+            yield this._applyFn(value);
+        }
+    }
+
+    // Take first n elements
+    take(n) {
+        const result = [];
+        let count = 0;
+        for (const value of this.sourceRange) {
+            if (count >= n) break;
+            result.push(this._applyFn(value));
+            count++;
+        }
+        return result;
+    }
+
+    // Get element at index
+    at(index) {
+        const sourceValue = this.sourceRange.at(index);
+        return this._applyFn(sourceValue);
+    }
+
+    // Drop first n elements, return new MappedInfiniteRange
+    drop(n) {
+        return new MappedInfiniteRange(this.sourceRange.drop(n), this.mapFn, this.interpreter);
+    }
+
+    // Get first element
+    head() {
+        return this._applyFn(this.sourceRange.head());
+    }
+
+    // Get tail (all but first)
+    tail() {
+        return new MappedInfiniteRange(this.sourceRange.tail(), this.mapFn, this.interpreter);
+    }
+
+    toString() {
+        const preview = this.take(10);
+        return `[${preview.join(',')}...]`;
+    }
+}
+
 class HaskishInterpreter {
     constructor() {
         this.functions = {};
@@ -122,7 +192,8 @@ class HaskishInterpreter {
             },
             'map': (fn, list) => {
                 if (list && list._isInfiniteRange) {
-                    throw new Error('map: cannot map over infinite range (use take first)');
+                    // Return a new MappedInfiniteRange for lazy mapping
+                    return new MappedInfiniteRange(list, fn, this);
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('map: second argument must be a list');
