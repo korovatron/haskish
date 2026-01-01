@@ -329,22 +329,47 @@
             CodeMirror.defineMode('haskish', function(config) {
                 return {
                     startState: function() {
-                        return haskellMode.startState();
+                        return {
+                            haskellState: haskellMode.startState(),
+                            inSingleString: false
+                        };
                     },
                     copyState: function(state) {
-                        return CodeMirror.copyState(haskellMode, state);
+                        return {
+                            haskellState: CodeMirror.copyState(haskellMode, state.haskellState),
+                            inSingleString: state.inSingleString
+                        };
                     },
                     token: function(stream, state) {
-                        // Try to match single-quoted string first (entire string at once)
-                        // This prevents Haskell mode from seeing it as a char literal
-                        const match = stream.match(/'(?:[^'\\]|\\.)+'/, false);
+                        // Continue inside single-quoted string
+                        if (state.inSingleString) {
+                            let escaped = false;
+                            while (!stream.eol()) {
+                                const ch = stream.next();
+                                if (ch === "'" && !escaped) {
+                                    state.inSingleString = false;
+                                    return 'string';
+                                }
+                                escaped = !escaped && ch === '\\';
+                            }
+                            return 'string';
+                        }
+                        
+                        // Try to match complete single-quoted string first
+                        const match = stream.match(/'(?:[^'\\]|\\.)+'/);
                         if (match) {
-                            stream.match(/'(?:[^'\\]|\\.)+'/);
+                            return 'string';
+                        }
+                        
+                        // Check if starting an incomplete single-quoted string
+                        if (stream.peek() === "'") {
+                            stream.next();
+                            state.inSingleString = true;
                             return 'string';
                         }
                         
                         // Otherwise delegate to Haskell mode
-                        return haskellMode.token(stream, state);
+                        return haskellMode.token(stream, state.haskellState);
                     }
                 };
             });
