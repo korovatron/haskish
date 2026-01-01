@@ -362,6 +362,12 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     return list.head();
                 }
+                if (typeof list === 'string') {
+                    if (list.length === 0) {
+                        throw new Error('head: empty list');
+                    }
+                    return list[0];
+                }
                 if (!Array.isArray(list) || list.length === 0) {
                     throw new Error('head: empty list');
                 }
@@ -370,6 +376,12 @@ class HaskishInterpreter {
             'tail': (list) => {
                 if (list && list._isInfiniteRange) {
                     return list.tail();
+                }
+                if (typeof list === 'string') {
+                    if (list.length === 0) {
+                        throw new Error('tail: empty list');
+                    }
+                    return list.slice(1);
                 }
                 if (!Array.isArray(list) || list.length === 0) {
                     throw new Error('tail: empty list');
@@ -380,6 +392,21 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     // Return a new MappedInfiniteRange for lazy mapping
                     return new MappedInfiniteRange(list, fn, this);
+                }
+                if (typeof list === 'string') {
+                    // Map over string characters, return array of results
+                    return list.split('').map(item => {
+                        if (fn instanceof Lambda) {
+                            return fn.apply(item);
+                        }
+                        if (fn instanceof PartialFunction) {
+                            return fn.apply([item]);
+                        }
+                        if (fn && fn._isOperatorFunction) {
+                            return fn.apply([item]);
+                        }
+                        return this.applyFunction(fn, [item]);
+                    });
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('map: second argument must be a list');
@@ -402,6 +429,21 @@ class HaskishInterpreter {
                     // Return a new FilteredInfiniteRange for lazy filtering
                     return new FilteredInfiniteRange(list, predicate, this);
                 }
+                if (typeof list === 'string') {
+                    // Filter string characters, return string
+                    return list.split('').filter(item => {
+                        if (predicate instanceof Lambda) {
+                            return predicate.apply(item);
+                        }
+                        if (predicate instanceof PartialFunction) {
+                            return predicate.apply([item]);
+                        }
+                        if (predicate && predicate._isOperatorFunction) {
+                            return predicate.apply([item]);
+                        }
+                        return this.applyFunction(predicate, [item]);
+                    }).join('');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('filter: second argument must be a list');
                 }
@@ -421,6 +463,26 @@ class HaskishInterpreter {
             'fold': (fn, acc, list) => {
                 if (list && list._isInfiniteRange) {
                     throw new Error('fold: cannot fold infinite range');
+                }
+                if (typeof list === 'string') {
+                    // Fold over string characters
+                    return list.split('').reduce((accumulator, item) => {
+                        if (fn instanceof Lambda) {
+                            // Multi-parameter lambdas are curried: apply accumulator, then item
+                            const step1 = fn.apply(accumulator);
+                            if (step1 instanceof Lambda) {
+                                return step1.apply(item);
+                            }
+                            return step1;
+                        }
+                        if (fn instanceof PartialFunction) {
+                            return fn.apply([accumulator, item]);
+                        }
+                        if (fn && fn._isOperatorFunction) {
+                            return fn.apply([accumulator, item]);
+                        }
+                        return this.applyFunction(fn, [accumulator, item]);
+                    }, acc);
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('fold: third argument must be a list');
@@ -447,6 +509,9 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     throw new Error('length: cannot get length of infinite range');
                 }
+                if (typeof list === 'string') {
+                    return list.length;
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('length: argument must be a list');
                 }
@@ -455,6 +520,9 @@ class HaskishInterpreter {
             'null': (list) => {
                 if (list && list._isInfiniteRange) {
                     return false; // Infinite ranges are never empty
+                }
+                if (typeof list === 'string') {
+                    return list.length === 0;
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('null: argument must be a list');
@@ -465,6 +533,9 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     throw new Error('reverse: cannot reverse infinite range');
                 }
+                if (typeof list === 'string') {
+                    return list.split('').reverse().join('');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('reverse: argument must be a list');
                 }
@@ -474,6 +545,9 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     return list.take(n);
                 }
+                if (typeof list === 'string') {
+                    return list.slice(0, n);
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('take: second argument must be a list');
                 }
@@ -482,6 +556,9 @@ class HaskishInterpreter {
             'drop': (n, list) => {
                 if (list && list._isInfiniteRange) {
                     return list.drop(n);
+                }
+                if (typeof list === 'string') {
+                    return list.slice(n);
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('drop: second argument must be a list');
@@ -505,6 +582,18 @@ class HaskishInterpreter {
             },
             'max': (a, b) => {
                 return a > b ? a : b;
+            },
+            'ord': (char) => {
+                if (typeof char !== 'string' || char.length !== 1) {
+                    throw new Error('ord: argument must be a single character');
+                }
+                return char.charCodeAt(0);
+            },
+            'chr': (code) => {
+                if (typeof code !== 'number' || code < 0 || code > 1114111) {
+                    throw new Error('chr: argument must be a valid Unicode code point (0-1114111)');
+                }
+                return String.fromCharCode(code);
             },
             'compose': (g, f) => {
                 // Function composition: (g . f) x = g(f(x))
@@ -1480,6 +1569,12 @@ class HaskishInterpreter {
                     }
                     return list.at(Math.floor(index));
                 }
+                if (typeof list === 'string') {
+                    if (typeof index !== 'number' || index < 0 || index >= list.length) {
+                        throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
+                    }
+                    return list[Math.floor(index)];
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('(!!) requires a list as the first argument');
                 }
@@ -1702,7 +1797,7 @@ class HaskishInterpreter {
                     // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
                     // Match operator sections: operators only, operators with number, string, or parenthesized expr
-                    if (/^\(([+*\/<>=]+|&&|\|\|)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=]+|&&|\|\|)\)$/.test(fullParen)) {
+                    if (/^\(([+*\/<>=]+|\+\+|!!|&&|\|\|)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=]+|\+\+|!!|&&|\|\|)\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -1823,14 +1918,14 @@ class HaskishInterpreter {
     createOperatorSection(section) {
         // Match patterns like (*), (+), (<10), (10+), (&&), (||), etc.
         // But NOT negative numbers like (-5) which could be (0 - 5) evaluated
-        const opOnlyMatch = section.match(/^\(([+*\/<>=]+|&&|\|\|)\)$/);  // Removed - from here
+        const opOnlyMatch = section.match(/^\(([+*\/<>=]+|\+\+|!!|&&|\|\|)\)$/);  // Removed - from here
         if (opOnlyMatch) {
             const op = opOnlyMatch[1];
             return this.createOperatorFunction(op);
         }
         
         // Left section with string literal like (== "cat") or (== 'cat')
-        const leftStringMatch = section.match(/^\(([+*\/<>=]+)\s*(["'][^"']*["'])\)$/);
+        const leftStringMatch = section.match(/^\(([+*\/<>=]+|\+\+|!!|&&|\|\|)\s*(["'][^"']*["'])\)$/);
         if (leftStringMatch) {
             const [, op, str] = leftStringMatch;
             const stringValue = this.evaluate(str);
@@ -1838,14 +1933,14 @@ class HaskishInterpreter {
         }
         
         // Left section like (<10), (>5), (*2) but not (- or (-5)
-        const leftMatch = section.match(/^\(([+*\/<>=]+)\s*(\d+)\)$/);  // Removed -
+        const leftMatch = section.match(/^\(([+*\/<>=]+|\+\+|!!|&&|\|\|)\s*(\d+)\)$/);  // Removed -
         if (leftMatch) {
             const [, op, num] = leftMatch;
             return this.createPartialOperatorFunction(op, null, parseFloat(num));
         }
         
         // Left section with parenthesized expression like (+(..))
-        const leftParenMatch = section.match(/^\(([+*\/<>=]+)\s*(\(.+\))\)$/);
+        const leftParenMatch = section.match(/^\(([+*\/<>=]+|\+\+|!!|&&|\|\|)\s*(\(.+\))\)$/);
         if (leftParenMatch) {
             const [, op, parenExpr] = leftParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
@@ -1853,7 +1948,7 @@ class HaskishInterpreter {
         }
         
         // Right section with string literal like ("cat" ==) or ('cat' ==)
-        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/<>=]+)\)$/);
+        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/<>=]+|\+\+|!!|&&|\|\|)\)$/);
         if (rightStringMatch) {
             const [, str, op] = rightStringMatch;
             const stringValue = this.evaluate(str);
@@ -1861,14 +1956,14 @@ class HaskishInterpreter {
         }
         
         // Right section like (10+), (5*) but not (-10)
-        const rightMatch = section.match(/^\((\d+)\s*([+*\/<>=]+)\)$/);  // Removed -
+        const rightMatch = section.match(/^\((\d+)\s*([+*\/<>=]+|\+\+|!!|&&|\|\|)\)$/);  // Removed -
         if (rightMatch) {
             const [, num, op] = rightMatch;
             return this.createPartialOperatorFunction(op, parseFloat(num), null);
         }
         
         // Right section with parenthesized expression like ((..)+)
-        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/<>=]+)\)$/);
+        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/<>=]+|\+\+|!!|&&|\|\|)\)$/);
         if (rightParenMatch) {
             const [, parenExpr, op] = rightParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
@@ -1892,6 +1987,34 @@ class HaskishInterpreter {
             '==': (a, b) => a == b,
             '&&': (a, b) => a && b,
             '||': (a, b) => a || b,
+            '++': (a, b) => {
+                // Concatenate lists or strings
+                if (typeof a === 'string' && typeof b === 'string') {
+                    return a + b;
+                }
+                if (Array.isArray(a) && Array.isArray(b)) {
+                    return [...a, ...b];
+                }
+                if (typeof a === 'string' && typeof b === 'string') {
+                    return a + b;
+                }
+                throw new Error('(++) requires two lists or two strings');
+            },
+            '!!': (list, index) => {
+                if (typeof list === 'string') {
+                    if (typeof index !== 'number' || index < 0 || index >= list.length) {
+                        throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
+                    }
+                    return list[Math.floor(index)];
+                }
+                if (!Array.isArray(list)) {
+                    throw new Error('(!!) requires a list as the first argument');
+                }
+                if (typeof index !== 'number' || index < 0 || index >= list.length) {
+                    throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
+                }
+                return list[Math.floor(index)];
+            },
             ':': (a, b) => {
                 if (!Array.isArray(b)) {
                     throw new Error('(:) requires a list as the second argument');

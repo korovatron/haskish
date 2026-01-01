@@ -126,18 +126,20 @@
                 </button>
             </div>
             <div class="about-content">
-                <p><strong>Haskish</strong> is a free online functional programming playground designed specifically for AQA A Level Computer Science students and teachers.</p>
-                <p>It provides a simplified Haskell-style environment that covers all the functional programming concepts required by the AQA specification (4.12), including:</p>
+                <p><strong>Haskish</strong> is a fun, no-fuss introduction to functional programming with Haskell-style syntax. No installation, no setup - just open your browser and start exploring.</p>
+                <p>Perfect for students, teachers, and anyone curious about functional programming, Haskish combines ease of use with powerful features including:</p>
                 <ul>
-                    <li>List operators (cons :, concatenation ++, indexing !!)</li>
-                    <li>Pattern matching and recursion</li>
+                    <li>Full list operations (cons :, concatenation ++, indexing !!, pattern matching)</li>
+                    <li>Recursion and guards</li>
                     <li>Higher-order functions (map, filter, fold)</li>
-                    <li>Function composition</li>
+                    <li>Function composition and operator sections</li>
                     <li>Partial application (currying)</li>
-                    <li>Uses eager evaluation (except for infinite ranges which are lazily evaluated)</li>
+                    <li>Lambda/anonymous functions</li>
+                    <li>Infinite ranges with lazy evaluation</li>
+                    <li>Tuples and character manipulation (ord/chr)</li>
                 </ul>
-                <p>Additionally, Haskish supports tuples, operator sections, guards, lambda/anonymous functions, and infinite ranges ([1..], [2,4..]) for those wanting to explore further.</p>
-                <p>No installation required - just open your browser and start coding!</p>
+                <p>Originally designed for AQA A Level Computer Science (4.12), Haskish now offers many advanced features for those wanting to dive deeper into functional programming.</p>
+                <p><strong>Note:</strong> Like Haskell, strings are treated as lists of characters, so all list functions (head, tail, map, filter, etc.) work on strings.</p>
                 <p class="about-footer">Created by Neil Kendall © 2025-2026<br>More @ <a href="https://www.korovatron.co.uk" target="_blank">www.korovatron.co.uk</a></p>
             </div>
         </div>
@@ -155,6 +157,8 @@
                 </button>
             </div>
             <div class="about-content builtins-content">
+                <p><strong>Note:</strong> All list functions work on strings (treated as <code>[Char]</code>).</p>
+                
                 <h3>List Functions</h3>
                 <ul>
                     <li><code>head list</code> - First element of a list</li>
@@ -166,11 +170,28 @@
                     <li><code>drop n list</code> - Drop first n elements</li>
                 </ul>
                 
+                <h3>List Operators</h3>
+                <ul>
+                    <li><code>:</code> - Cons (prepend element to list): <code>1:[2,3]</code> → <code>[1,2,3]</code></li>
+                    <li><code>++</code> - Concatenate lists: <code>[1,2]++[3,4]</code> → <code>[1,2,3,4]</code></li>
+                    <li><code>!!</code> - Index into list: <code>[10,20,30]!!1</code> → <code>20</code></li>
+                </ul>
+                
                 <h3>Higher-Order Functions</h3>
                 <ul>
-                    <li><code>map fn list</code> - Apply function to each element</li>
-                    <li><code>filter predicate list</code> - Filter list by predicate</li>
-                    <li><code>fold fn acc list</code> - Reduce list with accumulator</li>
+                    <li><code>map fn list</code> - Apply function to each element<br>
+                        Example: <code>map (*2) [1,2,3]</code> → <code>[2,4,6]</code></li>
+                    <li><code>filter predicate list</code> - Filter list by predicate<br>
+                        Example: <code>filter (>5) [3,7,2,9]</code> → <code>[7,9]</code></li>
+                    <li><code>fold fn acc list</code> - Reduce list with accumulator<br>
+                        Example: <code>fold (+) 0 [1,2,3]</code> → <code>6</code></li>
+                </ul>
+                
+                <h3>Operator Sections</h3>
+                <ul>
+                    <li><code>(+1)</code> - Partial application: <code>map (+1) [1,2,3]</code> → <code>[2,3,4]</code></li>
+                    <li><code>(&lt;10)</code> - Comparison: <code>filter (&lt;10) [5,15,3]</code> → <code>[5,3]</code></li>
+                    <li><code>(*)</code> - Binary operator as function: <code>fold (*) 1 [2,3,4]</code> → <code>24</code></li>
                 </ul>
                 
                 <h3>Arithmetic Functions</h3>
@@ -179,6 +200,12 @@
                     <li><code>div a b</code> - Integer division</li>
                     <li><code>min a b</code> - Minimum of two values</li>
                     <li><code>max a b</code> - Maximum of two values</li>
+                </ul>
+                
+                <h3>Character Functions</h3>
+                <ul>
+                    <li><code>ord char</code> - Convert character to Unicode code point</li>
+                    <li><code>chr code</code> - Convert Unicode code point to character</li>
                 </ul>
                 
                 <h3>Logic Functions</h3>
