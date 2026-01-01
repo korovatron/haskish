@@ -38,6 +38,60 @@ class PartialFunction {
     }
 }
 
+// Class to represent an infinite range [n..] or [n,m..]
+class InfiniteRange {
+    constructor(start, step = 1) {
+        this.start = start;
+        this.step = step;
+        this._isInfiniteRange = true;
+    }
+
+    // Generator for lazy iteration
+    *[Symbol.iterator]() {
+        let current = this.start;
+        while (true) {
+            yield current;
+            current += this.step;
+        }
+    }
+
+    // Take first n elements
+    take(n) {
+        const result = [];
+        let current = this.start;
+        for (let i = 0; i < n; i++) {
+            result.push(current);
+            current += this.step;
+        }
+        return result;
+    }
+
+    // Get element at index
+    at(index) {
+        return this.start + (index * this.step);
+    }
+
+    // Drop first n elements, return new InfiniteRange
+    drop(n) {
+        return new InfiniteRange(this.start + (n * this.step), this.step);
+    }
+
+    // Get first element
+    head() {
+        return this.start;
+    }
+
+    // Get tail (all but first)
+    tail() {
+        return new InfiniteRange(this.start + this.step, this.step);
+    }
+
+    toString() {
+        const preview = this.take(10);
+        return `[${preview.join(',')}...]`;
+    }
+}
+
 class HaskishInterpreter {
     constructor() {
         this.functions = {};
@@ -49,18 +103,27 @@ class HaskishInterpreter {
         // Built-in functions available to all programs
         this.builtins = {
             'head': (list) => {
+                if (list && list._isInfiniteRange) {
+                    return list.head();
+                }
                 if (!Array.isArray(list) || list.length === 0) {
                     throw new Error('head: empty list');
                 }
                 return list[0];
             },
             'tail': (list) => {
+                if (list && list._isInfiniteRange) {
+                    return list.tail();
+                }
                 if (!Array.isArray(list) || list.length === 0) {
                     throw new Error('tail: empty list');
                 }
                 return list.slice(1);
             },
             'map': (fn, list) => {
+                if (list && list._isInfiniteRange) {
+                    throw new Error('map: cannot map over infinite range (use take first)');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('map: second argument must be a list');
                 }
@@ -78,6 +141,9 @@ class HaskishInterpreter {
                 });
             },
             'filter': (predicate, list) => {
+                if (list && list._isInfiniteRange) {
+                    throw new Error('filter: cannot filter infinite range (use take first)');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('filter: second argument must be a list');
                 }
@@ -95,6 +161,9 @@ class HaskishInterpreter {
                 });
             },
             'fold': (fn, acc, list) => {
+                if (list && list._isInfiniteRange) {
+                    throw new Error('fold: cannot fold infinite range');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('fold: third argument must be a list');
                 }
@@ -117,30 +186,45 @@ class HaskishInterpreter {
                 }, acc);
             },
             'length': (list) => {
+                if (list && list._isInfiniteRange) {
+                    throw new Error('length: cannot get length of infinite range');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('length: argument must be a list');
                 }
                 return list.length;
             },
             'null': (list) => {
+                if (list && list._isInfiniteRange) {
+                    return false; // Infinite ranges are never empty
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('null: argument must be a list');
                 }
                 return list.length === 0;
             },
             'reverse': (list) => {
+                if (list && list._isInfiniteRange) {
+                    throw new Error('reverse: cannot reverse infinite range');
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('reverse: argument must be a list');
                 }
                 return list.slice().reverse();
             },
             'take': (n, list) => {
+                if (list && list._isInfiniteRange) {
+                    return list.take(n);
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('take: second argument must be a list');
                 }
                 return list.slice(0, n);
             },
             'drop': (n, list) => {
+                if (list && list._isInfiniteRange) {
+                    return list.drop(n);
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('drop: second argument must be a list');
                 }
@@ -632,7 +716,21 @@ class HaskishInterpreter {
             listStr = listStr.slice(1, -1);
         }
 
-        // Check for range syntax: [start..end] or [start,next..end]
+        // Check for infinite range syntax: [start..] or [start,next..]
+        const infiniteRangeMatch = listStr.match(/^(-?\d+)(?:,(-?\d+))?\.\.$/);
+        if (infiniteRangeMatch) {
+            const start = parseInt(infiniteRangeMatch[1]);
+            const next = infiniteRangeMatch[2] ? parseInt(infiniteRangeMatch[2]) : null;
+            const step = next !== null ? (next - start) : 1;
+            
+            if (step === 0) {
+                throw new Error('Range step cannot be zero');
+            }
+            
+            return new InfiniteRange(start, step);
+        }
+
+        // Check for finite range syntax: [start..end] or [start,next..end]
         const rangeMatch = listStr.match(/^(-?\d+)(?:,(-?\d+))?\.\.(-?\d+)$/);
         if (rangeMatch) {
             const start = parseInt(rangeMatch[1]);
@@ -1118,6 +1216,12 @@ class HaskishInterpreter {
                 return this.builtins['compose'].call(this, g, f);
             }},
             { op: '!!', fn: (list, index) => {
+                if (list && list._isInfiniteRange) {
+                    if (typeof index !== 'number' || index < 0) {
+                        throw new Error(`(!!) index must be a non-negative number`);
+                    }
+                    return list.at(Math.floor(index));
+                }
                 if (!Array.isArray(list)) {
                     throw new Error('(!!) requires a list as the first argument');
                 }
@@ -1127,6 +1231,19 @@ class HaskishInterpreter {
                 return list[Math.floor(index)];
             }},
             { op: '++', fn: (a, b) => {
+                // Can prepend finite list to infinite range, but not append
+                if (b && b._isInfiniteRange) {
+                    if (a && a._isInfiniteRange) {
+                        throw new Error('(++) cannot concatenate two infinite ranges');
+                    }
+                    if (!Array.isArray(a)) {
+                        throw new Error('(++) requires two lists');
+                    }
+                    throw new Error('(++) cannot append to infinite range (can only prepend finite list)');
+                }
+                if (a && a._isInfiniteRange) {
+                    throw new Error('(++) cannot append to infinite range');
+                }
                 if (!Array.isArray(a) || !Array.isArray(b)) {
                     throw new Error('(++) requires two lists');
                 }
@@ -1201,6 +1318,9 @@ class HaskishInterpreter {
             { op: '*', fn: (a, b) => a * b },
             { op: '/', fn: (a, b) => a / b },
             { op: ':', fn: (a, b) => {
+                if (b && b._isInfiniteRange) {
+                    throw new Error('(:) cannot cons onto infinite range');
+                }
                 if (!Array.isArray(b)) {
                     throw new Error('(:) requires a list as the second argument');
                 }
@@ -1583,6 +1703,9 @@ class HaskishInterpreter {
             return value.toString();
         }
         if (value && value._isOperatorFunction) {
+            return value.toString();
+        }
+        if (value && value._isInfiniteRange) {
             return value.toString();
         }
         if (value && value._isTuple) {
