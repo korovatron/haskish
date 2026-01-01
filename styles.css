@@ -1634,12 +1634,14 @@ footer a:hover {
     overflow-x: auto;
     margin: 1rem 0;
     border-left: 4px solid var(--nested-highlight);
+    white-space: pre;
 }
 
 .exercise-content pre code {
     background: transparent;
     padding: 0;
     color: var(--text-color);
+    white-space: pre;
 }
 
 .exercise-content ul, .exercise-content ol {

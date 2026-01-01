@@ -494,15 +494,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // Convert markdown-style formatting to HTML
     function convertMarkdownToHtml(content) {
         // Convert code blocks ```...``` to <pre><code>...</code></pre>
-        content = content.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        content = content.replace(/```([\s\S]*?)```/g, (match, code) => {
+            // Normalize line endings (remove \r)
+            code = code.replace(/\r/g, '');
+            
+            // Split into lines
+            let lines = code.split('\n');
+            
+            // Remove leading empty lines
+            while (lines.length > 0 && lines[0].trim() === '') {
+                lines.shift();
+            }
+            
+            // Remove trailing empty lines
+            while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+                lines.pop();
+            }
+            
+            // Find minimum indentation
+            const minIndent = lines
+                .filter(line => line.trim().length > 0)
+                .reduce((min, line) => {
+                    const indent = line.match(/^\s*/)[0].length;
+                    return Math.min(min, indent);
+                }, Infinity);
+            
+            // Remove minimum indentation from all lines
+            if (minIndent > 0 && minIndent < Infinity) {
+                lines = lines.map(line => line.slice(minIndent));
+            }
+            
+            code = lines.join('\n');
+            return `<pre><code>${code}</code></pre>`;
+        });
         
         // Convert inline code `...` to <code>...</code>
         content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
         
-        // Convert double newlines to paragraphs
+        // Convert double newlines to paragraphs, but don't touch lines with pre/code blocks
         const paragraphs = content.split('\n\n').map(para => {
             para = para.trim();
-            if (para.startsWith('<pre>') || para.startsWith('<code>')) {
+            // Don't wrap or modify if it contains pre or code blocks
+            if (para.includes('<pre>') || para.includes('<code>')) {
                 return para;
             }
             return para ? `<p>${para.replace(/\n/g, ' ')}</p>` : '';
