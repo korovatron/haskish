@@ -1065,13 +1065,13 @@ class HaskishInterpreter {
 
         // Check for list comprehension: [expr | generator, ...]
         // Need to find the | at depth 0 (not inside nested brackets)
-        let depth = 0;
+        let bracketDepth = 0;
         let pipeIndex = -1;
         for (let i = 0; i < listStr.length; i++) {
             const char = listStr[i];
-            if (char === '[' || char === '(') depth++;
-            if (char === ']' || char === ')') depth--;
-            if (char === '|' && depth === 0) {
+            if (char === '[' || char === '(') bracketDepth++;
+            if (char === ']' || char === ')') bracketDepth--;
+            if (char === '|' && bracketDepth === 0) {
                 pipeIndex = i;
                 break;
             }
