@@ -1912,7 +1912,7 @@ class HaskishInterpreter {
                     // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
                     // Match operator sections: operators only, operators with number, string, or parenthesized expr
-                    if (/^\(([+*\/^<>=]+|\+\+|!!|&&|\|\|)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/^<>=]+|\+\+|!!|&&|\|\|)\)$/.test(fullParen)) {
+                    if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\|)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -2033,14 +2033,14 @@ class HaskishInterpreter {
     createOperatorSection(section) {
         // Match patterns like (*), (+), (<10), (10+), (&&), (||), etc.
         // But NOT negative numbers like (-5) which could be (0 - 5) evaluated
-        const opOnlyMatch = section.match(/^\(([+*\/^<>=]+|\+\+|!!|&&|\|\|)\)$/);  // Removed - from here
+        const opOnlyMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\)$/);  // Removed - from here
         if (opOnlyMatch) {
             const op = opOnlyMatch[1];
             return this.createOperatorFunction(op);
         }
         
         // Left section with string literal like (== "cat") or (== 'cat')
-        const leftStringMatch = section.match(/^\(([+*\/^<>=]+|\+\+|!!|&&|\|\|)\s*(["'][^"']*["'])\)$/);
+        const leftStringMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\s*(["'][^"']*["'])\)$/);
         if (leftStringMatch) {
             const [, op, str] = leftStringMatch;
             const stringValue = this.evaluate(str);
@@ -2048,14 +2048,14 @@ class HaskishInterpreter {
         }
         
         // Left section like (<10), (>5), (*2) but not (- or (-5)
-        const leftMatch = section.match(/^\(([+*\/^<>=]+|\+\+|!!|&&|\|\|)\s*(\d+)\)$/);  // Removed -
+        const leftMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\s*(\d+)\)$/);  // Removed -
         if (leftMatch) {
             const [, op, num] = leftMatch;
             return this.createPartialOperatorFunction(op, null, parseFloat(num));
         }
         
         // Left section with parenthesized expression like (+(..))
-        const leftParenMatch = section.match(/^\(([+*\/^<>=]+|\+\+|!!|&&|\|\|)\s*(\(.+\))\)$/);
+        const leftParenMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\s*(\(.+\))\)$/);
         if (leftParenMatch) {
             const [, op, parenExpr] = leftParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
@@ -2063,7 +2063,7 @@ class HaskishInterpreter {
         }
         
         // Right section with string literal like ("cat" ==) or ('cat' ==)
-        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/^<>=]+|\+\+|!!|&&|\|\|)\)$/);
+        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\)$/);
         if (rightStringMatch) {
             const [, str, op] = rightStringMatch;
             const stringValue = this.evaluate(str);
@@ -2071,14 +2071,14 @@ class HaskishInterpreter {
         }
         
         // Right section like (10+), (5*) but not (-10)
-        const rightMatch = section.match(/^\((\d+)\s*([+*\/^<>=]+|\+\+|!!|&&|\|\|)\)$/);  // Removed -
+        const rightMatch = section.match(/^\((\d+)\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\)$/);  // Removed -
         if (rightMatch) {
             const [, num, op] = rightMatch;
             return this.createPartialOperatorFunction(op, parseFloat(num), null);
         }
         
         // Right section with parenthesized expression like ((..)+)
-        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/^<>=]+|\+\+|!!|&&|\|\|)\)$/);
+        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\|)\)$/);
         if (rightParenMatch) {
             const [, parenExpr, op] = rightParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
@@ -2167,13 +2167,44 @@ class HaskishInterpreter {
             '-': (a, b) => a - b,
             '*': (a, b) => a * b,
             '/': (a, b) => a / b,
+            '^': (a, b) => Math.pow(a, b),
             '<': (a, b) => a < b,
             '>': (a, b) => a > b,
             '<=': (a, b) => a <= b,
             '>=': (a, b) => a >= b,
             '==': (a, b) => a == b,
             '&&': (a, b) => a && b,
-            '||': (a, b) => a || b
+            '||': (a, b) => a || b,
+            '++': (a, b) => {
+                if (typeof a === 'string' && typeof b === 'string') {
+                    return a + b;
+                }
+                if (Array.isArray(a) && Array.isArray(b)) {
+                    return [...a, ...b];
+                }
+                throw new Error('(++) requires two lists or two strings');
+            },
+            '!!': (list, index) => {
+                if (typeof list === 'string') {
+                    if (typeof index !== 'number' || index < 0 || index >= list.length) {
+                        throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
+                    }
+                    return list[Math.floor(index)];
+                }
+                if (!Array.isArray(list)) {
+                    throw new Error('(!!) requires a list as the first argument');
+                }
+                if (typeof index !== 'number' || index < 0 || index >= list.length) {
+                    throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
+                }
+                return list[Math.floor(index)];
+            },
+            ':': (a, b) => {
+                if (!Array.isArray(b)) {
+                    throw new Error('(:) requires a list as the second argument');
+                }
+                return [a, ...b];
+            }
         };
         
         if (!opMap[op]) {
