@@ -726,7 +726,7 @@ class HaskishInterpreter {
             }
 
             // Try to match function definition (has parameters before =)
-            const funcMatch = line.match(/^(\w+)\s+(.+?)\s*=\s*(.+)$/);
+            const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*=\s*(.+)$/);
             
             if (funcMatch) {
                 // Save previous guards if any
@@ -759,7 +759,7 @@ class HaskishInterpreter {
             }
 
             // Check for function header without = (for guard syntax)
-            const headerMatch = line.match(/^(\w+)\s+(.+)$/);
+            const headerMatch = line.match(/^(\w+'*)\s+(.+)$/);
             if (headerMatch && !line.includes('=')) {
                 // Save previous guards if any
                 if (currentGuards.length > 0) {
@@ -787,7 +787,7 @@ class HaskishInterpreter {
             }
 
             // Try to match variable binding (no parameters before =)
-            const varMatch = line.match(/^(\w+)\s*=\s*(.+)$/);
+            const varMatch = line.match(/^(\w+'*)\s*=\s*(.+)$/);
             if (varMatch) {
                 // Save pending guards first
                 if (currentGuards.length > 0) {
@@ -803,6 +803,10 @@ class HaskishInterpreter {
                     currentCases = [];
                 }
                 const [, name, value] = varMatch;
+                // Check if the variable name shadows a built-in function
+                if (this.builtins[name]) {
+                    throw new Error(`Cannot use '${name}' as a variable name: it is a built-in function`);
+                }
                 this.variables[name] = this.evaluate(value.trim());
                 continue;
             }
@@ -960,7 +964,7 @@ class HaskishInterpreter {
                     // 1. Not a number literal
                     // 2. Not an arrow (->)
                     // 3. Just a simple identifier (no operators or spaces after)
-                    const isSimpleId = /^[a-zA-Z_]\w*$/.test(afterMinus);
+                    const isSimpleId = /^[a-zA-Z_]\w*'*$/.test(afterMinus);
                     const isNestedParen = afterMinus.startsWith('(');
                     
                     if (!afterMinus.startsWith('>') && (isSimpleId || isNestedParen)) {
@@ -1085,6 +1089,8 @@ class HaskishInterpreter {
             if (/[a-zA-Z_]/.test(expr[i])) {
                 let j = i;
                 while (j < expr.length && /[a-zA-Z0-9_]/.test(expr[j])) j++;
+                // Allow trailing prime characters (Haskell-style)
+                while (j < expr.length && expr[j] === "'") j++;
                 tokens.push({ type: 'identifier', value: expr.slice(i, j) });
                 i = j;
                 continue;
@@ -1463,7 +1469,7 @@ class HaskishInterpreter {
         }
 
         // Simple variable binding
-        if (/^[a-zA-Z_]\w*$/.test(pattern)) {
+        if (/^[a-zA-Z_]\w*'*$/.test(pattern)) {
             return { [pattern]: value };
         }
 
@@ -1725,7 +1731,7 @@ class HaskishInterpreter {
         }
 
         // Check if it's a variable reference
-        if (/^[a-zA-Z_]\w*$/.test(expr) && this.variables[expr] !== undefined) {
+        if (/^[a-zA-Z_]\w*'*$/.test(expr) && this.variables[expr] !== undefined) {
             return this.variables[expr];
         }
 
@@ -2416,7 +2422,7 @@ class HaskishInterpreter {
             // Check if it's a function definition (has parameters before =)
             // Function name must start with a letter (not a number)
             // Use negative lookbehind/lookahead to avoid matching ==, /=, <=, >=
-            const funcMatch = expr.match(/^([a-zA-Z_]\w*)\s+(.+?)\s*(?<![=/<>])=(?![=])(.+)$/);
+            const funcMatch = expr.match(/^([a-zA-Z_]\w*'*)\s+(.+?)\s*(?<![=/<>])=(?![=])(.+)$/);
             if (funcMatch) {
                 const [, funcName, params, body] = funcMatch;
                 
@@ -2435,9 +2441,14 @@ class HaskishInterpreter {
             // Check if it's a variable assignment (no parameters before =)
             // Variable name must start with a letter and only have a single =
             // Use negative lookahead to avoid matching ==, /=, <=, >=
-            const assignMatch = expr.match(/^([a-zA-Z_]\w*)\s*(?<![=/<>])=(?![=])\s*(.+)$/);
+            const assignMatch = expr.match(/^([a-zA-Z_]\w*'*)\s*(?<![=/<>])=(?![=])\s*(.+)$/);
             if (assignMatch) {
                 const [, varName, value] = assignMatch;
+                
+                // Check if variable name shadows a built-in function
+                if (this.builtins[varName]) {
+                    return { success: false, error: `Cannot use '${varName}' as a variable name: it is a built-in function` };
+                }
                 
                 // Check if variable already exists (immutability check)
                 if (this.variables[varName] !== undefined) {
