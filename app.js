@@ -102,7 +102,8 @@ closeMenu.addEventListener('click', closeMenuFunc);
 menuOverlay.addEventListener('click', closeMenuFunc);
 
 // Toggle exercises column
-document.getElementById('toggleExercises').addEventListener('click', function() {
+const toggleExercisesBtn = document.getElementById('toggleExercises');
+toggleExercisesBtn.addEventListener('click', function() {
     const exercisesColumn = document.getElementById('exercisesColumn');
     const mainContent = document.getElementById('mainContent');
     const isVisible = exercisesColumn.style.display !== 'none';
@@ -111,10 +112,12 @@ document.getElementById('toggleExercises').addEventListener('click', function() 
         exercisesColumn.style.display = 'none';
         mainContent.classList.remove('exercises-visible');
         document.body.classList.remove('exercises-visible');
+        toggleExercisesBtn.classList.remove('active');
     } else {
         exercisesColumn.style.display = 'flex';
         mainContent.classList.add('exercises-visible');
         document.body.classList.add('exercises-visible');
+        toggleExercisesBtn.classList.add('active');
     }
     
     // Close menu after toggling

@@ -255,6 +255,16 @@ header h1 {
     flex: 1;
 }
 
+/* Active state for exercise toggle */
+#toggleExercises.active svg {
+    stroke: var(--success-color);
+}
+
+#toggleExercises.active svg path,
+#toggleExercises.active svg rect {
+    stroke: var(--success-color);
+}
+
 /* Expandable menu items */
 .menu-item-group {
     border-bottom: 1px solid var(--border-color);
