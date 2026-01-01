@@ -162,6 +162,121 @@ class MappedInfiniteRange {
     }
 }
 
+// Class to represent a filtered infinite range (lazy filter over infinite range)
+class FilteredInfiniteRange {
+    constructor(sourceRange, predicate, interpreter) {
+        this.sourceRange = sourceRange;
+        this.predicate = predicate;
+        this.interpreter = interpreter;
+        this._isInfiniteRange = true;
+    }
+
+    // Test if a value passes the predicate
+    _testPredicate(value) {
+        const pred = this.predicate;
+        if (pred instanceof Lambda) {
+            return pred.apply(value);
+        }
+        if (pred instanceof PartialFunction) {
+            return pred.apply([value]);
+        }
+        if (pred && pred._isOperatorFunction) {
+            return pred.apply([value]);
+        }
+        return this.interpreter.applyFunction(pred, [value]);
+    }
+
+    // Generator for lazy iteration
+    *[Symbol.iterator]() {
+        for (const value of this.sourceRange) {
+            if (this._testPredicate(value)) {
+                yield value;
+            }
+        }
+    }
+
+    // Take first n elements that pass the filter
+    take(n) {
+        const result = [];
+        let count = 0;
+        for (const value of this.sourceRange) {
+            if (this._testPredicate(value)) {
+                result.push(value);
+                count++;
+                if (count >= n) break;
+            }
+        }
+        return result;
+    }
+
+    // Get element at index (nth element that passes filter)
+    at(index) {
+        let count = 0;
+        for (const value of this.sourceRange) {
+            if (this._testPredicate(value)) {
+                if (count === index) return value;
+                count++;
+            }
+        }
+        throw new Error('Index out of bounds in filtered range');
+    }
+
+    // Drop first n elements that pass the filter, return new FilteredInfiniteRange
+    drop(n) {
+        // We need to scan through and find where to start the new range
+        // This is tricky - we'll create a wrapper that skips the first n matches
+        let skipped = 0;
+        const interpreter = this.interpreter;
+        const predicate = this.predicate;
+        const sourceIter = this.sourceRange[Symbol.iterator]();
+        
+        // Create a new source that starts after skipping n matches
+        const droppedSource = {
+            _isInfiniteRange: true,
+            *[Symbol.iterator]() {
+                let skipCount = 0;
+                for (const value of sourceIter) {
+                    const passes = predicate instanceof Lambda ? predicate.apply(value) :
+                                   predicate instanceof PartialFunction ? predicate.apply([value]) :
+                                   predicate && predicate._isOperatorFunction ? predicate.apply([value]) :
+                                   interpreter.applyFunction(predicate, [value]);
+                    if (passes) {
+                        if (skipCount >= n) {
+                            yield value;
+                        } else {
+                            skipCount++;
+                        }
+                    } else if (skipCount >= n) {
+                        yield value;
+                    }
+                }
+            }
+        };
+        
+        return new FilteredInfiniteRange(droppedSource, predicate, interpreter);
+    }
+
+    // Get first element that passes filter
+    head() {
+        for (const value of this.sourceRange) {
+            if (this._testPredicate(value)) {
+                return value;
+            }
+        }
+        throw new Error('No elements match filter');
+    }
+
+    // Get tail (all but first element that passes filter)
+    tail() {
+        return this.drop(1);
+    }
+
+    toString() {
+        const preview = this.take(10);
+        return `[${preview.join(',')}...]`;
+    }
+}
+
 class HaskishInterpreter {
     constructor() {
         this.functions = {};
@@ -213,7 +328,8 @@ class HaskishInterpreter {
             },
             'filter': (predicate, list) => {
                 if (list && list._isInfiniteRange) {
-                    throw new Error('filter: cannot filter infinite range (use take first)');
+                    // Return a new FilteredInfiniteRange for lazy filtering
+                    return new FilteredInfiniteRange(list, predicate, this);
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('filter: second argument must be a list');
