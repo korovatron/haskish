@@ -129,6 +129,7 @@
                 <p><strong>Haskish</strong> is a fun, no-fuss introduction to functional programming with Haskell-style syntax. No installation, no setup - just open your browser and start exploring.</p>
                 <p>Perfect for students, teachers, and anyone curious about functional programming, Haskish combines ease of use with powerful features including:</p>
                 <ul>
+                    <li>List comprehensions with mathematical set notation</li>
                     <li>Full list operations (cons :, concatenation ++, indexing !!, pattern matching)</li>
                     <li>Recursion and guards</li>
                     <li>Higher-order functions (map, filter, fold)</li>
@@ -175,6 +176,16 @@
                     <li><code>:</code> - Cons (prepend element to list): <code>1:[2,3]</code> → <code>[1,2,3]</code></li>
                     <li><code>++</code> - Concatenate lists: <code>[1,2]++[3,4]</code> → <code>[1,2,3,4]</code></li>
                     <li><code>!!</code> - Index into list: <code>[10,20,30]!!1</code> → <code>20</code></li>
+                </ul>
+                
+                <h3>List Comprehensions</h3>
+                <ul>
+                    <li><code>[expr | x &lt;- list]</code> - Map over list<br>
+                        Example: <code>[x*2 | x &lt;- [1,2,3]]</code> → <code>[2,4,6]</code></li>
+                    <li><code>[expr | x &lt;- list, guard]</code> - Filter with guard<br>
+                        Example: <code>[x | x &lt;- [1..10], x > 5]</code> → <code>[6,7,8,9,10]</code></li>
+                    <li><code>[expr | x &lt;- list1, y &lt;- list2]</code> - Nested generators<br>
+                        Example: <code>[(x,y) | x &lt;- [1,2], y &lt;- ['a','b']]</code> → <code>[(1,'a'),(1,'b'),(2,'a'),(2,'b')]</code></li>
                 </ul>
                 
                 <h3>Higher-Order Functions</h3>

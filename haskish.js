@@ -1063,6 +1063,25 @@ class HaskishInterpreter {
             listStr = listStr.slice(1, -1);
         }
 
+        // Check for list comprehension: [expr | generator, ...]
+        // Need to find the | at depth 0 (not inside nested brackets)
+        let depth = 0;
+        let pipeIndex = -1;
+        for (let i = 0; i < listStr.length; i++) {
+            const char = listStr[i];
+            if (char === '[' || char === '(') depth++;
+            if (char === ']' || char === ')') depth--;
+            if (char === '|' && depth === 0) {
+                pipeIndex = i;
+                break;
+            }
+        }
+        
+        if (pipeIndex !== -1) {
+            // This is a list comprehension
+            return this.parseListComprehension(listStr, pipeIndex);
+        }
+
         // Check for infinite range syntax: [start..] or [start,next..]
         const infiniteRangeMatch = listStr.match(/^(-?\d+)(?:,(-?\d+))?\.\.$/);
         if (infiniteRangeMatch) {
@@ -1154,6 +1173,101 @@ class HaskishInterpreter {
 
         // Return as a special tuple object
         return { _isTuple: true, elements: elements };
+    }
+
+    // Parse list comprehension: [expr | x <- list, guard, y <- list2, ...]
+    parseListComprehension(comprehensionStr, pipeIndex) {
+        const outputExpr = comprehensionStr.substring(0, pipeIndex).trim();
+        const clausesStr = comprehensionStr.substring(pipeIndex + 1).trim();
+        
+        // Parse clauses (generators and guards)
+        const clauses = [];
+        let current = '';
+        let depth = 0;
+        
+        for (let char of clausesStr) {
+            if (char === '[' || char === '(') depth++;
+            if (char === ']' || char === ')') depth--;
+            
+            if (char === ',' && depth === 0) {
+                clauses.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        if (current.trim()) {
+            clauses.push(current.trim());
+        }
+        
+        // Parse each clause as either generator (x <- list) or guard (boolean expr)
+        const generators = [];
+        const guards = [];
+        
+        for (const clause of clauses) {
+            const generatorMatch = clause.match(/^(\w+)\s*<-\s*(.+)$/);
+            if (generatorMatch) {
+                generators.push({
+                    variable: generatorMatch[1],
+                    list: generatorMatch[2]
+                });
+            } else {
+                // It's a guard (filter condition)
+                guards.push(clause);
+            }
+        }
+        
+        if (generators.length === 0) {
+            throw new Error('List comprehension must have at least one generator');
+        }
+        
+        // Evaluate the list comprehension
+        return this.evaluateListComprehension(outputExpr, generators, guards);
+    }
+    
+    // Evaluate list comprehension with nested generators and guards
+    evaluateListComprehension(outputExpr, generators, guards, bindings = {}, genIndex = 0) {
+        if (genIndex >= generators.length) {
+            // Base case: all generators exhausted, check guards and produce output
+            // Check all guards
+            for (const guard of guards) {
+                const guardResult = this.evaluateWithBindings(guard, bindings);
+                if (!guardResult) {
+                    return []; // Guard failed, skip this combination
+                }
+            }
+            // All guards passed, evaluate output expression
+            const result = this.evaluateWithBindings(outputExpr, bindings);
+            return [result];
+        }
+        
+        // Recursive case: process current generator
+        const generator = generators[genIndex];
+        const listExpr = this.evaluateWithBindings(generator.list, bindings);
+        
+        // Handle infinite ranges specially - take a reasonable amount
+        let sourceList;
+        if (listExpr && listExpr._isInfiniteRange) {
+            // For infinite ranges in comprehensions, take first 100 elements
+            sourceList = listExpr.take(100);
+        } else if (typeof listExpr === 'string') {
+            // Handle strings as character lists
+            sourceList = listExpr.split('');
+        } else if (Array.isArray(listExpr)) {
+            sourceList = listExpr;
+        } else {
+            throw new Error(`Generator expression must evaluate to a list: ${generator.list}`);
+        }
+        
+        // Iterate through the list and recursively process remaining generators
+        const results = [];
+        for (const item of sourceList) {
+            const newBindings = { ...bindings, [generator.variable]: item };
+            const subResults = this.evaluateListComprehension(outputExpr, generators, guards, newBindings, genIndex + 1);
+            results.push(...subResults);
+        }
+        
+        return results;
     }
 
     // Pattern matching helper
