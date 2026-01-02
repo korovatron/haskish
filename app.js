@@ -668,7 +668,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearEditorBtn.addEventListener('click', () => {
         codeEditor.setValue('-- Write your function definitions here\n');
         codeEditor.setCursor({ line: 1, ch: 0 });
-        addSystemMessage('Editor cleared. Write your functions and click "Run Code".', 'info');
+        interpreter.functions = {};
+        interpreter.variables = {};
+        addSystemMessage('Editor and interpreter reset. Write your functions and click "Run Code".', 'info');
         saveUniversalState(); // Save cleared state
     });
 
@@ -677,6 +679,8 @@ document.addEventListener('DOMContentLoaded', () => {
         replOutput.innerHTML = '';
         replHistory = [];  // Clear command history
         replHistoryIndex = -1;
+        interpreter.functions = {};
+        interpreter.variables = {};
         replEditor.focus();
         saveUniversalState(); // Save cleared state
     });
