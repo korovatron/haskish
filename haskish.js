@@ -1254,11 +1254,24 @@ class HaskishInterpreter {
         const guards = [];
         
         for (const clause of clauses) {
-            const generatorMatch = clause.match(/^(\w+)\s*<-\s*(.+)$/);
-            if (generatorMatch) {
+            // Try to match tuple pattern: (a, b, c) <- list
+            const tuplePattern = clause.match(/^\(([^)]+)\)\s*<-\s*(.+)$/);
+            // Try to match simple pattern: x <- list
+            const simplePattern = clause.match(/^(\w+)\s*<-\s*(.+)$/);
+            
+            if (tuplePattern) {
+                // Parse tuple pattern variables
+                const vars = tuplePattern[1].split(',').map(v => v.trim());
                 generators.push({
-                    variable: generatorMatch[1],
-                    list: generatorMatch[2]
+                    variables: vars,
+                    list: tuplePattern[2],
+                    isTuple: true
+                });
+            } else if (simplePattern) {
+                generators.push({
+                    variable: simplePattern[1],
+                    list: simplePattern[2],
+                    isTuple: false
                 });
             } else {
                 // It's a guard (filter condition)
@@ -1283,7 +1296,8 @@ class HaskishInterpreter {
             const listExpr = this.evaluate(generator.list);
             
             // Check if we can create a lazy filtered/mapped infinite range
-            if (listExpr && listExpr._isInfiniteRange) {
+            // Skip optimization for tuple patterns - they need full evaluation
+            if (listExpr && listExpr._isInfiniteRange && !generator.isTuple) {
                 const varName = generator.variable;
                 
                 // Check if output expression is just the variable (simple identity)
@@ -1348,7 +1362,25 @@ class HaskishInterpreter {
         // Iterate through the list and recursively process remaining generators
         const results = [];
         for (const item of sourceList) {
-            const newBindings = { ...bindings, [generator.variable]: item };
+            let newBindings = { ...bindings };
+            
+            if (generator.isTuple) {
+                // Destructure tuple pattern
+                if (!item || !item._isTuple) {
+                    throw new Error(`Pattern match failure: expected tuple but got ${JSON.stringify(item)}`);
+                }
+                if (item.elements.length !== generator.variables.length) {
+                    throw new Error(`Pattern match failure: tuple has ${item.elements.length} elements but pattern expects ${generator.variables.length}`);
+                }
+                // Bind each variable from the tuple
+                generator.variables.forEach((varName, i) => {
+                    newBindings[varName] = item.elements[i];
+                });
+            } else {
+                // Simple pattern: bind single variable
+                newBindings[generator.variable] = item;
+            }
+            
             const subResults = this.evaluateListComprehension(outputExpr, generators, guards, newBindings, genIndex + 1);
             results.push(...subResults);
         }
