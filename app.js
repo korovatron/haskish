@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         codeEditor.setCursor({ line: 1, ch: 0 });
         interpreter.functions = {};
         interpreter.variables = {};
-        addSystemMessage('Editor and interpreter reset. Write your functions and click "Run Code".', 'info');
+        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
         saveUniversalState(); // Save cleared state
     });
 
@@ -688,6 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
         replHistoryIndex = -1;
         interpreter.functions = {};
         interpreter.variables = {};
+        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
         replEditor.focus();
         saveUniversalState(); // Save cleared state
     });
@@ -747,11 +748,11 @@ function initExercises() {
             replOutput.scrollTop = replOutput.scrollHeight;
             addSystemMessage('Previous session restored!', 'info');
         } else {
-            addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! (Examples available in the menu ☰)', 'info');
+            addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
         }
     } else {
         codeEditor.setValue('-- Write your function definitions here\n');
-        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! (Examples available in the menu ☰)', 'info');
+        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
     }
     
     // Focus REPL input on startup
