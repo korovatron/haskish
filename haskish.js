@@ -2472,14 +2472,14 @@ class HaskishInterpreter {
                     });
                 }
                 
-                return { success: true, result: output.trim() };
+                return { success: true, result: output.trim(), plainText: true };
             }
 
             case 'functions': {
                 const funcNames = Object.keys(this.functions);
                 
                 if (funcNames.length === 0) {
-                    return { success: true, result: 'No functions defined.' };
+                    return { success: true, result: 'No functions defined.', plainText: true };
                 }
                 
                 let output = 'Functions:\n';
@@ -2494,7 +2494,7 @@ class HaskishInterpreter {
                     output += patterns + '\n';
                 });
                 
-                return { success: true, result: output.trim() };
+                return { success: true, result: output.trim(), plainText: true };
             }
 
             case 'variables':
@@ -2502,7 +2502,7 @@ class HaskishInterpreter {
                 const varNames = Object.keys(this.variables);
                 
                 if (varNames.length === 0) {
-                    return { success: true, result: 'No variables defined.' };
+                    return { success: true, result: 'No variables defined.', plainText: true };
                 }
                 
                 let output = 'Variables:\n';
@@ -2511,7 +2511,7 @@ class HaskishInterpreter {
                     output += `  ${name} = ${value}\n`;
                 });
                 
-                return { success: true, result: output.trim() };
+                return { success: true, result: output.trim(), plainText: true };
             }
 
             case 'info':
@@ -2534,18 +2534,18 @@ class HaskishInterpreter {
                         }
                         if (i < this.functions[arg].length - 1) output += '\n';
                     });
-                    return { success: true, result: output.trim() };
+                    return { success: true, result: output.trim(), plainText: true };
                 }
                 
                 // Check if it's a variable
                 if (this.variables[arg] !== undefined) {
                     const value = this.formatOutput(this.variables[arg]);
-                    return { success: true, result: `Variable: ${arg}\n${arg} = ${value}` };
+                    return { success: true, result: `Variable: ${arg}\n${arg} = ${value}`, plainText: true };
                 }
                 
                 // Check if it's a built-in
                 if (this.builtins[arg]) {
-                    return { success: true, result: `Built-in function: ${arg}` };
+                    return { success: true, result: `Built-in function: ${arg}`, plainText: true };
                 }
                 
                 return { success: false, error: `'${arg}' is not defined` };
@@ -2560,7 +2560,7 @@ class HaskishInterpreter {
   :variables, :vars   Show only variables
   :info <name>        Show definition of a function or variable
   :help, :?           Show this help message`;
-                return { success: true, result: helpText };
+                return { success: true, result: helpText, plainText: true };
             }
 
             default:

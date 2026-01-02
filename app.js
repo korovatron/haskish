@@ -258,11 +258,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (result.success) {
                     outputDiv.className = 'repl-result';
-                    const outputCode = document.createElement('code');
-                    outputCode.className = `repl-output-code ${themeClass}`;
-                    outputDiv.appendChild(outputCode);
-                    // Apply syntax highlighting to output
-                    CodeMirror.runMode(result.result, 'haskish', outputCode);
+                    // Check if output should be plain text (for REPL commands)
+                    if (result.plainText) {
+                        outputDiv.textContent = result.result;
+                        outputDiv.style.whiteSpace = 'pre-wrap';
+                        outputDiv.style.fontFamily = 'monospace';
+                    } else {
+                        const outputCode = document.createElement('code');
+                        outputCode.className = `repl-output-code ${themeClass}`;
+                        outputDiv.appendChild(outputCode);
+                        // Apply syntax highlighting to output
+                        CodeMirror.runMode(result.result, 'haskish', outputCode);
+                    }
                 } else {
                     outputDiv.className = 'repl-error';
                     outputDiv.textContent = `Error: ${result.error}`;
