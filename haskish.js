@@ -1660,6 +1660,15 @@ class HaskishInterpreter {
                 if (typeof value === 'number' && value < 0) {
                     // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
                     replacement = `(${value})`;
+                } else if (typeof value === 'number') {
+                    // Convert number to string and check for scientific notation
+                    const numStr = String(value);
+                    // If scientific notation (contains e or E), wrap in parentheses to prevent 'e' being parsed as identifier
+                    if (/[eE]/.test(numStr)) {
+                        replacement = `(${numStr})`;
+                    } else {
+                        replacement = numStr;
+                    }
                 } else {
                     // Use formatOutput to properly handle booleans (True/False) and other types
                     replacement = this.formatOutput(value);
@@ -1697,8 +1706,8 @@ class HaskishInterpreter {
             throw new Error('Cannot evaluate empty expression');
         }
         
-        // Number literal (check EARLY before preprocessing)
-        if (/^-?\d+(\.\d+)?$/.test(expr)) {
+        // Number literal (check EARLY before preprocessing) - including scientific notation
+        if (/^-?\d+(\.\d+)?([eE][+\-]?\d+)?$/.test(expr)) {
             return parseFloat(expr);
         }
         
