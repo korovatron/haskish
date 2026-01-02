@@ -2431,6 +2431,143 @@ class HaskishInterpreter {
         return String(value);
     }
 
+    // Handle REPL commands (starting with :)
+    handleReplCommand(cmd) {
+        const parts = cmd.slice(1).trim().split(/\s+/);
+        const command = parts[0].toLowerCase();
+        const arg = parts.slice(1).join(' ');
+
+        switch (command) {
+            case 'show':
+            case 'bindings': {
+                const funcNames = Object.keys(this.functions);
+                const varNames = Object.keys(this.variables);
+                
+                if (funcNames.length === 0 && varNames.length === 0) {
+                    return { success: true, result: 'No functions or variables defined.' };
+                }
+                
+                let output = '';
+                
+                if (funcNames.length > 0) {
+                    output += 'Functions:\n';
+                    funcNames.forEach(name => {
+                        const patterns = this.functions[name].map(f => {
+                            if (f.guards && f.guards.length > 0) {
+                                return `  ${name} ${f.params}\n` + 
+                                       f.guards.map(g => `    | ${g.condition}`).join('\n');
+                            }
+                            return `  ${name} ${f.params}`;
+                        }).join('\n');
+                        output += patterns + '\n';
+                    });
+                }
+                
+                if (varNames.length > 0) {
+                    if (output) output += '\n';
+                    output += 'Variables:\n';
+                    varNames.forEach(name => {
+                        const value = this.formatOutput(this.variables[name]);
+                        output += `  ${name} = ${value}\n`;
+                    });
+                }
+                
+                return { success: true, result: output.trim() };
+            }
+
+            case 'functions': {
+                const funcNames = Object.keys(this.functions);
+                
+                if (funcNames.length === 0) {
+                    return { success: true, result: 'No functions defined.' };
+                }
+                
+                let output = 'Functions:\n';
+                funcNames.forEach(name => {
+                    const patterns = this.functions[name].map(f => {
+                        if (f.guards && f.guards.length > 0) {
+                            return `  ${name} ${f.params}\n` + 
+                                   f.guards.map(g => `    | ${g.condition}`).join('\n');
+                        }
+                        return `  ${name} ${f.params}`;
+                    }).join('\n');
+                    output += patterns + '\n';
+                });
+                
+                return { success: true, result: output.trim() };
+            }
+
+            case 'variables':
+            case 'vars': {
+                const varNames = Object.keys(this.variables);
+                
+                if (varNames.length === 0) {
+                    return { success: true, result: 'No variables defined.' };
+                }
+                
+                let output = 'Variables:\n';
+                varNames.forEach(name => {
+                    const value = this.formatOutput(this.variables[name]);
+                    output += `  ${name} = ${value}\n`;
+                });
+                
+                return { success: true, result: output.trim() };
+            }
+
+            case 'info':
+            case 'i': {
+                if (!arg) {
+                    return { success: false, error: 'Usage: :info <name>' };
+                }
+                
+                // Check if it's a function
+                if (this.functions[arg]) {
+                    let output = `Function: ${arg}\n\nDefinitions:\n`;
+                    this.functions[arg].forEach((f, i) => {
+                        if (f.guards && f.guards.length > 0) {
+                            output += `${arg} ${f.params}\n`;
+                            f.guards.forEach(g => {
+                                output += `  | ${g.condition} = ${g.body}\n`;
+                            });
+                        } else {
+                            output += `${arg} ${f.params} = ${f.body}\n`;
+                        }
+                        if (i < this.functions[arg].length - 1) output += '\n';
+                    });
+                    return { success: true, result: output.trim() };
+                }
+                
+                // Check if it's a variable
+                if (this.variables[arg] !== undefined) {
+                    const value = this.formatOutput(this.variables[arg]);
+                    return { success: true, result: `Variable: ${arg}\n${arg} = ${value}` };
+                }
+                
+                // Check if it's a built-in
+                if (this.builtins[arg]) {
+                    return { success: true, result: `Built-in function: ${arg}` };
+                }
+                
+                return { success: false, error: `'${arg}' is not defined` };
+            }
+
+            case 'help':
+            case 'h':
+            case '?': {
+                const helpText = `Available REPL commands:
+  :show, :bindings    Show all defined functions and variables
+  :functions          Show only functions
+  :variables, :vars   Show only variables
+  :info <name>        Show definition of a function or variable
+  :help, :?           Show this help message`;
+                return { success: true, result: helpText };
+            }
+
+            default:
+                return { success: false, error: `Unknown command: :${command}\nType :help for available commands` };
+        }
+    }
+
     // Run code and return result
     run(code) {
         try {
@@ -2448,8 +2585,15 @@ class HaskishInterpreter {
     // Evaluate a REPL expression
     evaluateRepl(expr) {
         try {
+            expr = expr.trim();
+            
+            // Handle REPL commands (starting with :)
+            if (expr.startsWith(':')) {
+                return this.handleReplCommand(expr);
+            }
+            
             // Strip optional 'let' keyword at the start
-            expr = expr.trim().replace(/^let\s+/, '');
+            expr = expr.replace(/^let\s+/, '');
             
             // Check if it's a function definition (has parameters before =)
             // Function name must start with a letter (not a number)
