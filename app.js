@@ -263,6 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         outputDiv.textContent = result.result;
                         outputDiv.style.whiteSpace = 'pre-wrap';
                         outputDiv.style.fontFamily = 'monospace';
+                    } else if (result.highlighted) {
+                        // Apply syntax highlighting while preserving formatting
+                        const outputCode = document.createElement('code');
+                        outputCode.className = `repl-output-code ${themeClass}`;
+                        outputDiv.appendChild(outputCode);
+                        CodeMirror.runMode(result.result, 'haskish', outputCode);
                     } else {
                         const outputCode = document.createElement('code');
                         outputCode.className = `repl-output-code ${themeClass}`;

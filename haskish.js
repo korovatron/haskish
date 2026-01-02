@@ -2453,10 +2453,6 @@ class HaskishInterpreter {
                     output += 'Functions:\n';
                     funcNames.forEach(name => {
                         const patterns = this.functions[name].map(f => {
-                            if (f.guards && f.guards.length > 0) {
-                                return `  ${name} ${f.params}\n` + 
-                                       f.guards.map(g => `    | ${g.condition}`).join('\n');
-                            }
                             return `  ${name} ${f.params}`;
                         }).join('\n');
                         output += patterns + '\n';
@@ -2472,7 +2468,7 @@ class HaskishInterpreter {
                     });
                 }
                 
-                return { success: true, result: output.trim(), plainText: true };
+                return { success: true, result: output.trim(), highlighted: true };
             }
 
             case 'functions': {
@@ -2485,16 +2481,12 @@ class HaskishInterpreter {
                 let output = 'Functions:\n';
                 funcNames.forEach(name => {
                     const patterns = this.functions[name].map(f => {
-                        if (f.guards && f.guards.length > 0) {
-                            return `  ${name} ${f.params}\n` + 
-                                   f.guards.map(g => `    | ${g.condition}`).join('\n');
-                        }
                         return `  ${name} ${f.params}`;
                     }).join('\n');
                     output += patterns + '\n';
                 });
                 
-                return { success: true, result: output.trim(), plainText: true };
+                return { success: true, result: output.trim(), highlighted: true };
             }
 
             case 'variables':
@@ -2511,7 +2503,7 @@ class HaskishInterpreter {
                     output += `  ${name} = ${value}\n`;
                 });
                 
-                return { success: true, result: output.trim(), plainText: true };
+                return { success: true, result: output.trim(), highlighted: true };
             }
 
             case 'info':
@@ -2534,13 +2526,13 @@ class HaskishInterpreter {
                         }
                         if (i < this.functions[arg].length - 1) output += '\n';
                     });
-                    return { success: true, result: output.trim(), plainText: true };
+                    return { success: true, result: output.trim(), highlighted: true };
                 }
                 
                 // Check if it's a variable
                 if (this.variables[arg] !== undefined) {
                     const value = this.formatOutput(this.variables[arg]);
-                    return { success: true, result: `Variable: ${arg}\n${arg} = ${value}`, plainText: true };
+                    return { success: true, result: `Variable: ${arg}\n${arg} = ${value}`, highlighted: true };
                 }
                 
                 // Check if it's a built-in
