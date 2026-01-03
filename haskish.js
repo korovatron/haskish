@@ -786,6 +786,71 @@ class HaskishInterpreter {
                 continue;
             }
 
+            // Check if it's a tuple pattern assignment like (a, b) = expr
+            let tupleAssignMatch = null;
+            if (line.startsWith('(')) {
+                // Find the matching closing paren
+                let depth = 0;
+                let endIndex = -1;
+                for (let i = 0; i < line.length; i++) {
+                    if (line[i] === '(') depth++;
+                    if (line[i] === ')') depth--;
+                    if (depth === 0) {
+                        endIndex = i;
+                        break;
+                    }
+                }
+                
+                // Check if there's an = after the closing paren (not ==, /=, <=, >=)
+                if (endIndex !== -1) {
+                    const afterParen = line.slice(endIndex + 1).trimStart();
+                    if (afterParen.startsWith('=') && !afterParen.startsWith('==')) {
+                        const pattern = line.slice(0, endIndex + 1);
+                        const valueExpr = afterParen.slice(1).trimStart();
+                        if (valueExpr) {
+                            tupleAssignMatch = [line, pattern, valueExpr];
+                        }
+                    }
+                }
+            }
+            
+            if (tupleAssignMatch) {
+                // Save pending guards first
+                if (currentGuards.length > 0) {
+                    currentCases.push({ params: currentParams, guards: currentGuards });
+                    currentGuards = [];
+                    currentParams = null;
+                }
+
+                // It's a tuple destructuring assignment
+                if (currentFunction) {
+                    this.functions[currentFunction] = currentCases;
+                    currentFunction = null;
+                    currentCases = [];
+                }
+                
+                const [, pattern, valueExpr] = tupleAssignMatch;
+                
+                // Evaluate the right-hand side
+                const evaluated = this.evaluate(valueExpr.trim());
+                
+                // Use existing matchPattern to destructure
+                const bindings = this.matchPattern(pattern, evaluated);
+                
+                if (bindings === null) {
+                    throw new Error(`Pattern match failure on line ${lineNumber}: ${pattern} does not match ${this.formatOutput(evaluated)}`);
+                }
+                
+                // Add all the bindings to variables
+                for (const [varName, varValue] of Object.entries(bindings)) {
+                    if (this.builtins[varName]) {
+                        throw new Error(`Cannot use '${varName}' as a variable name: it is a built-in function`);
+                    }
+                    this.variables[varName] = varValue;
+                }
+                continue;
+            }
+            
             // Try to match variable binding (no parameters before =)
             const varMatch = line.match(/^(\w+'*)\s*=\s*(.+)$/);
             if (varMatch) {
