@@ -1475,19 +1475,24 @@ class HaskishInterpreter {
             
             // If we found a cons operator, this is a list pattern
             if (consIndex !== -1) {
-                if (!Array.isArray(value) || value.length === 0) return null;
+                // Convert string to array for pattern matching
+                const listValue = typeof value === 'string' ? value.split('') : value;
+                
+                if (!Array.isArray(listValue) || listValue.length === 0) return null;
                 
                 const headPat = inner.slice(0, consIndex).trim();
                 const tailPat = inner.slice(consIndex + 1).trim();
                 
                 // Recursively match the head pattern (could be a tuple or nested pattern)
-                const headMatch = this.matchPattern(headPat, value[0]);
+                const headMatch = this.matchPattern(headPat, listValue[0]);
                 if (headMatch === null) return null;
                 
                 // Check if tail pattern is another cons pattern
                 if (tailPat.includes(':')) {
                     // Recursively match the tail pattern with the rest of the list
-                    const tailMatch = this.matchPattern('(' + tailPat + ')', value.slice(1));
+                    // Keep as string if original was string
+                    const tailValue = typeof value === 'string' ? listValue.slice(1).join('') : listValue.slice(1);
+                    const tailMatch = this.matchPattern('(' + tailPat + ')', tailValue);
                     if (tailMatch === null) return null;
                     return {
                         ...headMatch,
@@ -1495,9 +1500,11 @@ class HaskishInterpreter {
                     };
                 } else {
                     // Simple case: just head and tail variable
+                    // Keep as string if original was string
+                    const tailValue = typeof value === 'string' ? listValue.slice(1).join('') : listValue.slice(1);
                     return {
                         ...headMatch,
-                        [tailPat]: value.slice(1)
+                        [tailPat]: tailValue
                     };
                 }
             }
@@ -1548,19 +1555,24 @@ class HaskishInterpreter {
 
         // Empty list pattern
         if (pattern === '[]') {
-            return Array.isArray(value) && value.length === 0 ? {} : null;
+            // Match empty array or empty string
+            if (Array.isArray(value) && value.length === 0) return {};
+            if (typeof value === 'string' && value.length === 0) return {};
+            return null;
         }
 
         // Specific list pattern like [a, b]
         const listPatMatch = pattern.match(/^\[(.+)\]$/);
         if (listPatMatch) {
-            if (!Array.isArray(value)) return null;
+            // Convert string to array for pattern matching
+            const listValue = typeof value === 'string' ? value.split('') : value;
+            if (!Array.isArray(listValue)) return null;
             const params = listPatMatch[1].split(',').map(p => p.trim());
-            if (params.length !== value.length) return null;
+            if (params.length !== listValue.length) return null;
             
             const bindings = {};
             params.forEach((param, i) => {
-                bindings[param] = value[i];
+                bindings[param] = listValue[i];
             });
             return bindings;
         }
