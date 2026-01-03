@@ -1529,6 +1529,10 @@ class HaskishInterpreter {
 
         // Check user-defined functions
         if (!this.functions[funcName]) {
+            // Check if it's in variables - better error message
+            if (this.variables[funcName]) {
+                throw new Error(`'${funcName}' is a variable, not a function. Use it without explicit function call syntax.`);
+            }
             throw new Error(`Undefined function: ${funcName}`);
         }
 
@@ -1687,8 +1691,14 @@ class HaskishInterpreter {
             const evalResult = this.evaluate(result);
             
             // If the result is a Lambda, capture the current bindings as its closure
+            // BUT: if the lambda already has a closure from a nested computation, preserve it
+            // and only add bindings for free variables in the body
             if (evalResult instanceof Lambda && Object.keys(bindings).length > 0) {
-                // Create a new Lambda with captured bindings
+                // If lambda already has a closure, it came from a nested evaluation - don't override it
+                if (Object.keys(evalResult.closure).length > 0) {
+                    return evalResult;
+                }
+                // Otherwise, create a new Lambda with captured bindings
                 return new Lambda(evalResult.param, evalResult.body, this, bindings);
             }
             
