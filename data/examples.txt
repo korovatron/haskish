@@ -475,3 +475,46 @@ unrle ((c, n):rest) = replicate n c ++ unrle rest
 -- unrle [("A",2),("B",5),("C",2),("D",2)]
 --   → ["A","A","B","B","B","B","B","C","C","D","D"]
 -- unrle (rle "Hello")         → ["H","e","l","l","o"]
+
+=== Luhn Algorithm - Credit Card Validation ===
+-- The real algorithm used by credit card companies!
+-- Validates card numbers using checksum
+
+-- Convert string of digits to list of integers
+toDigits [] = []
+toDigits (x:xs) = (ord x - ord '0') : toDigits xs
+
+-- Double a digit, subtract 9 if result > 9
+doubleDigit n
+  | n * 2 > 9 = n * 2 - 9
+  | otherwise = n * 2
+
+-- Double every other digit from the right (use reverse!)
+doubleEveryOther [] = []
+doubleEveryOther [x] = [x]
+doubleEveryOther (x:y:rest) = x : doubleDigit y : doubleEveryOther rest
+
+-- Sum all digits in a list
+sumDigits [] = 0
+sumDigits (x:xs) = x + sumDigits xs
+
+-- Main Luhn validation function (inline composition)
+luhn cardNumber = mod (sumDigits (doubleEveryOther (reverse (toDigits cardNumber)))) 10 == 0
+
+-- Luhn check on a list of digits directly
+luhnDigits digits = mod (sumDigits (doubleEveryOther (reverse digits))) 10 == 0
+
+-- Tests (these are valid test card numbers):
+-- luhn "4532015112830366"     → True   (Valid Visa)
+-- luhn "6011514433546201"     → True   (Valid Discover)
+-- luhn "378282246310005"      → True   (Valid Amex)
+-- luhn "1234567812345670"     → True   (Valid test number)
+-- luhn "1234567812345678"     → False  (Invalid checksum)
+-- luhn "0000000000000000"     → True   (Edge case)
+-- luhnDigits [4,5,3,2,0,1,5,1,1,2,8,3,0,3,6,6]  → True
+
+-- Show the step-by-step process:
+-- toDigits "4532"                          → [4,5,3,2]
+-- reverse [4,5,3,2]                        → [2,3,5,4]
+-- doubleEveryOther [2,3,5,4]               → [2,6,5,8]
+-- sumDigits [2,6,5,8]                      → 21
