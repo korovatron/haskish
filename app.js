@@ -377,6 +377,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Focus REPL input when clicking anywhere in the REPL panel
+    const replOutput = document.getElementById('replOutput');
+    replOutput.addEventListener('click', () => {
+        replEditor.focus();
+    });
+
     // Run code from editor
     runCodeBtn.addEventListener('click', () => {
         const code = codeEditor.getValue();
