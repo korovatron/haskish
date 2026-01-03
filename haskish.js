@@ -1845,6 +1845,50 @@ class HaskishInterpreter {
             return true;
         }
 
+        // if/then/else expression
+        // Find 'if', 'then', 'else' at depth 0 (not inside parens/brackets)
+        if (expr.trimStart().startsWith('if ')) {
+            let depth = 0;
+            let ifIndex = -1;
+            let thenIndex = -1;
+            let elseIndex = -1;
+            
+            for (let i = 0; i < expr.length; i++) {
+                if (expr[i] === '(' || expr[i] === '[') depth++;
+                if (expr[i] === ')' || expr[i] === ']') depth--;
+                
+                if (depth === 0) {
+                    // Match 'if' as a word boundary
+                    if (ifIndex === -1 && expr.substr(i, 3) === 'if ' && (i === 0 || /\s/.test(expr[i-1]))) {
+                        ifIndex = i;
+                    }
+                    // Match 'then' as a word boundary
+                    else if (ifIndex !== -1 && thenIndex === -1 && 
+                             expr.substr(i, 5) === 'then ' && /\s/.test(expr[i-1])) {
+                        thenIndex = i;
+                    }
+                    // Match 'else' as a word boundary
+                    else if (thenIndex !== -1 && elseIndex === -1 && 
+                             expr.substr(i, 5) === 'else ' && /\s/.test(expr[i-1])) {
+                        elseIndex = i;
+                    }
+                }
+            }
+            
+            if (ifIndex !== -1 && thenIndex !== -1 && elseIndex !== -1) {
+                const condition = expr.slice(ifIndex + 3, thenIndex).trim();
+                const thenExpr = expr.slice(thenIndex + 5, elseIndex).trim();
+                const elseExpr = expr.slice(elseIndex + 5).trim();
+                
+                const condResult = this.evaluate(condition);
+                return condResult ? this.evaluate(thenExpr) : this.evaluate(elseExpr);
+            } else if (ifIndex !== -1 && thenIndex !== -1) {
+                throw new Error("if/then expression requires an 'else' clause. In Haskell, if-expressions must handle both branches.");
+            } else {
+                throw new Error("Malformed if/then/else expression");
+            }
+        }
+
         // Bare operator - convert to operator function
         if (/^([+*\/<>=\-]+|\+\+|!!|&&|\|\||\/=)$/.test(expr)) {
             return this.createOperatorFunction(expr);
