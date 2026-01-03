@@ -377,9 +377,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Focus REPL input when clicking anywhere in the REPL panel
+    // Focus REPL input when clicking anywhere in the REPL panel (but not if selecting text)
     document.getElementById('replOutput').addEventListener('click', () => {
-        replEditor.focus();
+        // Don't focus if user has selected text (they're probably trying to copy)
+        const selection = window.getSelection();
+        if (!selection || selection.toString().length === 0) {
+            replEditor.focus();
+        }
     });
 
     // Run code from editor

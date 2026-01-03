@@ -2006,6 +2006,14 @@ class HaskishInterpreter {
                     if (!Array.isArray(a)) {
                         throw new Error('(++) requires two lists');
                     }
+                    // Check type compatibility between finite list and infinite range
+                    if (a.length > 0) {
+                        const firstListType = this.getTypeCategory(a[0]);
+                        const rangeType = 'number'; // Infinite ranges are always numbers
+                        if (firstListType !== rangeType) {
+                            throw new Error(`Type error: (++) cannot concatenate ${firstListType} list with number range`);
+                        }
+                    }
                     // Prepend finite list to infinite range using ConsedInfiniteRange
                     return new ConsedInfiniteRange(a, b);
                 }
@@ -2015,11 +2023,35 @@ class HaskishInterpreter {
                 if (!Array.isArray(a) || !Array.isArray(b)) {
                     throw new Error('(++) requires two lists or two strings');
                 }
+                // Check type compatibility between two lists
+                if (a.length > 0 && b.length > 0) {
+                    const firstTypeA = this.getTypeCategory(a[0]);
+                    const firstTypeB = this.getTypeCategory(b[0]);
+                    if (firstTypeA !== firstTypeB) {
+                        throw new Error(`Type error: (++) cannot concatenate ${firstTypeA} list with ${firstTypeB} list`);
+                    }
+                }
                 return [...a, ...b];
             }},
-            { op: '&&', fn: (a, b) => a && b },
-            { op: '||', fn: (a, b) => a || b },
+            { op: '&&', fn: (a, b) => {
+                if (typeof a !== 'boolean' || typeof b !== 'boolean') {
+                    throw new Error(`Type error: (&&) requires booleans, got ${typeof a} and ${typeof b}`);
+                }
+                return a && b;
+            }},
+            { op: '||', fn: (a, b) => {
+                if (typeof a !== 'boolean' || typeof b !== 'boolean') {
+                    throw new Error(`Type error: (||) requires booleans, got ${typeof a} and ${typeof b}`);
+                }
+                return a || b;
+            }},
             { op: '/=', fn: (a, b) => {
+                // Type check first (unless both are lists or tuples which have special handling)
+                if (!Array.isArray(a) && !(a && a._isTuple) && !Array.isArray(b) && !(b && b._isTuple)) {
+                    if (typeof a !== typeof b) {
+                        throw new Error(`Type error: (/=) requires same types, got ${typeof a} and ${typeof b}`);
+                    }
+                }
                 // Handle array comparison (lists)
                 if (Array.isArray(a) && Array.isArray(b)) {
                     if (a.length !== b.length) return true;
@@ -2046,9 +2078,22 @@ class HaskishInterpreter {
                     }
                     return false;
                 }
-                return a != b;
+                // Check type mismatch for list vs non-list
+                if (Array.isArray(a) !== Array.isArray(b)) {
+                    throw new Error(`Type error: (/=) requires same types, got ${Array.isArray(a) ? 'list' : typeof a} and ${Array.isArray(b) ? 'list' : typeof b}`);
+                }
+                if ((a && a._isTuple) !== (b && b._isTuple)) {
+                    throw new Error(`Type error: (/=) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
+                }
+                return a !== b;
             }},
             { op: '==', fn: (a, b) => {
+                // Type check first (unless both are lists or tuples which have special handling)
+                if (!Array.isArray(a) && !(a && a._isTuple) && !Array.isArray(b) && !(b && b._isTuple)) {
+                    if (typeof a !== typeof b) {
+                        throw new Error(`Type error: (==) requires same types, got ${typeof a} and ${typeof b}`);
+                    }
+                }
                 // Handle array comparison (lists)
                 if (Array.isArray(a) && Array.isArray(b)) {
                     if (a.length !== b.length) return false;
@@ -2075,12 +2120,39 @@ class HaskishInterpreter {
                     }
                     return true;
                 }
-                return a == b;
+                // Check type mismatch for list vs non-list
+                if (Array.isArray(a) !== Array.isArray(b)) {
+                    throw new Error(`Type error: (==) requires same types, got ${Array.isArray(a) ? 'list' : typeof a} and ${Array.isArray(b) ? 'list' : typeof b}`);
+                }
+                if ((a && a._isTuple) !== (b && b._isTuple)) {
+                    throw new Error(`Type error: (==) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
+                }
+                return a === b;
             }},
-            { op: '<=', fn: (a, b) => a <= b },
-            { op: '>=', fn: (a, b) => a >= b },
-            { op: '<', fn: (a, b) => a < b },
-            { op: '>', fn: (a, b) => a > b },
+            { op: '<=', fn: (a, b) => {
+                if (typeof a !== typeof b) {
+                    throw new Error(`Type error: (<=) requires same types, got ${typeof a} and ${typeof b}`);
+                }
+                return a <= b;
+            }},
+            { op: '>=', fn: (a, b) => {
+                if (typeof a !== typeof b) {
+                    throw new Error(`Type error: (>=) requires same types, got ${typeof a} and ${typeof b}`);
+                }
+                return a >= b;
+            }},
+            { op: '<', fn: (a, b) => {
+                if (typeof a !== typeof b) {
+                    throw new Error(`Type error: (<) requires same types, got ${typeof a} and ${typeof b}`);
+                }
+                return a < b;
+            }},
+            { op: '>', fn: (a, b) => {
+                if (typeof a !== typeof b) {
+                    throw new Error(`Type error: (>) requires same types, got ${typeof a} and ${typeof b}`);
+                }
+                return a > b;
+            }},
             { op: '+', fn: (a, b) => {
                 if (typeof a !== 'number' || typeof b !== 'number') {
                     throw new Error(`Type error: (+) requires numbers, got ${typeof a} and ${typeof b}`);
@@ -2113,11 +2185,24 @@ class HaskishInterpreter {
             }},
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
+                    // Type check: element must match range type (numbers)
+                    const elementType = this.getTypeCategory(a);
+                    if (elementType !== 'number') {
+                        throw new Error(`Type error: (:) cannot cons ${elementType} onto number range`);
+                    }
                     // Create a new ConsedInfiniteRange
                     return new ConsedInfiniteRange(a, b);
                 }
                 if (!Array.isArray(b)) {
                     throw new Error('(:) requires a list as the second argument');
+                }
+                // Type check: element must match list element type
+                if (b.length > 0) {
+                    const elementType = this.getTypeCategory(a);
+                    const listType = this.getTypeCategory(b[0]);
+                    if (elementType !== listType) {
+                        throw new Error(`Type error: (:) cannot cons ${elementType} onto ${listType} list`);
+                    }
                 }
                 return [a, ...b];
             }}
