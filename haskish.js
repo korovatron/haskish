@@ -383,6 +383,20 @@ class HaskishInterpreter {
         this.initializeBuiltins();
     }
 
+    // Helper to determine the type of a value for homogeneous list checking
+    getTypeCategory(value) {
+        if (value === null || value === undefined) return 'null';
+        if (typeof value === 'number') return 'number';
+        if (typeof value === 'boolean') return 'boolean';
+        if (typeof value === 'string') return 'string';
+        if (Array.isArray(value)) return 'list';
+        if (value && value._isTuple) return 'tuple';
+        if (value && value._isInfiniteRange) return 'infiniteRange';
+        if (value instanceof Lambda) return 'lambda';
+        if (value instanceof PartialFunction) return 'partialFunction';
+        return 'other';
+    }
+
     initializeBuiltins() {
         // Built-in functions available to all programs
         this.builtins = {
@@ -1256,6 +1270,17 @@ class HaskishInterpreter {
 
         if (current.trim()) {
             elements.push(this.evaluate(current.trim()));
+        }
+
+        // Type check: ensure all elements are of the same type (homogeneous list)
+        if (elements.length > 0) {
+            const firstType = this.getTypeCategory(elements[0]);
+            for (let i = 1; i < elements.length; i++) {
+                const currentType = this.getTypeCategory(elements[i]);
+                if (currentType !== firstType) {
+                    throw new Error(`Type error: list elements must all be the same type (expected ${firstType}, but got ${currentType})`);
+                }
+            }
         }
 
         return elements;
