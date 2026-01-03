@@ -175,6 +175,48 @@ isPositive = (>0)
 -- increment 5             → 6
 -- halve 20                → 10
 
+=== Church Numerals ===
+-- Church encoding of numbers as higher-order functions
+-- A Church numeral n is a function that applies f n times to x
+
+-- Basic Church numerals
+zero = \f -> \x -> x
+one = \f -> \x -> f x
+two = \f -> \x -> f (f x)
+three = \f -> \x -> f (f (f x))
+
+-- Church numeral operations
+succ = \n -> \f -> \x -> f (n f x)
+add = \m -> \n -> \f -> \x -> m f (n f x)
+mul = \m -> \n -> \f -> m (n f)
+pow = \m -> \n -> n m
+pred = \n -> fst (n (\p -> pair (snd p) (succ (snd p))) (pair zero zero))
+sub = \m -> \n -> n pred m
+
+-- Convert Church numeral to integer
+inc = \n -> n + 1
+
+-- Boolean operations with Church encoding
+true = \a -> \b -> a
+false = \a -> \b -> b
+
+-- Pair operations (using Church encoding)
+pair = \a -> \b -> \f -> f a b
+fst = \p -> p (\a -> \b -> a)
+snd = \p -> p (\a -> \b -> b)
+
+-- Tests:
+-- three inc 0              → 3
+-- (add two three) inc 0    → 5
+-- (mul two three) inc 0    → 6
+-- (pow two three) inc 0    → 8
+-- (pred three) inc 0       → 2
+-- (sub three two) inc 0    → 1
+-- true 1 2                 → 1
+-- false 1 2                → 2
+-- fst (pair 10 20)         → 10
+-- snd (pair 10 20)         → 20
+
 === Tuples ===
 -- Tuple creation
 point = (3, 5)
