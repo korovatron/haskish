@@ -378,8 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Focus REPL input when clicking anywhere in the REPL panel
-    const replOutput = document.getElementById('replOutput');
-    replOutput.addEventListener('click', () => {
+    document.getElementById('replOutput').addEventListener('click', () => {
         replEditor.focus();
     });
 
