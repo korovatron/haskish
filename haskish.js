@@ -2081,11 +2081,36 @@ class HaskishInterpreter {
             { op: '>=', fn: (a, b) => a >= b },
             { op: '<', fn: (a, b) => a < b },
             { op: '>', fn: (a, b) => a > b },
-            { op: '+', fn: (a, b) => a + b },
-            { op: '-', fn: (a, b) => a - b },
-            { op: '^', fn: (a, b) => Math.pow(a, b) },
-            { op: '*', fn: (a, b) => a * b },
-            { op: '/', fn: (a, b) => a / b },
+            { op: '+', fn: (a, b) => {
+                if (typeof a !== 'number' || typeof b !== 'number') {
+                    throw new Error(`Type error: (+) requires numbers, got ${typeof a} and ${typeof b}`);
+                }
+                return a + b;
+            }},
+            { op: '-', fn: (a, b) => {
+                if (typeof a !== 'number' || typeof b !== 'number') {
+                    throw new Error(`Type error: (-) requires numbers, got ${typeof a} and ${typeof b}`);
+                }
+                return a - b;
+            }},
+            { op: '^', fn: (a, b) => {
+                if (typeof a !== 'number' || typeof b !== 'number') {
+                    throw new Error(`Type error: (^) requires numbers, got ${typeof a} and ${typeof b}`);
+                }
+                return Math.pow(a, b);
+            }},
+            { op: '*', fn: (a, b) => {
+                if (typeof a !== 'number' || typeof b !== 'number') {
+                    throw new Error(`Type error: (*) requires numbers, got ${typeof a} and ${typeof b}`);
+                }
+                return a * b;
+            }},
+            { op: '/', fn: (a, b) => {
+                if (typeof a !== 'number' || typeof b !== 'number') {
+                    throw new Error(`Type error: (/) requires numbers, got ${typeof a} and ${typeof b}`);
+                }
+                return a / b;
+            }},
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
                     // Create a new ConsedInfiniteRange
