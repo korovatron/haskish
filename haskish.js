@@ -1701,9 +1701,9 @@ class HaskishInterpreter {
     evaluate(expr) {
         expr = expr.trim();
         
-        // Guard against empty expressions
+        // Handle unit value () - return null to represent unit
         if (expr === '') {
-            throw new Error('Cannot evaluate empty expression');
+            return null;
         }
         
         // Number literal (check EARLY before preprocessing) - including scientific notation
@@ -1999,7 +1999,10 @@ class HaskishInterpreter {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
-                if (token.type === 'paren') return this.evaluate(token.value);
+                if (token.type === 'paren') {
+                    // Handle unit () as null
+                    return token.value.trim() === '' ? null : this.evaluate(token.value);
+                }
                 if (token.type === 'identifier') return this.evaluate(token.value);
                 return token.value;
             });
@@ -2023,7 +2026,10 @@ class HaskishInterpreter {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
-                if (token.type === 'paren') return this.evaluate(token.value);
+                if (token.type === 'paren') {
+                    // Handle unit () as null
+                    return token.value.trim() === '' ? null : this.evaluate(token.value);
+                }
                 if (token.type === 'identifier') return this.evaluate(token.value);
                 return token.value;
             });
@@ -2075,10 +2081,14 @@ class HaskishInterpreter {
                     throw new Error(`Invalid lambda syntax: ${token.value}`);
                 }
                 if (token.type === 'paren') {
+                    // Handle unit () as null
+                    if (token.value.trim() === '') {
+                        return null;
+                    }
                     // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
                     // Match operator sections: operators only, operators with number, string, or parenthesized expr
-                    if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
+                    if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -2615,7 +2625,67 @@ class HaskishInterpreter {
                 return { success: true, result: `Defined function: ${funcName}` };
             }
             
-            // Check if it's a variable assignment (no parameters before =)
+            // Check if it's a tuple pattern assignment like (a, b) = expr
+            // Need to match balanced parentheses for nested tuples like ((a, b), c)
+            let tupleAssignMatch = null;
+            if (expr.startsWith('(')) {
+                // Find the matching closing paren
+                let depth = 0;
+                let endIndex = -1;
+                for (let i = 0; i < expr.length; i++) {
+                    if (expr[i] === '(') depth++;
+                    if (expr[i] === ')') depth--;
+                    if (depth === 0) {
+                        endIndex = i;
+                        break;
+                    }
+                }
+                
+                // Check if there's an = after the closing paren (not ==, /=, <=, >=)
+                if (endIndex !== -1) {
+                    const afterParen = expr.slice(endIndex + 1).trimStart();
+                    if (afterParen.startsWith('=') && !afterParen.startsWith('==')) {
+                        const pattern = expr.slice(0, endIndex + 1);
+                        const valueExpr = afterParen.slice(1).trimStart();
+                        if (valueExpr) {
+                            tupleAssignMatch = [expr, pattern, valueExpr];
+                        }
+                    }
+                }
+            }
+            
+            if (tupleAssignMatch) {
+                const [, pattern, valueExpr] = tupleAssignMatch;
+                
+                // Evaluate the right-hand side
+                const evaluated = this.evaluate(valueExpr.trim());
+                
+                // Use existing matchPattern to destructure
+                const bindings = this.matchPattern(pattern, evaluated);
+                
+                if (bindings === null) {
+                    return { success: false, error: `Pattern match failure: ${pattern} does not match ${this.formatOutput(evaluated)}` };
+                }
+                
+                // Check for conflicts with built-ins and existing variables
+                for (const varName in bindings) {
+                    if (this.builtins[varName]) {
+                        return { success: false, error: `Cannot use '${varName}' as a variable name: it is a built-in function` };
+                    }
+                    if (this.variables[varName] !== undefined) {
+                        return { success: false, error: `Cannot reassign '${varName}' - variables are immutable in functional programming!` };
+                    }
+                }
+                
+                // Bind all variables
+                Object.assign(this.variables, bindings);
+                
+                // Format output showing all bindings
+                const bindingStrs = Object.entries(bindings).map(([k, v]) => `${k} = ${this.formatOutput(v)}`);
+                return { success: true, result: bindingStrs.join('\n') };
+            }
+            
+            // Check if it's a simple variable assignment (no parameters before =)
             // Variable name must start with a letter and only have a single =
             // Use negative lookahead to avoid matching ==, /=, <=, >=
             const assignMatch = expr.match(/^([a-zA-Z_]\w*'*)\s*(?<![=/<>])=(?![=])\s*(.+)$/);

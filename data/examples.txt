@@ -180,9 +180,19 @@ isPositive = (>0)
 point = (3, 5)
 triple = (1, "hello", True)
 
--- Tuple pattern matching
+-- Tuple pattern matching in functions
 fst (x, y) = x
 snd (x, y) = y
+
+-- Tuple destructuring in assignments
+(a, b) = (10, 20)
+((x, y), z) = ((1, 2), 3)
+
+-- Stateful computation with tuples and lambdas
+counter n = \_ -> (n, counter (n + 1))
+-- Usage: c0 = counter 0
+--        (step0, c1) = c0 ()
+--        (step1, c2) = c1 ()
 
 -- Tuples with guards
 distance (x1, y1) (x2, y2) = ((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
