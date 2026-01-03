@@ -1576,7 +1576,15 @@ class HaskishInterpreter {
             }
         }
 
-        throw new Error(`No pattern matched for function ${funcName} with arguments: ${JSON.stringify(args)}`);
+        // Format args for error message without JSON.stringify to avoid circular reference
+        const argsStr = args.map(arg => {
+            if (arg instanceof Lambda) return arg.toString();
+            if (arg instanceof PartialFunction) return arg.toString();
+            if (arg && arg._isOperatorFunction) return '<operator function>';
+            if (arg && arg._isComposedFunction) return '<composed function>';
+            return JSON.stringify(arg);
+        }).join(', ');
+        throw new Error(`No pattern matched for function ${funcName} with arguments: ${argsStr}`);
     }
 
     // Parse parameter patterns
@@ -2039,7 +2047,16 @@ class HaskishInterpreter {
                 return funcExpr.apply(args);
             }
             if (funcExpr instanceof Lambda) {
-                return funcExpr.apply(args[0]);
+                // Apply arguments one at a time (currying)
+                let result = funcExpr;
+                for (const arg of args) {
+                    if (result instanceof Lambda) {
+                        result = result.apply(arg);
+                    } else {
+                        throw new Error('Too many arguments for lambda');
+                    }
+                }
+                return result;
             }
             if (funcExpr instanceof PartialFunction) {
                 return funcExpr.apply(args);
@@ -2613,16 +2630,22 @@ class HaskishInterpreter {
             if (funcMatch) {
                 const [, funcName, params, body] = funcMatch;
                 
-                // Check if function already exists
-                if (this.functions[funcName]) {
-                    // Add to existing function cases (for pattern matching)
-                    this.functions[funcName].push({ params: params.trim(), body: body.trim() });
+                // Check if params is only whitespace or starts with \ - if so, this is a lambda/variable assignment, not a function definition
+                const trimmedParams = params.trim();
+                if (trimmedParams === '' || trimmedParams.startsWith('\\')) {
+                    // Fall through to variable assignment handling below
                 } else {
-                    // Create new function
-                    this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
+                    // Check if function already exists
+                    if (this.functions[funcName]) {
+                        // Add to existing function cases (for pattern matching)
+                        this.functions[funcName].push({ params: params.trim(), body: body.trim() });
+                    } else {
+                        // Create new function
+                        this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
+                    }
+                    
+                    return { success: true, result: `Defined function: ${funcName}` };
                 }
-                
-                return { success: true, result: `Defined function: ${funcName}` };
             }
             
             // Check if it's a tuple pattern assignment like (a, b) = expr
