@@ -445,6 +445,33 @@ myCos x = cosHelper x 0 0
 
 myTan x = (mySin x) / (myCos x)
 
-
-
 -- try mySin (pi/6) etc
+
+=== String Processing - RLE Compression ===
+-- Run-Length Encoding: compress strings by counting consecutive characters
+
+-- Main RLE function
+rle [] = []
+rle (x:xs) = rleHelper x 1 xs
+
+-- Helper accumulates count for each character
+rleHelper current count [] = [(current, count)]
+rleHelper current count (y:ys)
+  | current == y = rleHelper current (count + 1) ys
+  | otherwise = (current, count) : rleHelper y 1 ys
+
+-- Replicate a character n times
+replicate 0 c = []
+replicate n c = c : replicate (n - 1) c
+
+-- Decode RLE back to original string
+unrle [] = []
+unrle ((c, n):rest) = replicate n c ++ unrle rest
+
+-- Tests:
+-- rle "AABBBBBCCDD"           → [("A",2),("B",5),("C",2),("D",2)]
+-- rle "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB"
+--   → [("W",12),("B",1),("W",12),("B",3),("W",24),("B",1)]
+-- unrle [("A",2),("B",5),("C",2),("D",2)]
+--   → ["A","A","B","B","B","B","B","C","C","D","D"]
+-- unrle (rle "Hello")         → ["H","e","l","l","o"]
