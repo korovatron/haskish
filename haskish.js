@@ -2197,6 +2197,10 @@ class HaskishInterpreter {
                 return a + b;
             }},
             { op: '-', fn: (a, b) => {
+                // Check if trying to subtract from a partially applied function
+                if (a instanceof PartialFunction) {
+                    throw new Error(`Cannot apply operator '-' to a partially applied function.\nDid you mean to pass a negative number? Use parentheses, e.g., add 4 (-5)`);
+                }
                 if (typeof a !== 'number' || typeof b !== 'number') {
                     throw new Error(`Type error: (-) requires numbers, got ${typeof a} and ${typeof b}`);
                 }
