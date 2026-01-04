@@ -2,16 +2,25 @@
 Get familiar with the Interactive REPL (Read-Eval-Print Loop). Try these expressions:
 
 ```
-> 15 + 12
-> 3 * 56
+> 5 + 7
+> 8 / 4
 > True && False
 > not (False && True)
-> 5 == 5
+> 7 == 7
 > 5 /= 5
-> "hello" == "hello"
+> 5 /= 6
+> "hello" == "world"
+> min 64 128
+> max 128 64
+> max "apple" "banana"
+> (2 == 3) || (2 == 2)
+> ord "A"
+> chr 98
 ```
 
 The REPL shows results immediately. Experiment!
+What is the purpose of `&&` and `||` ?
+What does `/=` mean?
 
 === Simple Function ===
 Write a function called `tripleMe` that takes a number and returns triple its value.

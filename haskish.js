@@ -620,9 +620,15 @@ class HaskishInterpreter {
                 return Math.floor(a / b);
             },
             'min': (a, b) => {
+                if (typeof a !== typeof b) {
+                    throw new Error(`Type error: min requires same types, got ${typeof a} and ${typeof b}`);
+                }
                 return a < b ? a : b;
             },
             'max': (a, b) => {
+                if (typeof a !== typeof b) {
+                    throw new Error(`Type error: max requires same types, got ${typeof a} and ${typeof b}`);
+                }
                 return a > b ? a : b;
             },
             'ord': (char) => {

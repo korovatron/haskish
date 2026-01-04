@@ -1605,6 +1605,8 @@ footer a:hover {
     line-height: 1.8;
     color: var(--text-color);
     padding-bottom: 60px; /* Extra padding to ensure content is scrollable to bottom */
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .exercise-content h3 {
@@ -1624,7 +1626,7 @@ footer a:hover {
     border-radius: 3px;
     font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
     font-size: 0.9em;
-    color: var(--primary-color);
+    color: #00bcd4; /* Bright cyan for better readability */
 }
 
 .exercise-content pre {

@@ -507,6 +507,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Initialize exercises functionality
             initExercises();
+            
+            // Highlight code blocks with Prism.js
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+            }
         } catch (error) {
             console.error('Error loading exercises:', error);
             addSystemMessage(`✗ Error loading exercises: ${error.message}`, 'error');
@@ -515,10 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Convert markdown-style formatting to HTML
     function convertMarkdownToHtml(content) {
+        // Normalize line endings first (Windows uses \r\n, we want just \n)
+        content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        
         // Convert code blocks ```...``` to <pre><code>...</code></pre>
         content = content.replace(/```([\s\S]*?)```/g, (match, code) => {
-            // Normalize line endings (remove \r)
-            code = code.replace(/\r/g, '');
             
             // Split into lines
             let lines = code.split('\n');
@@ -547,20 +553,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             code = lines.join('\n');
-            return `<pre><code>${code}</code></pre>`;
+            return `<pre><code class="language-haskell">${code}</code></pre>`;
         });
         
         // Convert inline code `...` to <code>...</code>
         content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
         
-        // Convert double newlines to paragraphs, but don't touch lines with pre/code blocks
+        // Convert double newlines to paragraphs, but don't touch pre/code blocks
         const paragraphs = content.split('\n\n').map(para => {
             para = para.trim();
-            // Don't wrap or modify if it contains pre or code blocks
-            if (para.includes('<pre>') || para.includes('<code>')) {
+            // Don't wrap or modify if it's a code block (but inline code is fine)
+            if (para.includes('<pre>')) {
                 return para;
             }
-            return para ? `<p>${para.replace(/\n/g, ' ')}</p>` : '';
+            // Replace single newlines with <br> tags for line breaks within paragraphs
+            return para ? `<p>${para.replace(/\n/g, '<br>')}</p>` : '';
         }).filter(p => p).join('\n');
         
         return paragraphs;
@@ -869,6 +876,11 @@ function showExerciseContent(exerciseId) {
         title.textContent = `${exerciseId}. ${exerciseTitles[index]}`;
         content.innerHTML = exerciseData[index];
         panel.style.display = 'flex';
+        
+        // Highlight code blocks with Prism.js
+        if (typeof Prism !== 'undefined') {
+            Prism.highlightAllUnder(content);
+        }
     }
 }
 
