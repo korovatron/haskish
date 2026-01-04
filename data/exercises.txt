@@ -24,6 +24,36 @@ What is the purpose of `&&` and `||` ?
 What does `/=` mean?
 What is the significance of `ord` and `chr` ?
 
+=== Variables ===
+In the REPL define some Variables
+```
+x = 7
+y = 2
+myValue = 17
+mySecondValue = -12
+```
+You can use these variables as numbers in expressions. Try the following, and some of your own:
+```
+myValue + 3
+y - mySecondValue
+y == 7
+y == 2
+myValue < 15
+not (myValue > 15)
+myNewValue = x + y
+myNewValue + 11
+```
+What happens if you now try
+```
+myValue = 10
+```
+In functional programming variables and other data structures are **_immutable_**. This means that the values stored in them cannot be changed after being created.
+
+This is particularly important when working with **_Big Data_**: Big Data is distributed across multiple devices, so immutability ensures that values stored cannot be changed after being created, preventing conflicts when multiple devices process the same data simultaneously.
+
+
+You can use the **RESET** button in the REPL to clear the output as well as clear any variable definitions.
+
 === Simple Function ===
 Write a function called `tripleMe` that takes a number and returns triple its value.
 

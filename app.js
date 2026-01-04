@@ -556,6 +556,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Convert inline code `...` to <code>...</code>
         content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
         
+        // Convert key terms **_..._** to <span class="key-term">...</span> (must be before regular bold)
+        content = content.replace(/\*\*_([^_]+)_\*\*/g, '<span class="key-term">$1</span>');
+        
+        // Convert bold **...** to <strong>...</strong>
+        content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        
         // Convert double newlines to paragraphs, but don't touch pre/code blocks
         const paragraphs = content.split('\n\n').map(para => {
             para = para.trim();

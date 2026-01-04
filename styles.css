@@ -63,6 +63,12 @@ body {
     width: 100%;
 }
 
+/* Key terms styling for exercises */
+.key-term {
+    font-weight: bold;
+    color: #fbbf24;
+}
+
 /* Prevent iOS viewport scrolling when menu is open */
 html.menu-open,
 body.menu-open {

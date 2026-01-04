@@ -902,6 +902,10 @@ class HaskishInterpreter {
                 if (this.builtins[name]) {
                     throw new Error(`Cannot use '${name}' as a variable name: it is a built-in function`);
                 }
+                // Check if variable is being redefined (immutability)
+                if (this.variables.hasOwnProperty(name)) {
+                    throw new Error(`Cannot reassign '${name}' - variables are immutable in functional programming!`);
+                }
                 this.variables[name] = this.evaluate(value.trim());
                 continue;
             }
