@@ -1460,7 +1460,7 @@ footer a:hover {
 }
 
 .exercise-content {
-    line-height: 1.8;
+    line-height: 1.5;
     color: var(--text-color);
     padding-bottom: 60px; /* Extra padding to ensure content is scrollable to bottom */
     user-select: text;
@@ -1476,6 +1476,12 @@ footer a:hover {
 
 .exercise-content p {
     margin-bottom: 1rem;
+    margin-top: 0;
+}
+
+.exercise-content .spacer {
+    height: 1rem;
+    display: block;
 }
 
 .exercise-content code {

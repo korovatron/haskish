@@ -520,6 +520,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Normalize line endings first (Windows uses \r\n, we want just \n)
         content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         
+        // Normalize 3+ newlines to exactly 2 (1 blank line)
+        content = content.replace(/\n{3,}/g, '\n\n');
+        
         // Convert code blocks ```...``` to <pre><code>...</code></pre>
         content = content.replace(/```([\s\S]*?)```/g, (match, code) => {
             
@@ -562,16 +565,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // Convert bold **...** to <strong>...</strong>
         content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         
-        // Convert double newlines to paragraphs, but don't touch pre/code blocks
+        // Convert double newlines to paragraphs, but handle lists and code blocks specially
         const paragraphs = content.split('\n\n').map(para => {
             para = para.trim();
-            // Don't wrap or modify if it's a code block (but inline code is fine)
-            if (para.includes('<pre>')) {
+            
+            // If it's ONLY a code block, return as-is
+            if (para.startsWith('<pre>') && para.endsWith('</pre>')) {
                 return para;
             }
-            // Replace single newlines with <br> tags for line breaks within paragraphs
-            return para ? `<p>${para.replace(/\n/g, '<br>')}</p>` : '';
-        }).filter(p => p).join('\n');
+            
+            // Check if this paragraph is a bullet list
+            const lines = para.split('\n');
+            const hasListItems = lines.some(line => line.trim().startsWith('-'));
+            const isAllListOrEmpty = lines.every(line => line.trim().startsWith('-') || line.trim() === '');
+            
+            if (hasListItems && isAllListOrEmpty) {
+                // Convert to list
+                const items = lines
+                    .filter(line => line.trim().startsWith('-'))
+                    .map(line => line.trim().substring(1).trim())
+                    .map(item => `<li>${item}</li>`)
+                    .join('\n');
+                return `<ul>\n${items}\n</ul>`;
+            }
+            
+            // For paragraphs that may contain code blocks, preserve newlines inside <pre> tags
+            if (para.includes('<pre>')) {
+                // Split on <pre> and </pre> to isolate code blocks
+                const parts = para.split(/(<pre>[\s\S]*?<\/pre>)/);
+                const processed = parts.map(part => {
+                    if (part.startsWith('<pre>')) {
+                        return part; // Keep code blocks as-is
+                    } else {
+                        return part.replace(/\n/g, ' '); // Replace newlines with spaces in text
+                    }
+                }).join('');
+                return processed ? `<p>${processed}</p>` : '';
+            }
+            
+            // For regular paragraphs, join lines with spaces
+            return para ? `<p>${para.replace(/\n/g, ' ')}</p>` : '';
+        }).filter(p => p).join('\n\n');
         
         return paragraphs;
     }
