@@ -771,6 +771,11 @@ class HaskishInterpreter {
                     currentCases = [];
                 }
                 
+                // Check if the function name shadows a built-in function
+                if (this.builtins[funcName]) {
+                    throw new Error(`Cannot redefine '${funcName}': it is a built-in function`);
+                }
+                
                 currentFunction = funcName;
                 currentParams = params.trim();
                 currentCases.push({ params: currentParams, body: body.trim() });
@@ -798,6 +803,11 @@ class HaskishInterpreter {
                 if (currentFunction && currentFunction !== funcName) {
                     this.functions[currentFunction] = currentCases;
                     currentCases = [];
+                }
+                
+                // Check if the function name shadows a built-in function
+                if (this.builtins[funcName]) {
+                    throw new Error(`Cannot redefine '${funcName}': it is a built-in function`);
                 }
                 
                 currentFunction = funcName;
@@ -2907,6 +2917,11 @@ class HaskishInterpreter {
                 if (trimmedParams === '' || trimmedParams.startsWith('\\')) {
                     // Fall through to variable assignment handling below
                 } else {
+                    // Check if the function name shadows a built-in function
+                    if (this.builtins[funcName]) {
+                        throw new Error(`Cannot redefine '${funcName}': it is a built-in function`);
+                    }
+                    
                     // Check if function already exists
                     if (this.functions[funcName]) {
                         // Add to existing function cases (for pattern matching)
