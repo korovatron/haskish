@@ -939,8 +939,9 @@ class HaskishInterpreter {
         // Validate function bodies by attempting to tokenize them
         for (const [funcName, cases] of Object.entries(this.functions)) {
             // Check for duplicate patterns (same parameters)
+            // But only for cases without guards - guard cases are supposed to share params
             if (cases.length > 1) {
-                const patterns = cases.map(c => c.params);
+                const patterns = cases.filter(c => !c.guards).map(c => c.params);
                 for (let i = 0; i < patterns.length; i++) {
                     for (let j = i + 1; j < patterns.length; j++) {
                         if (patterns[i] === patterns[j]) {
@@ -2110,8 +2111,10 @@ class HaskishInterpreter {
                 if (Array.isArray(a) !== Array.isArray(b)) {
                     throw new Error(`Type error: (/=) requires same types, got ${Array.isArray(a) ? 'list' : typeof a} and ${Array.isArray(b) ? 'list' : typeof b}`);
                 }
-                if ((a && a._isTuple) !== (b && b._isTuple)) {
-                    throw new Error(`Type error: (/=) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
+                if ((a && a._isTuple) || (b && b._isTuple)) {
+                    if (!(a && a._isTuple) || !(b && b._isTuple)) {
+                        throw new Error(`Type error: (/=) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
+                    }
                 }
                 return a !== b;
             }},
@@ -2152,8 +2155,10 @@ class HaskishInterpreter {
                 if (Array.isArray(a) !== Array.isArray(b)) {
                     throw new Error(`Type error: (==) requires same types, got ${Array.isArray(a) ? 'list' : typeof a} and ${Array.isArray(b) ? 'list' : typeof b}`);
                 }
-                if ((a && a._isTuple) !== (b && b._isTuple)) {
-                    throw new Error(`Type error: (==) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
+                if ((a && a._isTuple) || (b && b._isTuple)) {
+                    if (!(a && a._isTuple) || !(b && b._isTuple)) {
+                        throw new Error(`Type error: (==) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
+                    }
                 }
                 return a === b;
             }},
