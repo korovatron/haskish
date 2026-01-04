@@ -14,6 +14,9 @@ Try these expressions:
 > "hello" == "world"
 > min 64 128
 > max 128 64
+> mod 14 3
+> mod 14 3 == 0
+> div 14 3
 > max "apple" "banana"
 > (2 == 3) || (2 == 2)
 > ord "A"
@@ -21,155 +24,120 @@ Try these expressions:
 ```
 
 What is the purpose of `&&` and `||` ?
+
 What does `/=` mean?
+
 What is the significance of `ord` and `chr` ?
+
+What do `mod` and `div` do? Try different values to help you decide.
 
 === Variables ===
 In the REPL define some Variables
 ```
-x = 7
-y = 2
-myValue = 17
-mySecondValue = -12
+> x = 7
+> y = 2
+> myValue = 17
+> mySecondValue = -12
 ```
 You can use these variables as numbers in expressions. Try the following, and some of your own:
 ```
-myValue + 3
-y - mySecondValue
-y == 7
-y == 2
-myValue < 15
-not (myValue > 15)
-myNewValue = x + y
-myNewValue + 11
+> myValue + 3
+> y - mySecondValue
+> y == 7
+> y == 2
+> myValue < 15
+> not (myValue > 15)
+> myNewValue = x + y
+> myNewValue + 11
 ```
 What happens if you now try
 ```
-myValue = 10
+> myValue = 10
 ```
 In functional programming variables and other data structures are **_immutable_**. This means that the values stored in them cannot be changed after being created.
 
 This is particularly important when working with **_Big Data_**: Big Data is distributed across multiple devices, so immutability ensures that values stored cannot be changed after being created, preventing conflicts when multiple devices process the same data simultaneously.
 
-
 You can use the **RESET** button in the REPL to clear the output as well as clear any variable definitions.
 
-=== Simple Function ===
-Write a function called `tripleMe` that takes a number and returns triple its value.
+=== Simple Functions ===
+In the REPL type the following:
+```
+> add x y = x + y
+```
+then try the following ...
+```
+> add 4 5
+> add -6 7
+```
+`add` is the **identifier** (name of the function).
+`x` `y` are the **parameters** of the function.
+`= x + y` defines what the function does.
 
+
+When we type 
+```
+> add 4 5
+```
+the `4` and `5` are the **arguments** that are passed into the **parameters** `x` and `y`.
+
+
+Now write functions to perform the following tasks:
+
+`tripleMe` - Accepts one parameter and returns three times its value.
 Example:
 ```
-> tripleMe 10
-30
-> tripleMe 7
-21
+> tripleMe 5
+15
 ```
 
-Remember: function definitions go in the editor above, then click "Run Code".
-
-=== Multiple Parameters ===
-Write a function `doubleAdd` that takes two values, doubles each of them, and adds them together.
-
+`doubleAdd` - Accepts two parameters, doubles each of them, then adds them together.
 Example:
 ```
 > doubleAdd 3 4
 14
-> doubleAdd 10 5
-30
 ```
 
-=== Working with Lists ===
-Experiment with lists and ranges in the REPL:
-
-```
-> [1,2,3,4,5]
-> [1..10]
-> [2,4..20]
-> reverse ["cat","dog","bird"]
-> take 2 ["red","green","blue"]
-> drop 3 [1..10]
-```
-
-Lists are fundamental in functional programming!
-
-=== Head and Tail ===
-Try using `head` and `tail` to break apart lists:
-
-```
-> head [10,20,30,40]
-10
-> tail [10,20,30,40]
-[20,30,40]
-> head (tail [10,20,30,40])
-20
-```
-
-What happens with an empty list? Try it!
-
-=== Pattern Matching - Factorial ===
-Write a recursive `factorial` function using pattern matching.
-
-Remember: 0! = 1, and n! = n × (n-1)!
-
-```
-> factorial 5
-120
-> factorial 0
-1
-> factorial 10
-3628800
-```
-
-Hint: Define the base case first (`factorial 0 = 1`), then the recursive case.
-
-=== Guards ===
-Write a function `classify` that uses guards to classify a number as "negative", "zero", or "positive".
-
+`subtractThenDouble` - Accepts two parameters, subtracts the second from the first, then doubles the result.
 Example:
 ```
-> classify (-5)
-"negative"
-> classify 0
-"zero"
-> classify 42
-"positive"
+> subtractThenDouble 10 3
+14
 ```
 
-Use the guard syntax with `|` and `otherwise`.
-
-=== Map Function ===
-Use `map` to apply a function to every element in a list.
-
-Try these:
+`isGreaterThan100` - Accepts two parameters, adds them together, and returns `True` if the sum is greater than 100.
+Example:
 ```
-> map double [1,2,3,4,5]
-> map (\x -> x * x) [1..10]
-> map reverse ["cat","dog","bird"]
+> isGreaterThan100 60 50
+True
+> isGreaterThan100 30 40
+False
 ```
 
-First define `double x = x * 2` in the editor!
-
-=== Filter Function ===
-Use `filter` to keep only elements that match a condition.
-
-Examples:
+`averageTwo` - Accepts two parameters and returns their average.
+Example:
 ```
-> filter (\x -> x > 10) [5,12,8,20,3,15]
-[12,20,15]
-> filter even [1..20]
-[2,4,6,8,10,12,14,16,18,20]
+> averageTwo 10 20
+15
+> averageTwo 7 8
+7.5
 ```
 
-The function you pass to `filter` should return `True` or `False`.
-
-=== Combining Functions ===
-Combine `map`, `filter`, and other functions to solve problems.
-
-Challenge: Get all even numbers from 1 to 20, then square them.
-
+`minutesToHours` - Accepts a number of minutes and returns how many complete hours. Use `div` for integer division.
+Example:
 ```
-> map (\x -> x * x) (filter even [1..20])
-[4,16,36,64,100,144,196,256,324,400]
+> minutesToHours 150
+2
+> minutesToHours 90
+1
 ```
 
-Try different combinations! Can you reverse the order of operations?
+`isEven` - Accepts one parameter and returns `True` if the number is even, `False` otherwise. Use `mod` to find the remainder.
+Example:
+```
+> isEven 8
+True
+> isEven 7
+False
+```
+
