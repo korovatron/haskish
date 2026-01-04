@@ -2922,14 +2922,9 @@ class HaskishInterpreter {
                         throw new Error(`Cannot redefine '${funcName}': it is a built-in function`);
                     }
                     
-                    // Check if function already exists
-                    if (this.functions[funcName]) {
-                        // Add to existing function cases (for pattern matching)
-                        this.functions[funcName].push({ params: params.trim(), body: body.trim() });
-                    } else {
-                        // Create new function
-                        this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
-                    }
+                    // In REPL, replace function entirely (like GHCi behavior)
+                    // Pattern matching cases should only be added via the definition panel
+                    this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
                     
                     return { success: true, result: `Defined function: ${funcName}` };
                 }
