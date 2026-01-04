@@ -734,6 +734,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearEditorBtn.addEventListener('click', () => {
         codeEditor.setValue('-- Write your function definitions here\n');
         codeEditor.setCursor({ line: 1, ch: 0 });
+        replOutput.innerHTML = '';  // Also clear REPL output
+        replHistory = [];  // Clear command history
+        replHistoryIndex = -1;
         interpreter.functions = {};
         interpreter.variables = {};
         addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');

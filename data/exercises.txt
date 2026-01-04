@@ -83,15 +83,13 @@ then try the following ...
 
 `= x + y` defines what the function does.
 
-**Note: When passing negative numbers as arguments, always use parentheses, e.g., (-6) not -6. This avoids confusion with the subtraction operator.**
-
-
 When we type 
 ```
-> add 4 5
+> add (-6) 7
 ```
-the `4` and `5` are the **arguments** that are passed into the **parameters** `x` and `y`.
+the `(-6)` and `7` are the **arguments** that are passed into the **parameters** `x` and `y`.
 
+**Note:** When passing negative numbers as arguments, always use parentheses, e.g., `(-6)` not `-6`. This avoids confusion with the subtraction operator.
 
 Now write functions to perform the following tasks:
 
