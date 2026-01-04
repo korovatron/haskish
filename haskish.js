@@ -938,6 +938,18 @@ class HaskishInterpreter {
 
         // Validate function bodies by attempting to tokenize them
         for (const [funcName, cases] of Object.entries(this.functions)) {
+            // Check for duplicate patterns (same parameters)
+            if (cases.length > 1) {
+                const patterns = cases.map(c => c.params);
+                for (let i = 0; i < patterns.length; i++) {
+                    for (let j = i + 1; j < patterns.length; j++) {
+                        if (patterns[i] === patterns[j]) {
+                            throw new Error(`Multiple declarations of '${funcName}' with pattern: ${patterns[i]}`);
+                        }
+                    }
+                }
+            }
+            
             for (let i = 0; i < cases.length; i++) {
                 const funcCase = cases[i];
                 
