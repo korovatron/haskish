@@ -231,9 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 replHistoryIndex = replHistory.length;
                 replCurrentInput = '';
                 
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const themeClass = currentTheme === 'light' ? 'cm-s-eclipse' : 'cm-s-monokai';
-
                 // Add input to history with syntax highlighting
                 const inputDiv = document.createElement('div');
                 inputDiv.className = 'repl-entry';
@@ -243,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 promptSpan.textContent = '> ';
                 
                 const inputCode = document.createElement('code');
-                inputCode.className = `repl-input-code ${themeClass}`;
+                inputCode.className = 'repl-input-code cm-s-monokai';
                 inputDiv.appendChild(promptSpan);
                 inputDiv.appendChild(inputCode);
                 

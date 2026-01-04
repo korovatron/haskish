@@ -1,5 +1,7 @@
 === Using the REPL ===
-Get familiar with the Interactive REPL (Read-Eval-Print Loop). Try these expressions:
+Get familiar with the Interactive REPL (Read-Eval-Print Loop).
+The REPL shows results immediately. Experiment!
+Try these expressions:
 
 ```
 > 5 + 7
@@ -18,9 +20,9 @@ Get familiar with the Interactive REPL (Read-Eval-Print Loop). Try these express
 > chr 98
 ```
 
-The REPL shows results immediately. Experiment!
 What is the purpose of `&&` and `||` ?
 What does `/=` mean?
+What is the significance of `ord` and `chr` ?
 
 === Simple Function ===
 Write a function called `tripleMe` that takes a number and returns triple its value.

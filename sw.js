@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-v48';
+const CACHE_NAME = 'haskish-v51';
 const urlsToCache = [
   './',
   './index.html',
@@ -14,9 +14,11 @@ const urlsToCache = [
   './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-haskell.min.js'
 ];
 
 // Install event - cache resources

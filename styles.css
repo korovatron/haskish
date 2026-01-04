@@ -17,38 +17,6 @@ html {
     --accent-color: #e74c3c;
     --success-color: #27ae60;
     --error-color: #e74c3c;
-    --nested-highlight: #9333ea;
-    --module1-color: #3b82f6;
-    --module2-color: #8b5cf6;
-    --module3-color: #ec4899;
-    --module4-color: #f59e0b;
-    --module5-color: #10b981;
-    --module6-color: #06b6d4;
-    --bg-color: #f5f5f5;
-    --panel-bg: #f8f9fa;
-    --border-color: #e0e0e0;
-    --text-color: #2c2c2c;
-    --text-secondary: #6c757d;
-    --code-bg: #e8e9ec;
-    --repl-bg: #f8f9fa;
-    --repl-input-bg: #ffffff;
-    --repl-text: #2c2c2c;
-    --header-gradient-start: #5865f2;
-    --header-gradient-end: #a855f7;
-    
-    /* Safe area support for iOS */
-    --safe-area-top: env(safe-area-inset-top);
-    --safe-area-bottom: env(safe-area-inset-bottom);
-    --safe-area-left: env(safe-area-inset-left);
-    --safe-area-right: env(safe-area-inset-right);
-}
-
-[data-theme="dark"] {
-    --primary-color: #5865f2;
-    --secondary-color: #7289da;
-    --accent-color: #e74c3c;
-    --success-color: #27ae60;
-    --error-color: #e74c3c;
     --nested-highlight: #d946ef;
     --module1-color: #60a5fa;
     --module2-color: #a78bfa;
@@ -67,6 +35,12 @@ html {
     --repl-text: #e0e0e0;
     --header-gradient-start: #5865f2;
     --header-gradient-end: #a855f7;
+    
+    /* Safe area support for iOS */
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
+    --safe-area-left: env(safe-area-inset-left);
+    --safe-area-right: env(safe-area-inset-right);
 }
 
 body {
@@ -1197,20 +1171,8 @@ footer a:hover {
     background: var(--text-secondary);
 }
 
-/* Syntax Highlighting Color Overrides for Light Mode */
+/* Syntax Highlighting Color Overrides for Monokai (Dark Theme) */
 :root {
-    /* CodeMirror Eclipse theme overrides for better light mode visibility */
-    --syntax-keyword: #7F0055;
-    --syntax-function: #000080;
-    --syntax-string: #2A00FF;
-    --syntax-number: #0000C0;
-    --syntax-comment: #3F7F5F;
-    --syntax-operator: #000000;
-    --syntax-variable: #0000C0;
-}
-
-[data-theme="dark"] {
-    /* CodeMirror Monokai theme already has good colors */
     --syntax-keyword: #F92672;
     --syntax-function: #A6E22E;
     --syntax-string: #E6DB74;
@@ -1218,112 +1180,6 @@ footer a:hover {
     --syntax-comment: #75715E;
     --syntax-operator: #F92672;
     --syntax-variable: #66D9EF;
-}
-
-/* CodeMirror syntax highlighting overrides for light mode */
-.cm-s-eclipse .cm-keyword {
-    color: #7F0055 !important;
-    font-weight: bold;
-}
-
-.cm-s-eclipse .cm-atom,
-.cm-s-eclipse .cm-number {
-    color: #0000C0 !important;
-    font-weight: bold;
-}
-
-.cm-s-eclipse .cm-def,
-.cm-s-eclipse .cm-variable,
-.cm-s-eclipse .cm-variable-2 {
-    color: #0000C0 !important;
-}
-
-.cm-s-eclipse .cm-variable-3,
-.cm-s-eclipse .cm-type {
-    color: #000080 !important;
-}
-
-.cm-s-eclipse .cm-comment {
-    color: #3F7F5F !important;
-    font-style: italic;
-}
-
-.cm-s-eclipse .cm-string {
-    color: #2A00FF !important;
-}
-
-.cm-s-eclipse .cm-string-2 {
-    color: #1F00AF !important;
-}
-
-.cm-s-eclipse .cm-meta {
-    color: #FF1717 !important;
-}
-
-.cm-s-eclipse .cm-qualifier {
-    color: #555555 !important;
-}
-
-.cm-s-eclipse .cm-builtin {
-    color: #30A;
-    font-weight: bold;
-}
-
-.cm-s-eclipse .cm-bracket {
-    color: #000000 !important;
-}
-
-.cm-s-eclipse .cm-tag {
-    color: #170;
-}
-
-.cm-s-eclipse .cm-attribute {
-    color: #00c;
-}
-
-.cm-s-eclipse .cm-operator {
-    color: #000000 !important;
-    font-weight: bold;
-}
-
-/* Ensure code elements in REPL also get proper highlighting */
-.repl-input-code.cm-s-eclipse,
-.repl-output-code.cm-s-eclipse {
-    color: var(--text-color);
-}
-
-.repl-input-code.cm-s-eclipse .cm-keyword,
-.repl-output-code.cm-s-eclipse .cm-keyword {
-    color: #7F0055 !important;
-    font-weight: bold;
-}
-
-.repl-input-code.cm-s-eclipse .cm-number,
-.repl-output-code.cm-s-eclipse .cm-number {
-    color: #0000C0 !important;
-    font-weight: bold;
-}
-
-.repl-input-code.cm-s-eclipse .cm-variable,
-.repl-output-code.cm-s-eclipse .cm-variable {
-    color: #0000C0 !important;
-}
-
-.repl-input-code.cm-s-eclipse .cm-comment,
-.repl-output-code.cm-s-eclipse .cm-comment {
-    color: #3F7F5F !important;
-    font-style: italic;
-}
-
-.repl-input-code.cm-s-eclipse .cm-string,
-.repl-output-code.cm-s-eclipse .cm-string {
-    color: #2A00FF !important;
-}
-
-.repl-input-code.cm-s-eclipse .cm-operator,
-.repl-output-code.cm-s-eclipse .cm-operator {
-    color: #000000 !important;
-    font-weight: bold;
 }
 
 /* Force wrapping for all CodeMirror spans in REPL */
