@@ -1,6 +1,9 @@
 === Using the REPL ===
-Get familiar with the Interactive REPL (Read-Eval-Print Loop).
-The REPL shows results immediately. Experiment!
+Get familiar with the Interactive **REPL** (Read-Eval-Print Loop).
+The REPL shows results immediately. 
+
+Experiment!
+
 Try these expressions:
 
 ```
@@ -32,14 +35,14 @@ What is the significance of `ord` and `chr` ?
 What do `mod` and `div` do? Try different values to help you decide.
 
 === Variables ===
-In the REPL define some Variables
+In the REPL define some **variables**
 ```
 > x = 7
 > y = 2
 > myValue = 17
 > mySecondValue = -12
 ```
-You can use these variables as numbers in expressions. Try the following, and some of your own:
+You can use these variables as values in expressions. Try the following, and some of your own:
 ```
 > myValue + 3
 > y - mySecondValue
@@ -53,6 +56,10 @@ You can use these variables as numbers in expressions. Try the following, and so
 What happens if you now try
 ```
 > myValue = 10
+```
+or
+```
+> y = 42
 ```
 In functional programming variables and other data structures are **_immutable_**. This means that the values stored in them cannot be changed after being created.
 
@@ -141,3 +148,98 @@ True
 False
 ```
 
+
+=== Using the Function Panel ===
+So far we've been writing functions in the REPL. For more complex programs, we use the **Function Definition Panel** on the left side of the screen.
+
+The function panel lets you:
+- Write multiple functions that work together
+- Save your work
+- Build more complex programs using helper functions
+
+Try writing these helper functions in the function panel:
+
+First, write a simple `square` function:
+```
+square x = x * x
+```
+
+Click **Run Code** to make the function available in the REPL. Then test it:
+```
+> square 5
+25
+> square 12
+144
+```
+
+Now add a function that uses `square` as a helper. Add this to the function panel (above or below `square`):
+```
+sumOfSquares a b = square a + square b
+```
+
+Click **Run Code** again and test:
+```
+> sumOfSquares 3 4
+25
+> sumOfSquares 5 12
+169
+```
+
+Notice how `sumOfSquares` **calls** the `square` function as a helper. Breaking problems into smaller helper functions makes code easier to understand and reuse.
+
+
+Now write a complete program with helper functions:
+
+`isRightTriangle` - Accepts three parameters (sides of a triangle) and returns `True` if they form a right-angled triangle using Pythagoras' theorem (a² + b² = c²).
+
+You'll need these helper functions:
+- `square x` - returns x squared
+- `sumOfSquares a b` - returns the sum of a² and b²
+- `isRightTriangle a b c` - checks if a² + b² = c²
+
+Example:
+```
+> isRightTriangle 3 4 5
+True
+> isRightTriangle 5 12 13
+True
+> isRightTriangle 1 2 3
+False
+```
+
+Remember: Write all three functions in the function panel, click **Run Code**, then test in the REPL!
+
+=== Building More Complex Programs ===
+Now create a more complex program with multiple helper functions. This time you'll get less step-by-step guidance.
+
+Write a program to analyze quadratic equations (ax² + bx + c = 0). The **discriminant** tells us how many real solutions the equation has:
+- discriminant = b² - 4ac
+- If discriminant > 0, there are **two** real roots
+- If discriminant = 0, there is **one** real root (repeated)
+- If discriminant < 0, there are **no** real roots
+
+Build these functions in the function panel:
+
+`discriminant a b c` - Calculates b² - 4ac
+
+`hasRealRoots a b c` - Returns `True` if the equation has at least one real root (discriminant >= 0)
+
+`hasTwoRoots a b c` - Returns `True` if the equation has two distinct real roots (discriminant > 0)
+
+`hasOneRoot a b c` - Returns `True` if the equation has exactly one root (discriminant = 0)
+
+Think about what helper functions you might need (hint: you've written similar ones before!).
+
+Example tests:
+```
+> discriminant 1 (-5) 6
+1
+> hasRealRoots 1 (-5) 6
+True
+> hasTwoRoots 1 (-5) 6
+True
+> hasOneRoot 2 4 2
+True
+> hasRealRoots 1 0 1
+False
+```
