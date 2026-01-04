@@ -263,12 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (result.highlighted) {
                         // Apply syntax highlighting while preserving formatting
                         const outputCode = document.createElement('code');
-                        outputCode.className = `repl-output-code ${themeClass}`;
+                        outputCode.className = 'repl-output-code cm-s-monokai';
                         outputDiv.appendChild(outputCode);
                         CodeMirror.runMode(result.result, 'haskish', outputCode);
                     } else {
                         const outputCode = document.createElement('code');
-                        outputCode.className = `repl-output-code ${themeClass}`;
+                        outputCode.className = 'repl-output-code cm-s-monokai';
                         outputDiv.appendChild(outputCode);
                         // Apply syntax highlighting to output
                         CodeMirror.runMode(result.result, 'haskish', outputCode);
