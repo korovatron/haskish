@@ -1723,6 +1723,12 @@ class HaskishInterpreter {
             if (arg && arg._isComposedFunction) return '<composed function>';
             return JSON.stringify(arg);
         }).join(', ');
+        
+        // Check for common mistake: negative number without parentheses
+        if (args.length >= 2 && args[args.length - 2] === '-' && typeof args[args.length - 1] === 'number') {
+            throw new Error(`Cannot apply operator '-' to a partially applied function.\nDid you mean to pass a negative number? Use parentheses, e.g., ${funcName} ... (-${args[args.length - 1]})`);
+        }
+        
         throw new Error(`No pattern matched for function ${funcName} with arguments: ${argsStr}`);
     }
 

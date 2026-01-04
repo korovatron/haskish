@@ -75,11 +75,15 @@ In the REPL type the following:
 then try the following ...
 ```
 > add 4 5
-> add -6 7
+> add (-6) 7
 ```
 `add` is the **identifier** (name of the function).
+
 `x` `y` are the **parameters** of the function.
+
 `= x + y` defines what the function does.
+
+**Note: When passing negative numbers as arguments, always use parentheses, e.g., (-6) not -6. This avoids confusion with the subtraction operator.**
 
 
 When we type 
@@ -150,9 +154,10 @@ False
 
 
 === Using the Function Panel ===
-So far we've been writing functions in the REPL. For more complex programs, we use the **Function Definition Panel** on the left side of the screen.
+So far we've been writing functions in the REPL. For more complex programs, we use the **Function Definition Panel**.
 
 The function panel lets you:
+
 - Write multiple functions that work together
 - Save your work
 - Build more complex programs using helper functions
@@ -193,6 +198,7 @@ Now write a complete program with helper functions:
 `isRightTriangle` - Accepts three parameters (sides of a triangle) and returns `True` if they form a right-angled triangle using Pythagoras' theorem (a² + b² = c²).
 
 You'll need these helper functions:
+
 - `square x` - returns x squared
 - `sumOfSquares a b` - returns the sum of a² and b²
 - `isRightTriangle a b c` - checks if a² + b² = c²
@@ -210,9 +216,12 @@ False
 Remember: Write all three functions in the function panel, click **Run Code**, then test in the REPL!
 
 === Building More Complex Programs ===
-Now create a more complex program with multiple helper functions. This time you'll get less step-by-step guidance.
+Now create a more complex program with multiple helper functions.
 
-Write a program to analyze quadratic equations (ax² + bx + c = 0). The **discriminant** tells us how many real solutions the equation has:
+Write a program to analyse quadratic equations (ax² + bx + c = 0). 
+
+The **discriminant** tells us how many real solutions the equation has:
+
 - discriminant = b² - 4ac
 - If discriminant > 0, there are **two** real roots
 - If discriminant = 0, there is **one** real root (repeated)
@@ -222,11 +231,11 @@ Build these functions in the function panel:
 
 `discriminant a b c` - Calculates b² - 4ac
 
-`hasRealRoots a b c` - Returns `True` if the equation has at least one real root (discriminant >= 0)
+`hasRealRoots a b c` - Returns `True` if the equation has at least one real root
 
-`hasTwoRoots a b c` - Returns `True` if the equation has two distinct real roots (discriminant > 0)
+`hasTwoRoots a b c` - Returns `True` if the equation has two distinct real roots
 
-`hasOneRoot a b c` - Returns `True` if the equation has exactly one root (discriminant = 0)
+`hasOneRoot a b c` - Returns `True` if the equation has exactly one root
 
 Think about what helper functions you might need (hint: you've written similar ones before!).
 

@@ -5,8 +5,8 @@ double x = x * 2
 -- Multiple parameters
 add x y = x + y
 
--- Implicit multiplication (3x becomes 3*x)
-triple x = 3x
+-- Note: Haskish allows implicit multiplication (3x), but use explicit * for standard Haskell
+triple x = 3 * x
 
 -- Tests:
 -- double 5  → 10
