@@ -251,3 +251,19 @@ True
 > hasRealRoots 1 0 1
 False
 ```
+
+=== Introduction to Lists ===
+Lists are collections of values of the same data type. They are enclosed in `[ ]`
+
+Lists can be finite or infinite.
+
+Try making some lists ...
+
+```
+> [45,23,9,78]
+> [8..15]
+> [5..]
+> [3,7..50]
+> [5,3..-20]
+> ["cherry", "apple", "orange"]
+```

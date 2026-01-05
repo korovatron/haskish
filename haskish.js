@@ -1221,7 +1221,7 @@ class HaskishInterpreter {
         
         // Remove outer brackets
         if (listStr.startsWith('[') && listStr.endsWith(']')) {
-            listStr = listStr.slice(1, -1);
+            listStr = listStr.slice(1, -1).trim();
         }
 
         // Check for list comprehension: [expr | generator, ...]
@@ -1243,8 +1243,13 @@ class HaskishInterpreter {
             return this.parseListComprehension(listStr, pipeIndex);
         }
 
+        // Check for invalid range syntax: [..n] (missing start)
+        if (/^\s*\.\./.test(listStr)) {
+            throw new Error('Invalid range syntax: range must have a starting value (e.g., [1..10] not [..10])');
+        }
+
         // Check for infinite range syntax: [start..] or [start,next..]
-        const infiniteRangeMatch = listStr.match(/^(-?\d+)(?:,(-?\d+))?\.\.$/);
+        const infiniteRangeMatch = listStr.match(/^(-?\d+)\s*(?:,\s*(-?\d+)\s*)?\.\.\s*$/);
         if (infiniteRangeMatch) {
             const start = parseInt(infiniteRangeMatch[1]);
             const next = infiniteRangeMatch[2] ? parseInt(infiniteRangeMatch[2]) : null;
@@ -1258,7 +1263,7 @@ class HaskishInterpreter {
         }
 
         // Check for finite range syntax: [start..end] or [start,next..end]
-        const rangeMatch = listStr.match(/^(-?\d+)(?:,(-?\d+))?\.\.(-?\d+)$/);
+        const rangeMatch = listStr.match(/^(-?\d+)\s*(?:,\s*(-?\d+)\s*)?\.\.\s*(-?\d+)\s*$/);
         if (rangeMatch) {
             const start = parseInt(rangeMatch[1]);
             const end = parseInt(rangeMatch[3]);
