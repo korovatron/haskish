@@ -696,6 +696,7 @@ class HaskishInterpreter {
         let currentFunction = null;
         let currentCases = [];
         let currentParams = null;
+        let currentParamsLineNumber = null;
         let currentGuards = [];
         let lineNumber = 0;
         const originalLines = code.split('\n');
@@ -749,11 +750,17 @@ class HaskishInterpreter {
             const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*=\s*(.+)$/);
             
             if (funcMatch) {
+                // Check for incomplete function from previous lines
+                if (currentParams !== null && currentGuards.length === 0) {
+                    throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
+                }
+                
                 // Save previous guards if any
                 if (currentGuards.length > 0) {
                     currentCases.push({ params: currentParams, guards: currentGuards });
                     currentGuards = [];
                     currentParams = null;
+                    currentParamsLineNumber = null;
                 }
 
                 // It's a function definition
@@ -780,17 +787,24 @@ class HaskishInterpreter {
                 currentParams = params.trim();
                 currentCases.push({ params: currentParams, body: body.trim() });
                 currentParams = null; // Reset since this is a complete definition
+                currentParamsLineNumber = null;
                 continue;
             }
 
             // Check for function header without = (for guard syntax)
             const headerMatch = line.match(/^(\w+'*)\s+(.+)$/);
             if (headerMatch && !line.includes('=')) {
+                // Check for incomplete function from previous lines
+                if (currentParams !== null && currentGuards.length === 0) {
+                    throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
+                }
+                
                 // Save previous guards if any
                 if (currentGuards.length > 0) {
                     currentCases.push({ params: currentParams, guards: currentGuards });
                     currentGuards = [];
                     currentParams = null;
+                    currentParamsLineNumber = null;
                 }
 
                 const [, funcName, params] = headerMatch;
@@ -812,6 +826,7 @@ class HaskishInterpreter {
                 
                 currentFunction = funcName;
                 currentParams = params.trim();
+                currentParamsLineNumber = lineNumber;
                 // Don't add to cases yet - wait for guards
                 continue;
             }
@@ -845,11 +860,17 @@ class HaskishInterpreter {
             }
             
             if (tupleAssignMatch) {
+                // Check for incomplete function from previous lines
+                if (currentParams !== null && currentGuards.length === 0) {
+                    throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
+                }
+                
                 // Save pending guards first
                 if (currentGuards.length > 0) {
                     currentCases.push({ params: currentParams, guards: currentGuards });
                     currentGuards = [];
                     currentParams = null;
+                    currentParamsLineNumber = null;
                 }
 
                 // It's a tuple destructuring assignment
@@ -874,7 +895,7 @@ class HaskishInterpreter {
                 // Add all the bindings to variables
                 for (const [varName, varValue] of Object.entries(bindings)) {
                     if (this.builtins[varName]) {
-                        throw new Error(`Cannot use '${varName}' as a variable name: it is a built-in function`);
+                        throw new Error(`Cannot use '${varName}' as a variable name on line ${lineNumber}: it is a built-in function`);
                     }
                     this.variables[varName] = varValue;
                 }
@@ -884,11 +905,17 @@ class HaskishInterpreter {
             // Try to match variable binding (no parameters before =)
             const varMatch = line.match(/^(\w+'*)\s*=\s*(.+)$/);
             if (varMatch) {
+                // Check for incomplete function from previous lines
+                if (currentParams !== null && currentGuards.length === 0) {
+                    throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
+                }
+                
                 // Save pending guards first
                 if (currentGuards.length > 0) {
                     currentCases.push({ params: currentParams, guards: currentGuards });
                     currentGuards = [];
                     currentParams = null;
+                    currentParamsLineNumber = null;
                 }
 
                 // It's a variable binding
@@ -900,11 +927,11 @@ class HaskishInterpreter {
                 const [, name, value] = varMatch;
                 // Check if the variable name shadows a built-in function
                 if (this.builtins[name]) {
-                    throw new Error(`Cannot use '${name}' as a variable name: it is a built-in function`);
+                    throw new Error(`Cannot use '${name}' as a variable name on line ${lineNumber}: it is a built-in function`);
                 }
                 // Check if variable is being redefined (immutability)
                 if (this.variables.hasOwnProperty(name)) {
-                    throw new Error(`Cannot reassign '${name}' - variables are immutable in functional programming!`);
+                    throw new Error(`Cannot reassign '${name}' on line ${lineNumber} - variables are immutable in functional programming!`);
                 }
                 this.variables[name] = this.evaluate(value.trim());
                 continue;
@@ -918,11 +945,12 @@ class HaskishInterpreter {
         if (currentGuards.length > 0) {
             currentCases.push({ params: currentParams, guards: currentGuards });
             currentParams = null; // Reset after saving guards
+            currentParamsLineNumber = null;
         }
 
         // Check for incomplete function definition (header without guards or body)
         if (currentFunction && currentParams !== null) {
-            throw new Error(`Incomplete function definition for '${currentFunction}': expected guards (|) or assignment (=) after parameters.`);
+            throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
         }
 
         if (currentFunction) {
