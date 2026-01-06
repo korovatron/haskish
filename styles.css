@@ -1027,7 +1027,19 @@ footer a:hover {
 }
 
 /* Responsive Design */
-@media (max-width: 968px) {
+
+/* Intermediate breakpoint when exercises are visible (3 columns) */
+@media (max-width: 1400px) {
+    body.exercises-visible .desktop-text {
+        display: none;
+    }
+    
+    body.exercises-visible .mobile-text {
+        display: inline;
+    }
+}
+
+@media (max-width: 1015px) {
     body {
         height: 100vh; /* Fixed height when exercises hidden */
         overflow: hidden; /* No body scroll when exercises hidden */
