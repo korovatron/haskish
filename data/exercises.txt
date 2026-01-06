@@ -1,5 +1,5 @@
 ﻿=== Using the REPL ===
-Get familiar with the Interactive **REPL** (Read-Eval-Print Loop).
+Get familiar with the Interactive **REPL** (**R**ead-**E**val-**P**rint **L**oop).
 The REPL shows results immediately. 
 
 Experiment!
@@ -307,3 +307,13 @@ Answer the following questions:
 - What is the purpose of `!!`?
 - What is the problem with `tail head heroesAndVillains`?
 - What does the result of `tail (head heroesAndVillains)` tell you about how strings are stored?
+
+Finally try out these code snippets:
+```
+> length heroesAndVillains == 6
+> length (tail heroesAndVillains) == 5
+> (heroesAndVillains !! 1) == "thing"
+> head (heroesAndVillains !! 1) == head (heroesAndVillains !! 2)
+```
+
+- Can you explain the last result?
