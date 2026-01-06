@@ -926,6 +926,9 @@ function showExerciseContent(exerciseId) {
         content.innerHTML = exerciseData[index];
         panel.style.display = 'flex';
         
+        // Scroll the panel to top (panel is the scrollable container)
+        panel.scrollTop = 0;
+        
         // Highlight code blocks with Prism.js
         if (typeof Prism !== 'undefined') {
             Prism.highlightAllUnder(content);
