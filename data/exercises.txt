@@ -253,9 +253,7 @@ False
 ```
 
 === Introduction to Lists ===
-Lists are collections of values of the same data type. They are enclosed in `[ ]`
-
-Lists can be finite or infinite.
+Lists are collections of values of the same data type. They are enclosed in `[ ]`. Lists can be **finite** or **infinite**.
 
 Try making some lists ...
 
@@ -265,5 +263,47 @@ Try making some lists ...
 > [5..]
 > [3,7..50]
 > [5,3..-20]
-> ["cherry", "apple", "orange"]
+> heroes = ["superman", "spiderman", "batman"]
 ```
+Now try the following, taking note of any **errors**:
+```
+> head heroes
+> tail heroes
+> null heroes
+> "thor" : heroes
+> heroes : "thor"
+> extraHeroes = "thing" : heroes
+> heroesAndVillains = extraHeroes ++ ["joker","magneto"]
+> "kingpin" ++ heroesAndVillains
+> length heroesAndVillains
+```
+Answer the following questions:
+
+- What does `head` do?
+- What does `tail` do?
+- What is the purpose of `null`?
+- Describe the purpose of the cons operator `:`
+- What does `++` do?
+- Why does `heroes : "thor"` throw an error?
+- What is wrong with `"kingpin" ++ heroesAndVillains`?
+
+Now try the following commands, carefully noting any **errors**:
+```
+> take 2 heroesAndVillains
+> drop 2 heroesAndVillains
+> tail head heroesAndVillains
+> tail [head heroesAndVillains]
+> tail (head heroesAndVillains)
+> head tail heroesAndVillains
+> head (tail heroesAndVillains)
+> heroesAndVillains !! 0
+> heroesAndVillains !! 1
+> heroesAndVillains !! 2
+```
+Answer the following questions:
+
+- What does `take` do?
+- What does `drop` do?
+- What is the purpose of `!!`?
+- What is the problem with `tail head heroesAndVillains`?
+- What does the result of `tail (head heroesAndVillains)` tell you about how strings are stored?
