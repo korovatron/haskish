@@ -1,5 +1,5 @@
 ﻿=== Using the REPL ===
-Get familiar with the Interactive **REPL** (**R**ead-**E**val-**P**rint **L**oop).
+Get familiar with the Interactive **_REPL_** (**R**ead-**E**val-**P**rint **L**oop).
 The REPL shows results immediately. 
 
 Experiment!
@@ -35,7 +35,7 @@ What is the significance of `ord` and `chr` ?
 What do `mod` and `div` do? Try different values to help you decide.
 
 === Variables ===
-In the REPL define some **variables**
+In the REPL define some **_variables_**
 ```
 > x = 7
 > y = 2
@@ -65,9 +65,11 @@ In functional programming variables and other data structures are **_immutable_*
 
 This is particularly important when working with **_Big Data_**: Big Data is distributed across multiple devices, so immutability ensures that values stored cannot be changed after being created, preventing conflicts when multiple devices process the same data simultaneously.
 
-You can use the **RESET** button <svg width="16" height="16" viewBox="0 0 1200 1200" fill="currentColor" style="vertical-align: middle;"><path d="M600,0C308.74,0,66.009,207.555,11.499,482.812h166.553C229.37,297.756,398.603,161.719,600,161.719c121.069,0,230.474,49.195,309.668,128.613l-192.48,192.48h304.762H1200V0l-175.781,175.781C915.653,67.181,765.698,0,600,0z M0,717.188V1200l175.781-175.781C284.346,1132.819,434.302,1200,600,1200c291.26,0,533.991-207.555,588.501-482.812h-166.553C970.631,902.243,801.396,1038.281,600,1038.281c-121.069,0-230.474-49.195-309.668-128.613l192.48-192.48H0z"/></svg> in the REPL to clear the output as well as clear any variable definitions.
+You can use the **RESET** button `<svg width="16" height="16" viewBox="0 0 1200 1200" fill="currentColor" style="vertical-align: middle;"><path d="M600,0C308.74,0,66.009,207.555,11.499,482.812h166.553C229.37,297.756,398.603,161.719,600,161.719c121.069,0,230.474,49.195,309.668,128.613l-192.48,192.48h304.762H1200V0l-175.781,175.781C915.653,67.181,765.698,0,600,0z M0,717.188V1200l175.781-175.781C284.346,1132.819,434.302,1200,600,1200c291.26,0,533.991-207.555,588.501-482.812h-166.553C970.631,902.243,801.396,1038.281,600,1038.281c-121.069,0-230.474-49.195-309.668-128.613l192.48-192.48H0z"/></svg>` in the REPL to clear the output as well as all variable definitions.
 
 === Simple Functions ===
+In addition to the built-in **_functions_**, you can define your own.
+
 In the REPL type the following:
 ```
 > add x y = x + y
@@ -77,9 +79,9 @@ then try the following ...
 > add 4 5
 > add (-6) 7
 ```
-`add` is the **identifier** (name of the function).
+`add` is the **_identifier_** (name of the function).
 
-`x` `y` are the **parameters** of the function.
+`x` `y` are the **_parameters_** of the function.
 
 `= x + y` defines what the function does.
 
@@ -87,7 +89,7 @@ When we type
 ```
 > add (-6) 7
 ```
-the `(-6)` and `7` are the **arguments** that are passed into the **parameters** `x` and `y`.
+the `(-6)` and `7` are the **_arguments_** that are passed into the **parameters** `x` and `y`.
 
 **_Note:_** **When passing negative numbers as arguments, always use parentheses, e.g., `(-6)` not `-6`**.
 This avoids confusion with the subtraction operator.
@@ -153,7 +155,7 @@ False
 
 
 === Using the Function Panel ===
-So far we've been writing functions in the REPL. For more complex programs, we use the **Function Definition Panel**.
+So far we've been writing functions in the REPL. For more complex programs, we use the **_Function Definition Panel_**.
 
 The function panel lets you:
 
@@ -168,7 +170,7 @@ First, write a simple `square` function:
 square x = x * x
 ```
 
-Click **Run Code** <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle;"><path d="M3 2l10 6-10 6V2z"/></svg> to make the function available in the REPL. Then test it:
+Click **Run Code** `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle;"><path d="M3 2l10 6-10 6V2z"/></svg>` to make the function available in the REPL. Then test it:
 ```
 > square 5
 25
@@ -194,13 +196,13 @@ Notice how `sumOfSquares` **calls** the `square` function as a helper. Breaking 
 
 Now write a complete program with helper functions:
 
-`isRightTriangle` - Accepts three parameters (sides of a triangle) and returns `True` if they form a right-angled triangle using Pythagoras' theorem (aÂ² + bÂ² = cÂ²).
+`isRightTriangle` - Accepts three parameters (sides of a triangle) and returns `True` if they form a right-angled triangle using Pythagoras' theorem (a² + b² = c²).
 
 You'll need these helper functions:
 
 - `square x` - returns x squared
-- `sumOfSquares a b` - returns the sum of aÂ² and bÂ²
-- `isRightTriangle a b c` - checks if aÂ² + bÂ² = cÂ²
+- `sumOfSquares a b` - returns the sum of a² and b²
+- `isRightTriangle a b c` - checks if a² + b² = c²
 
 Example:
 ```
@@ -212,23 +214,23 @@ True
 False
 ```
 
-Remember: Write all three functions in the function panel, click **Run Code**, then test in the REPL!
+Remember: Write all three functions in the function panel, click **Run Code** `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle;"><path d="M3 2l10 6-10 6V2z"/></svg>`, then test in the REPL!
 
 === Building More Complex Programs ===
 Now create a more complex program with multiple helper functions.
 
-Write a program to analyse quadratic equations (axÂ² + bx + c = 0). 
+Write a program to analyse quadratic equations (ax² + bx + c = 0). 
 
 The **discriminant** tells us how many real solutions the equation has:
 
-- discriminant = bÂ² - 4ac
+- discriminant = b² - 4ac
 - If discriminant > 0, there are **two** real roots
 - If discriminant = 0, there is **one** real root (repeated)
 - If discriminant < 0, there are **no** real roots
 
 Build these functions in the function panel:
 
-`discriminant a b c` - Calculates bÂ² - 4ac
+`discriminant a b c` - Calculates b² - 4ac
 
 `hasRealRoots a b c` - Returns `True` if the equation has at least one real root
 
@@ -253,7 +255,7 @@ False
 ```
 
 === Introduction to Lists ===
-Lists are collections of values of the same data type. They are enclosed in `[ ]`. Lists can be **finite** or **infinite**.
+**_Lists_** are collections of values of the same data type. They are enclosed in `[ ]`. Lists can be **_finite_** or **_infinite_** in length.
 
 Try making some lists ...
 
