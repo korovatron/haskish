@@ -380,6 +380,7 @@ class HaskishInterpreter {
     constructor() {
         this.functions = {};
         this.variables = {};
+        this.warnings = [];
         this.initializeBuiltins();
     }
 
@@ -688,6 +689,7 @@ class HaskishInterpreter {
     parseFunctionDefinitions(code) {
         this.functions = {};
         this.variables = {};
+        this.warnings = [];
         const lines = code.split('\n').filter(line => {
             const trimmed = line.trim();
             return trimmed && !trimmed.startsWith('--');
@@ -972,12 +974,14 @@ class HaskishInterpreter {
         for (const [funcName, cases] of Object.entries(this.functions)) {
             // Check for duplicate patterns (same parameters)
             // But only for cases without guards - guard cases are supposed to share params
+            // Changed from error to warning to match GHC behavior
             if (cases.length > 1) {
                 const patterns = cases.filter(c => !c.guards).map(c => c.params);
                 for (let i = 0; i < patterns.length; i++) {
                     for (let j = i + 1; j < patterns.length; j++) {
                         if (patterns[i] === patterns[j]) {
-                            throw new Error(`Multiple declarations of '${funcName}' with pattern: ${patterns[i]}`);
+                            // Add warning instead of throwing error
+                            this.warnings.push(`Warning: Pattern '${funcName} ${patterns[i]}' has multiple definitions - only the first will be used`);
                         }
                     }
                 }
@@ -2950,7 +2954,11 @@ class HaskishInterpreter {
             const varCount = Object.keys(this.variables).length;
             console.log('Loaded functions:', Object.keys(this.functions));
             console.log('Loaded variables:', Object.keys(this.variables));
-            return { success: true, message: `Loaded ${funcCount} function(s) and ${varCount} variable(s)` };
+            return { 
+                success: true, 
+                message: `Loaded ${funcCount} function(s) and ${varCount} variable(s)`,
+                warnings: this.warnings
+            };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -2986,11 +2994,18 @@ class HaskishInterpreter {
                         throw new Error(`Cannot redefine '${funcName}': it is a built-in function`);
                     }
                     
+                    // Check if function already exists
+                    const isRedefinition = this.functions[funcName] !== undefined;
+                    
                     // In REPL, replace function entirely (like GHCi behavior)
                     // Pattern matching cases should only be added via the definition panel
                     this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
                     
-                    return { success: true, result: `Defined function: ${funcName}` };
+                    if (isRedefinition) {
+                        return { success: true, result: `Redefined function: ${funcName}`, isWarning: true };
+                    } else {
+                        return { success: true, result: `Defined function: ${funcName}` };
+                    }
                 }
             }
             

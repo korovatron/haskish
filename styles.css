@@ -899,6 +899,18 @@ body.menu-open .repl-history {
     font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
 }
 
+.repl-warning {
+    color: #fbbf24 !important;
+    margin-left: 20px;
+    margin-bottom: 12px;
+    font-style: italic;
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+}
+
+.repl-warning * {
+    color: #fbbf24 !important;
+}
+
 .repl-info,
 .repl-result {
     color: var(--success-color);

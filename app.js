@@ -254,7 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const outputDiv = document.createElement('div');
                 
                 if (result.success) {
-                    outputDiv.className = 'repl-result';
+                    // Use warning style if this is a redefinition
+                    outputDiv.className = result.isWarning ? 'repl-warning' : 'repl-result';
                     // Check if output should be plain text (for REPL commands)
                     if (result.plainText) {
                         outputDiv.textContent = result.result;
@@ -390,6 +391,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (result.success) {
             addSystemMessage(`✓ ${result.message}`, 'result');
+            
+            // Display any warnings
+            if (result.warnings && result.warnings.length > 0) {
+                result.warnings.forEach(warning => {
+                    addSystemMessage(`⚠ ${warning}`, 'warning');
+                });
+            }
+            
             addSystemMessage('Now try calling your functions by typing their name below!', 'info');
         } else {
             addSystemMessage(`✗ Error: ${result.error}`, 'error');
