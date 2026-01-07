@@ -411,7 +411,13 @@ calcLength (x:xs) = 1 + calcLength xs
 
 - `sumList` - adds all numbers in a list (base: empty list = 0)
 - `productList` - multiplies all numbers in a list (base: empty list = 1)
-- `countEvens` - counts even numbers in a list
+- `replicateEach` - replicates each element in a list twice (base: empty list = [], **hint:** cons the head twice onto the result of recursing on the tail)
+```
+> replicateEach [1,2,3]
+[1,1,2,2,3,3]
+> replicateEach "hi"
+"hhii"
+```
 
 **Tougher Challenges:**
 
