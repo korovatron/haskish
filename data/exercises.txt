@@ -416,38 +416,37 @@ calcLength (x:xs) = 1 + calcLength xs
 **Tougher Challenges:**
 
 - `appendToEach` - appends a given element to the end of each sublist
-  ```
-  > appendToEach 0 [[1,2],[3,4],[5]]
-  [[1,2,0],[3,4,0],[5,0]]
-  > appendToEach '!' ["hello","world"]
-  ["hello!","world!"]
-  ```
+```
+> appendToEach 0 [[1,2],[3,4],[5]]
+[[1,2,0],[3,4,0],[5,0]]
+> appendToEach '!' ["hello","world"]
+["hello!","world!"]
+```
 
-- `flatten` - flattens a list of lists into a single list
-  - Hint: Use `++` to join the head list with the flattened tail
-  ```
-  > flatten [[1,2],[3,4],[5,6]]
-  [1,2,3,4,5,6]
-  > flatten [["hello"],["world"]]
-  ["hello","world"]
-  ```
+- `flatten` - flattens a list of lists into a single list. **Hint:** Use `++` to join the head list with the flattened tail
+```
+> flatten [[1,2],[3,4],[5,6]]
+[1,2,3,4,5,6]
+> flatten [["hello"],["world"]]
+["hello","world"]
+```
 
-- `pairUp` - pairs up consecutive elements from a list
-  - Hint: You need to match `(x:y:xs)` to get two elements at once
-  ```
-  > pairUp [1,2,3,4,5,6]
-  [(1,2),(3,4),(5,6)]
-  > pairUp "hello"
-  [('h','e'),('l','l')]
-  ```
+- `pairUp` - pairs up consecutive elements from a list. **Hint:** You need to match `(x:y:xs)` to get two elements at once
+```
+> pairUp [1,2,3,4,5,6]
+[(1,2),(3,4),(5,6)]
+> pairUp "hello"
+[('h','e'),('l','l')]
+```
 
-- `countOccurrences` - counts how many times an element appears in a list
-  - Hint: Match `(x:xs)`, check if `x` equals the target, then recurse
-  ```
-  > countOccurrences 3 [1,3,2,3,3,4]
-  3
-  > countOccurrences 'a' "banana"
-  3
-  ```
+- `countOccurrences` - counts how many times an element appears in a list. **Hint:** Match `(x:xs)`, check if `x` equals the target, then recurse
+```
+> countOccurrences 3 [1,3,2,3,3,4]
+3
+> countOccurrences 'a' "banana"
+3
+```
+
+
 
 

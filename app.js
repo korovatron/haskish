@@ -583,19 +583,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 return para;
             }
             
-            // Check if this paragraph is a bullet list
+            // Check if this paragraph contains bullet list items
             const lines = para.split('\n');
             const hasListItems = lines.some(line => line.trim().startsWith('-'));
-            const isAllListOrEmpty = lines.every(line => line.trim().startsWith('-') || line.trim() === '');
             
-            if (hasListItems && isAllListOrEmpty) {
-                // Convert to list
-                const items = lines
-                    .filter(line => line.trim().startsWith('-'))
-                    .map(line => line.trim().substring(1).trim())
-                    .map(item => `<li>${item}</li>`)
-                    .join('\n');
-                return `<ul>\n${items}\n</ul>`;
+            if (hasListItems) {
+                // Process as a list, where each list item can be multi-line (including code blocks)
+                const items = [];
+                let currentItem = null;
+                
+                for (const line of lines) {
+                    if (line.trim().startsWith('-')) {
+                        // Start a new list item
+                        if (currentItem !== null) {
+                            items.push(currentItem);
+                        }
+                        currentItem = line.trim().substring(1).trim();
+                    } else if (currentItem !== null) {
+                        // Continue the current list item (could be a code block or continuation)
+                        currentItem += '\n' + line;
+                    }
+                }
+                
+                // Add the last item
+                if (currentItem !== null) {
+                    items.push(currentItem);
+                }
+                
+                // Convert items to HTML
+                const htmlItems = items.map(item => `<li>${item}</li>`).join('\n');
+                return `<ul>\n${htmlItems}\n</ul>`;
             }
             
             // For paragraphs that may contain code blocks, preserve newlines inside <pre> tags
