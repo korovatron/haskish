@@ -126,15 +126,6 @@ positives (x:xs)
   | x > 0     = x : positives xs
   | otherwise = positives xs
 
--- Accumulator pattern
-sumList [] = 0
-sumList (x:xs) = x + sumList xs
-
--- Fibonacci sequence (very slow!!!)
-fib 0 = 0
-fib 1 = 1
-fib n = fib (n-1) + fib (n-2)
-
 -- Fibonacci sequence (fast)
 fibHelper 0 a b = a
 fibHelper n a b = fibHelper (n-1) b (a+b)
@@ -145,7 +136,7 @@ fastFib n = fibHelper n 0 1
 -- doubleAll [1,2,3]      → [2,4,6]
 -- positives [-1,2,-3,4]  → [2,4]
 -- sumList [1,2,3,4]      → 10
--- fib 10                 → 55
+-- fastFib                → 9227465
 
 === Higher-Order Functions ===
 -- map examples
