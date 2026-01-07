@@ -381,6 +381,8 @@ class HaskishInterpreter {
         this.functions = {};
         this.variables = {};
         this.warnings = [];
+        this.executionStartTime = 0;
+        this.maxExecutionTime = 5000; // 5 seconds max execution
         this.initializeBuiltins();
     }
 
@@ -1699,6 +1701,15 @@ class HaskishInterpreter {
             return builtinFn(...args);
         }
 
+        // Check execution timeout to catch exponential algorithms and infinite loops
+        if (this.executionStartTime > 0) {
+            const elapsed = Date.now() - this.executionStartTime;
+            if (elapsed > this.maxExecutionTime) {
+                this.executionStartTime = 0;
+                throw new Error(`Execution timeout (${this.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion.`);
+            }
+        }
+
         // Check user-defined functions
         if (!this.functions[funcName]) {
             // Check if it's in variables - better error message
@@ -2967,6 +2978,9 @@ class HaskishInterpreter {
     // Evaluate a REPL expression
     evaluateRepl(expr) {
         try {
+            // Start execution timer
+            this.executionStartTime = Date.now();
+            
             expr = expr.trim();
             
             // Handle REPL commands (starting with :)
