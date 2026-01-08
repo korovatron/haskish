@@ -143,7 +143,7 @@
                 </ul>
                 <p>Originally designed for AQA A Level Computer Science (4.12), Haskish now offers many advanced features for those wanting to dive deeper into functional programming.</p>
                 <p><strong>Note:</strong> Like Haskell, strings are treated as lists of characters, so all list functions (head, tail, map, filter, etc.) work on strings.</p>
-                <p class="about-footer">Created by Neil Kendall Â© 2025-2026<br>More @ <a href="https://www.korovatron.co.uk" target="_blank">www.korovatron.co.uk</a></p>
+                <p class="about-footer">Created by Neil Kendall © 2025-2026<br>More @ <a href="https://www.korovatron.co.uk" target="_blank">www.korovatron.co.uk</a></p>
             </div>
         </div>
     </div>
@@ -181,41 +181,41 @@
                 
                 <h3>List Operators</h3>
                 <ul>
-                    <li><code>:</code> - Cons (prepend element to list): <code>1:[2,3]</code> â†’ <code>[1,2,3]</code></li>
-                    <li><code>++</code> - Concatenate lists: <code>[1,2]++[3,4]</code> â†’ <code>[1,2,3,4]</code></li>
-                    <li><code>!!</code> - Index into list: <code>[10,20,30]!!1</code> â†’ <code>20</code></li>
+                    <li><code>:</code> - Cons (prepend element to list): <code>1:[2,3]</code> → <code>[1,2,3]</code></li>
+                    <li><code>++</code> - Concatenate lists: <code>[1,2]++[3,4]</code> → <code>[1,2,3,4]</code></li>
+                    <li><code>!!</code> - Index into list: <code>[10,20,30]!!1</code> → <code>20</code></li>
                 </ul>
                 
                 <h3>List Comprehensions</h3>
                 <ul>
                     <li><code>[expr | x &lt;- list]</code> - Map over list<br>
-                        Example: <code>[x*2 | x &lt;- [1,2,3]]</code> â†’ <code>[2,4,6]</code></li>
+                        Example: <code>[x*2 | x &lt;- [1,2,3]]</code> → <code>[2,4,6]</code></li>
                     <li><code>[expr | x &lt;- list, guard]</code> - Filter with guard<br>
-                        Example: <code>[x | x &lt;- [1..10], x > 5]</code> â†’ <code>[6,7,8,9,10]</code></li>
+                        Example: <code>[x | x &lt;- [1..10], x > 5]</code> → <code>[6,7,8,9,10]</code></li>
                     <li><code>[expr | x &lt;- list1, y &lt;- list2]</code> - Nested generators<br>
-                        Example: <code>[(x,y) | x &lt;- [1,2], y &lt;- ['a','b']]</code> â†’ <code>[(1,'a'),(1,'b'),(2,'a'),(2,'b')]</code></li>
+                        Example: <code>[(x,y) | x &lt;- [1,2], y &lt;- ['a','b']]</code> → <code>[(1,'a'),(1,'b'),(2,'a'),(2,'b')]</code></li>
                 </ul>
                 
                 <h3>Higher-Order Functions</h3>
                 <ul>
                     <li><code>map fn list</code> - Apply function to each element<br>
-                        Example: <code>map (*2) [1,2,3]</code> â†’ <code>[2,4,6]</code></li>
+                        Example: <code>map (*2) [1,2,3]</code> → <code>[2,4,6]</code></li>
                     <li><code>filter predicate list</code> - Filter list by predicate<br>
-                        Example: <code>filter (>5) [3,7,2,9]</code> â†’ <code>[7,9]</code></li>
+                        Example: <code>filter (>5) [3,7,2,9]</code> → <code>[7,9]</code></li>
                     <li><code>fold fn acc list</code> - Reduce list with accumulator<br>
-                        Example: <code>fold (+) 0 [1,2,3]</code> â†’ <code>6</code></li>
+                        Example: <code>fold (+) 0 [1,2,3]</code> → <code>6</code></li>
                 </ul>
                 
                 <h3>Operator Sections</h3>
                 <ul>
-                    <li><code>(+1)</code> - Partial application: <code>map (+1) [1,2,3]</code> â†’ <code>[2,3,4]</code></li>
-                    <li><code>(&lt;10)</code> - Comparison: <code>filter (&lt;10) [5,15,3]</code> â†’ <code>[5,3]</code></li>
-                    <li><code>(*)</code> - Binary operator as function: <code>fold (*) 1 [2,3,4]</code> â†’ <code>24</code></li>
+                    <li><code>(+1)</code> - Partial application: <code>map (+1) [1,2,3]</code> → <code>[2,3,4]</code></li>
+                    <li><code>(&lt;10)</code> - Comparison: <code>filter (&lt;10) [5,15,3]</code> → <code>[5,3]</code></li>
+                    <li><code>(*)</code> - Binary operator as function: <code>fold (*) 1 [2,3,4]</code> → <code>24</code></li>
                 </ul>
                 
                 <h3>Arithmetic Functions</h3>
                 <ul>
-                    <li><code>a ^ b</code> - Exponentiation: <code>2^10</code> â†’ <code>1024</code></li>
+                    <li><code>a ^ b</code> - Exponentiation: <code>2^10</code> → <code>1024</code></li>
                     <li><code>mod a b</code> - Modulo (remainder)</li>
                     <li><code>div a b</code> - Integer division</li>
                     <li><code>min a b</code> - Minimum of two values</li>
