@@ -568,6 +568,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Convert inline code `...` to <code>...</code>
         content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
         
+        // Convert challenge headings **~...~** to <span class="challenge-heading">...</span> (must be before regular bold)
+        content = content.replace(/\*\*~([^~]+)~\*\*/g, '<span class="challenge-heading">$1</span>');
+        
         // Convert key terms **_..._** to <span class="key-term">...</span> (must be before regular bold)
         content = content.replace(/\*\*_([^_]+)_\*\*/g, '<span class="key-term">$1</span>');
         

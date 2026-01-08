@@ -2,7 +2,7 @@
 Get familiar with the Interactive **_REPL_** (**R**ead-**E**val-**P**rint **L**oop).
 The REPL shows results immediately. 
 
-Experiment!
+**~Experiment!~**
 
 Try these expressions:
 
@@ -25,6 +25,8 @@ Try these expressions:
 > ord "A"
 > chr 98
 ```
+
+**~Questions~**
 
 What is the purpose of `&&` and `||` ?
 
@@ -94,31 +96,29 @@ the `(-6)` and `7` are the **_arguments_** that are passed into the **parameters
 **_Note:_** **When passing negative numbers as arguments, always use parentheses, e.g., `(-6)` not `-6`**.
 This avoids confusion with the subtraction operator.
 
+**~Challenges:~**
+
 Now write functions to perform the following tasks:
 
-`tripleMe` - Accepts one parameter and returns three times its value.
-Example:
+- `tripleMe` - Accepts one parameter and returns three times its value
 ```
 > tripleMe 5
 15
 ```
 
-`doubleAdd` - Accepts two parameters, doubles each of them, then adds them together.
-Example:
+- `doubleAdd` - Accepts two parameters, doubles each of them, then adds them together
 ```
 > doubleAdd 3 4
 14
 ```
 
-`subtractThenDouble` - Accepts two parameters, subtracts the second from the first, then doubles the result.
-Example:
+- `subtractThenDouble` - Accepts two parameters, subtracts the second from the first, then doubles the result
 ```
 > subtractThenDouble 10 3
 14
 ```
 
-`isGreaterThan100` - Accepts two parameters, adds them together, and returns `True` if the sum is greater than 100.
-Example:
+- `isGreaterThan100` - Accepts two parameters, adds them together, and returns `True` if the sum is greater than 100
 ```
 > isGreaterThan100 60 50
 True
@@ -126,8 +126,7 @@ True
 False
 ```
 
-`averageTwo` - Accepts two parameters and returns their average.
-Example:
+- `averageTwo` - Accepts two parameters and returns their average
 ```
 > averageTwo 10 20
 15
@@ -135,8 +134,7 @@ Example:
 7.5
 ```
 
-`minutesToHours` - Accepts a number of minutes and returns how many complete hours. Use `div` for integer division.
-Example:
+- `minutesToHours` - Accepts a number of minutes and returns how many complete hours. Use `div` for integer division
 ```
 > minutesToHours 150
 2
@@ -144,14 +142,14 @@ Example:
 1
 ```
 
-`isEven` - Accepts one parameter and returns `True` if the number is even, `False` otherwise. Use `mod` to find the remainder.
-Example:
+- `isEven` - Accepts one parameter and returns `True` if the number is even, `False` otherwise. Use `mod` to find the remainder
 ```
 > isEven 8
 True
 > isEven 7
 False
 ```
+
 
 
 === Using the Function Panel ===
@@ -193,6 +191,7 @@ Click **Run Code** <svg width="16" height="16" viewBox="0 0 16 16" fill="current
 
 Notice how `sumOfSquares` **calls** the `square` function as a helper. Breaking problems into smaller helper functions makes code easier to understand and reuse.
 
+**~Challenge~**
 
 Now write a complete program with helper functions:
 
@@ -217,6 +216,9 @@ False
 Remember: Write all three functions in the function panel, click **Run Code** `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle;"><path d="M3 2l10 6-10 6V2z"/></svg>`, then test in the REPL!
 
 === Building More Complex Programs ===
+
+**~Challenge~**
+
 Now create a more complex program with multiple helper functions.
 
 Write a program to analyse quadratic equations (ax² + bx + c = 0). 
@@ -279,7 +281,7 @@ Now try the following, taking note of any **errors**:
 > "kingpin" ++ heroesAndVillains
 > length heroesAndVillains
 ```
-Answer the following questions:
+**~Questions~**
 
 - What does `head` do?
 - What does `tail` do?
@@ -302,7 +304,8 @@ Now try the following commands, carefully noting any **errors**:
 > heroesAndVillains !! 1
 > heroesAndVillains !! 2
 ```
-Answer the following questions:
+
+**~Questions~**
 
 - What does `take` do?
 - What does `drop` do?
@@ -327,7 +330,7 @@ Every recursive function needs:
 - A **_base case_** - when to stop recursing
 - A **_recursive case_** - how to break down the problem
 
-**Example 1: Factorial**
+**~Example 1: Factorial~**
 
 Factorial is defined mathematically as:
 
@@ -358,8 +361,9 @@ factorial n = n * factorial (n-1)
 > factorial 0
 ```
 
+**~Challenge~**
 
-- Now write a function `fib` that calculates the nth Fibonacci number:
+Now write a function `fib` that calculates the nth Fibonacci number:
 
 ```
 > fib 5
@@ -374,7 +378,7 @@ factorial n = n * factorial (n-1)
 
 - Can you explain What happens with `fib 35`? If you look in the **Recursion Examples** in the menu, you will see an implementation `fastFib` that does not have this issue. It uses a technique called **Tail Recursion with Accumulators**. 
 
-**Example 2: Pattern Matching with Lists**
+**~Example 2: Pattern Matching with Lists~**
 
 **Pattern matching** lets you define functions by matching on the *structure* of data.
 Lists can be matched as either `[]` (empty) or `(x:xs)` (head and tail).
@@ -407,7 +411,9 @@ calcLength (x:xs) = 1 + calcLength xs
 > calcLength []
 ```
 
-**Challenges:** Write similar recursive functions:
+**~Challenges:~** 
+
+Write similar recursive functions:
 
 - `sumList` - adds all numbers in a list (base: empty list = 0)
 - `productList` - multiplies all numbers in a list (base: empty list = 1)
@@ -419,7 +425,7 @@ calcLength (x:xs) = 1 + calcLength xs
 "hhii"
 ```
 
-**Tougher Challenges:**
+**~Tougher Challenges:~**
 
 - `appendToEach` - appends a given element to the end of each sublist
 ```
@@ -453,6 +459,139 @@ calcLength (x:xs) = 1 + calcLength xs
 3
 ```
 
+=== Guards & Conditionals ===
+
+Haskish supports two main ways to make decisions in your code: **_Guards_** and **_Conditional expressions (if-then-else)_**.
+
+One of the challenges from the previous exercise was to write `countOccurrences` to count how many times an element appears in a list. One way to solve this is with a helper function `boolToInt`:
+
+```
+boolToInt True  = 1
+boolToInt False = 0
+
+countOccurrences e [] = 0
+countOccurrences e (x:xs) = boolToInt (e == x) + countOccurrences e xs
+```
+
+However, there are clearer ways to do this using guards or conditionals.
+
+**_Conditional Expressions (if-then-else)_**
+
+An `if-then-else` expression lets you choose between two values based on a condition. Both `then` and `else` branches are required because the expression must always return a value.
+
+```
+countOccurrences e [] = 0
+countOccurrences e (x:xs) = if e == x then 1 + countOccurrences e xs else countOccurrences e xs
+```
+
+This is good for simple **binary choices** (one thing or another).
+
+**_Guards_**
+
+Guards let you test multiple conditions in sequence. Each guard starts with `|` (pipe symbol) followed by a boolean condition:
+
+```
+countOccurrences e [] = 0
+countOccurrences e (x:xs)
+  | e == x    = 1 + countOccurrences e xs
+  | otherwise = countOccurrences e xs
+```
+
+The `otherwise` keyword is just `True` - it catches any case that doesn't match the earlier guards. Guards are especially useful when you have **multiple conditions** to check.
+
+**When to use which:**
+- **if-then-else:** Simple binary choice between two options
+- **Guards:** Multiple conditions or when the logic reads more naturally as a list of cases
+
+**~Practice with Guards and Conditionals~**
+
+Now practice using guards and if-then-else with these challenges:
+
+- `switchBinary` - Given a list of binary digits (0s and 1s), return a new list with 0s changed to 1s and 1s changed to 0s. **Hint:** Use guards to check if `x == 0` or `x == 1`
+```
+> switchBinary [0,1,1,0,1]
+[1,0,0,1,0]
+> switchBinary [1,1,1]
+[0,0,0]
+```
+
+- `countTwoElems` - Count how many times either of two given elements appear in a list. **Hint:** You'll need two guard conditions before `otherwise`
+```
+> countTwoElems 2 3 [1,2,3,2,4,3]
+4
+> countTwoElems 'a' 'e' "hello world"
+1
+```
+
+- `inList` - Return `True` if a given element appears in the list, `False` otherwise
+```
+> inList 5 [1,3,5,7]
+True
+> inList 4 [1,3,5,7]
+False
+> inList 'x' "hello"
+False
+```
+
+- `removeAll` - Remove all occurrences of a given element from a list
+```
+> removeAll 2 [1,2,3,2,4,2]
+[1,3,4]
+> removeAll 'l' "hello"
+"heo"
+```
+
+- `removeFirst` - Remove only the first occurrence of a given element from a list. **Hint:** When you find the match, just return `xs` instead of recursing
+```
+> removeFirst 2 [1,2,3,2,4]
+[1,3,2,4]
+> removeFirst 'l' "hello"
+"helo"
+```
+
+- `replace` - Replace all instances of one element with another element
+```
+> replace 2 9 [1,2,3,2,4]
+[1,9,3,9,4]
+> replace 'o' 'a' "hello"
+"hella"
+```
+
+**~Advanced Challenges - Using Helper Functions~**
+
+These next challenges use a common pattern: a main function that calls a helper function with an extra parameter (often called an **accumulator**) to track something as we recurse through the list.
+
+- `multEvenIdx` - Multiply all values at even-numbered indices (0, 2, 4, ...). **Hint:** Create a helper function that takes an extra parameter `n` to track the current index
+```
+> multEvenIdx [1,2,3,4,5]
+15
+> multEvenIdx [2,10,3,10,5,10]
+30
+```
+
+- `multEvenNums` - Multiply all the even numbers in a list (return 1 if there are none). **Hint:** Use the built-in `even` function
+```
+> multEvenNums [1,2,3,4,5,6]
+48
+> multEvenNums [1,3,5]
+1
+```
+
+- `insertEvenPos` - Insert a given element at all even positions in a list (positions 0, 2, 4, ...). **Hint:** The pattern is `e : x : insertEvenPos e xs`
+```
+> insertEvenPos 0 [1,2,3]
+[0,1,0,2,0,3,0]
+> insertEvenPos 'x' "abc"
+"xaxbxcx"
+```
+
+- `multBy` - Multiply every element in a list by a given number
+```
+> multBy 3 [1,2,3,4]
+[3,6,9,12]
+> multBy 10 [5,10,15]
+[50,100,150]
+```
 
 
 

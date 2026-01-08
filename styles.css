@@ -69,6 +69,13 @@ body {
     color: #fbbf24;
 }
 
+/* Challenge headings styling for exercises */
+.challenge-heading {
+    font-weight: bold;
+    color: #10b981;
+    font-size: 1.1em;
+}
+
 /* Prevent iOS viewport scrolling when menu is open */
 html.menu-open,
 body.menu-open {
