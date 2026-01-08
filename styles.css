@@ -1615,8 +1615,6 @@ footer a:hover {
 
 @media (max-width: 1024px) {
     /* Remove restrictive max-heights for mobile */
-}
-    }
     
     .exercise-buttons-container {
         justify-content: center;
