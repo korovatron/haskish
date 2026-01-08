@@ -1674,12 +1674,20 @@ class HaskishInterpreter {
             return bindings;
         }
 
+        // Literal match for boolean constructors (before variable binding)
+        if (pattern === 'True') {
+            return value === true ? {} : null;
+        }
+        if (pattern === 'False') {
+            return value === false ? {} : null;
+        }
+
         // Simple variable binding
         if (/^[a-zA-Z_]\w*'*$/.test(pattern)) {
             return { [pattern]: value };
         }
 
-        // Literal match
+        // Literal match (for numbers, strings, etc.)
         const literalValue = this.evaluate(pattern);
         return literalValue === value ? {} : null;
     }
