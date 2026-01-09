@@ -538,3 +538,95 @@ luhnDigits digits = mod (sumDigits (doubleEveryOther (reverse digits))) 10 == 0
 -- reverse [4,5,3,2]                        → [2,3,5,4]
 -- doubleEveryOther [2,3,5,4]               → [2,6,5,8]
 -- sumDigits [2,6,5,8]                      → 21
+
+=== Dictionary Compression ===
+-- Compress text by replacing frequent words with numeric codes
+-- This demonstrates frequency analysis and substitution compression
+
+-- Helper to check if string is empty after dropping spaces
+allSpaces [] = True
+allSpaces s
+  | head s == ' ' = allSpaces (tail s)
+  | otherwise     = False
+
+-- Split string into words (splits on spaces)
+words [] = []
+words s
+  | allSpaces s = []
+  | otherwise   = wordsHelper (dropSpaces s)
+
+wordsHelper [] = []
+wordsHelper s = takeWord s : words (dropWord s)
+
+takeWord [] = []
+takeWord s
+  | head s == ' ' = []
+  | otherwise     = head s : takeWord (tail s)
+
+dropWord [] = []
+dropWord s
+  | head s == ' ' = tail s
+  | otherwise     = dropWord (tail s)
+
+dropSpaces [] = []
+dropSpaces s
+  | head s == ' ' = dropSpaces (tail s)
+  | otherwise     = s
+
+-- Count occurrences of a word in a list
+countWord target [] = 0
+countWord target (x:xs)
+  | target == x = 1 + countWord target xs
+  | otherwise   = countWord target xs
+
+-- Remove duplicates from list
+unique [] = []
+unique (x:xs) = x : unique (removeAll x xs)
+
+removeAll ee [] = []
+removeAll ee (x:xs)
+  | ee == x   = removeAll ee xs
+  | otherwise = x : removeAll ee xs
+
+-- Build frequency list: [(word, count)]
+freqs ws = map (\zz -> (zz, countWord zz ws)) (unique ws)
+
+-- Get first and second elements of tuple
+fst (aa,bb) = aa
+snd (aa,bb) = bb
+
+-- Get top N most frequent words
+topN nn [] = []
+topN 0 fs = []
+topN nn fs = maxFreq fs : topN (nn - 1) (removeAll (maxFreq fs) fs)
+
+maxFreq [] = ("", 0)
+maxFreq (pair:rest)
+  | null rest = pair
+  | snd pair >= snd (maxFreq rest) = pair
+  | otherwise = maxFreq rest
+
+-- Build dictionary from text (top 10 words)
+buildDict txt = filter notEmpty (topN 10 (freqs (words txt)))
+
+notEmpty pair = not (null (fst pair))
+
+-- Compress: return list of numeric codes
+compress txt = compressWords (buildDict txt) (words txt)
+
+compressWords dict [] = []
+compressWords dict (ww:wws) = codeFor dict ww 0 : compressWords dict wws
+
+codeFor [] ww nn = nn
+codeFor (pair:pairs) ww nn
+  | ww == fst pair = nn
+  | otherwise      = codeFor pairs ww (nn + 1)
+
+-- Tests:
+-- compress "the cat sat on the mat"
+-- → [0,1,2,3,0,4]
+-- The most frequent word "the" gets code 0
+
+-- compress "the cat sat on the mat the dog sat on the log"
+-- → [0,3,1,2,0,4,0,5,1,2,0,6]
+-- "the" (4×) = 0, "sat" (2×) = 1, "on" (2×) = 2, others get higher codes
