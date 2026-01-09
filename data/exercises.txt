@@ -20,7 +20,7 @@ Try these expressions:
 > mod 14 3
 > mod 14 3 == 0
 > div 14 3
-> max "apple" "banana"
+> max "clockwork" "orange"
 > (2 == 3) || (2 == 2)
 > ord "A"
 > chr 98
@@ -206,12 +206,10 @@ Notice how `addThree = add 3` creates a specialised function! This is called **_
 > greet greeting name = greeting ++ ", " ++ name ++ "!"
 > sayHello = greet "Hello"
 > sayGoodbye = greet "Goodbye"
-> sayHello "Alice"
-"Hello, Alice!"
-> sayHello "Bob"
-"Hello, Bob!"
-> sayGoodbye "Charlie"
-"Goodbye, Charlie!"
+> sayHello "Clarice"
+"Hello, Clarice!"
+> sayGoodbye "cruel world"
+"Goodbye, cruel world!"
 ```
 
 Partial application is incredibly useful for creating specialised functions from general ones without writing repetitive code.
@@ -230,10 +228,8 @@ Try creating some specialised functions through partial application.
 
 - Create a function `addSuffix suffix text = text ++ suffix`, then use partial application to create `addExclamation` (which adds "!" to text)
 ```
-> addExclamation "Hello"
-"Hello!"
-> addExclamation "Wow"
-"Wow!"
+> addExclamation "Real horrorshow"
+"Real horrorshow!"
 ```
 
 - Use the built-in `min` function with partial application to create `capAt100` (which ensures a value doesn't exceed 100)
@@ -246,10 +242,10 @@ Try creating some specialised functions through partial application.
 
 - Create a function `addPrefix prefix text = prefix ++ text`, then use partial application to create `addMr` (which adds "Mr. " to names)
 ```
-> addMr "Smith"
-"Mr. Smith"
-> addMr "Jones"
-"Mr. Jones"
+> addMr "Spock"
+"Mr. Spock"
+> addMr "Ben"
+"Mr. Ben"
 ```
 
 **_Why This Matters_**
