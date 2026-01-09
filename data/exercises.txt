@@ -203,136 +203,22 @@ Notice how `addThree = add 3` creates a specialised function! This is called **_
 ```
 
 ```
-> power base exp = base ^ exp
-> square = power 2
-> cube = power 3
-> square 5
-25
-> cube 5
-125
+> greet greeting name = greeting ++ ", " ++ name ++ "!"
+> sayHello = greet "Hello"
+> sayGoodbye = greet "Goodbye"
+> sayHello "Alice"
+"Hello, Alice!"
+> sayHello "Bob"
+"Hello, Bob!"
+> sayGoodbye "Charlie"
+"Goodbye, Charlie!"
 ```
-
-**_Function Types_**
-
-We can describe the **_type_** of a function using arrow notation. For any function `f`, we write:
-
-```
-f: A → B
-```
-
-This means: "function `f` maps values from set `A` to set `B`".
-
-- `A` is called the **_domain_** - the set of possible input values
-- `B` is called the **_co-domain_** - the set of possible output values
-- The type of the function is `A → B`
-
-**_Important:_** The domain and co-domain are always subsets of values from some data type (like integers, strings, or booleans).
-
-**_Example: Simple function with domain and co-domain_**
-
-Consider a function that maps lowercase letters to numbers:
-
-```
-letterToNumber: {a,b,c,...,z} → {0,1,2,...,25}
-```
-
-This function could use the rule: `a` maps to `0`, `b` maps to `1`, `c` maps to `2`, and so on.
-
-- **_Domain:_** `{a,b,c,...,z}` - all lowercase letters (a subset of characters)
-- **_Co-domain:_** `{0,1,2,...,25}` - numbers from 0 to 25 (a subset of integers)
-
-Notice that the co-domain contains all possible output values. Not every member of the co-domain needs to be used by the function - it's just the set from which outputs are chosen.
-
-**_Multi-argument functions_**
-
-For multi-argument functions like `add`:
-
-```
-add: integer → integer → integer
-```
-
-This notation can be read as: "`add` takes an integer and returns a function that takes an integer and returns an integer".
-
-The arrows are **_right-associative_**, meaning we can add brackets to show the grouping:
-
-```
-add: integer → (integer → integer)
-```
-
-This makes it clear that `add` takes one integer and returns a function `(integer → integer)` that takes another integer and returns an integer.
-
-**_Examples with different numbers of arguments:_**
-
-**_One-argument function:_**
-```
-double: integer → integer
-```
-`double` takes an integer and returns an integer.
-- Domain: integers
-- Co-domain: integers
-
-**_Two-argument function:_**
-```
-add: integer → (integer → integer)
-```
-or simply: `add: integer → integer → integer`
-
-`add` takes an integer, returns a function that takes an integer and returns an integer.
-
-**_Three-argument function:_**
-```
-addThree x y z = x + y + z
-addThree: integer → (integer → (integer → integer))
-```
-or simply: `addThree: integer → integer → integer → integer`
-
-`addThree` takes an integer, returns a function that takes an integer, which returns a function that takes an integer, which returns an integer.
-
-With three arguments, we can partially apply in different ways:
-```
-> addThree 1 2 3
-6
-> addTwo = addThree 1
-> addTwo 2 3
-6
-> addOne = addThree 1 2
-> addOne 3
-6
-```
-
-**Note:** Technically, when we write `add x y`, we could think of it as the function taking a **pair** of values `(x, y)` - this is called a **_Cartesian product_** (integer × integer). However, in Haskish and Haskell, **_currying_** automatically handles this by breaking it into single-argument functions, which is more flexible and powerful!
 
 Partial application is incredibly useful for creating specialised functions from general ones without writing repetitive code.
 
 **~Challenges:~**
 
-Using the functions from Exercise 3, create specialised versions through partial application:
-
-- Define `add x y = x + y` in the REPL, then create `addTen` by partially applying `add` with 10
-```
-> addTen 5
-15
-> addTen 23
-33
-```
-
-- Define `multiply x y = x * y`, then create `triple` by partially applying it
-```
-> triple 4
-12
-> triple 100
-300
-```
-
-- Define `power base exp = base ^ exp`, then create `fourthPower` by partially applying with 4 as the exponent
-```
-> fourthPower 2
-16
-> fourthPower 3
-81
-```
-
-Now try creating some specialised functions on your own:
+Try creating some specialised functions through partial application.
 
 - Create a function `subtract x y = x - y`, then use partial application to create `subtractFromHundred` (which subtracts its argument from 100). Be careful about parameter order!
 ```
@@ -342,12 +228,28 @@ Now try creating some specialised functions on your own:
 95
 ```
 
-- Create a function `divide x y = x / y`, then use partial application to create `half` (which divides its argument by 2)
+- Create a function `addSuffix suffix text = text ++ suffix`, then use partial application to create `addExclamation` (which adds "!" to text)
 ```
-> half 10
-5
-> half 7
-3.5
+> addExclamation "Hello"
+"Hello!"
+> addExclamation "Wow"
+"Wow!"
+```
+
+- Use the built-in `min` function with partial application to create `capAt100` (which ensures a value doesn't exceed 100)
+```
+> capAt100 75
+75
+> capAt100 150
+100
+```
+
+- Create a function `addPrefix prefix text = prefix ++ text`, then use partial application to create `addMr` (which adds "Mr. " to names)
+```
+> addMr "Smith"
+"Mr. Smith"
+> addMr "Jones"
+"Mr. Jones"
 ```
 
 **_Why This Matters_**
