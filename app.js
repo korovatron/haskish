@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).filter(p => p).join('\n\n');
         
         return paragraphs;
-    }
+    } 
     
     // Generate exercise buttons dynamically
     function generateExerciseButtons() {

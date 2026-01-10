@@ -153,20 +153,46 @@ False
 
 === Partial Function Application ===
 
-In the previous exercise, you wrote functions like `add x y = x + y` which seemed to take two parameters. However, in functional programming languages like Haskish, **_all functions actually take only one parameter_**.
+In **mathematics**, a function maps a **single** value from its **_domain_** to a **single** value in its **_co‑domain_**.
+For example:
+```
+add(x, y) = x + y
+```
 
-This might sound strange, but it's a powerful feature called **_currying_**. Here's what really happens:
+This looks like a function taking two values, but in mathematics it is formally treated as taking one input, which is a pair of integers such as `(3,4)`.
+So the domain is the set of all integer pairs:
+```
+{ (0,0), (0,1), (0,2), …
+  (1,0), (1,1), (1,2), …
+  … }
+```  
+This set is called the **_Cartesian product_** of ℤ with itself.
+We write the **_type definition_** as 
+```
+add : ℤ × ℤ → ℤ
+```
+meaning: a single **pair** of integers is mapped to a **single** integer.
 
+Functional programming languages use a different representation called **_currying_**.
+In Haskish (and Haskell) we can define:
+```
+add x y = x + y
+```
+In Haskish, spaces separate items in both function definitions (parameters) and function calls (arguments). No commas or parentheses are needed.
+Haskish interprets this as:
+
+"`add` is a function that takes one parameter `x` and returns a new function that takes one parameter `y`."
+
+**_Function application_** is the process of passing arguments to a function.
 When you write:
 ```
-> add x y = x + y
+add 3 5
 ```
-
-Haskish interprets this as: "`add` is a function that takes one parameter `x` and returns a new function that takes one parameter `y`".
-
-**_Function Application_**
-
-**Function application** is the process of passing arguments to a function. When you call `add 3 5`, it's really `(add 3) 5` - function application is **left-associative** (evaluated left to right):
+it is really
+```
+(add 3) 5
+```
+because function application is left‑associative. The steps are:
 
 1. `add 3` creates a new function that adds 3 to its input
 
@@ -175,6 +201,16 @@ Haskish interprets this as: "`add` is a function that takes one parameter `x` an
 3. The result is 8
 
 In other words, `add 3 5` is actually shorthand for `(add 3) 5`
+
+In Haskish (and Haskell) we write the **_type definition_** as
+```
+add :: Integer -> (Integer -> Integer)
+```
+or more concisely as
+```
+add :: Integer -> Integer -> Integer
+```
+meaning: the function takes **one integer** and returns a **new function**. That new function takes another **integer** and returns the final result. Each `->` represents a function. 
 
 Try this in the REPL:
 ```
@@ -188,7 +224,7 @@ Try this in the REPL:
 13
 ```
 
-Notice how `addThree = add 3` creates a specialised function! This is called **_partial function application_** (or just **_partial application_**) - applying some but not all of the arguments to create a new, more specialised function.
+Notice how `addThree = add 3` creates a specialised function. This is called **_partial function application_** (or just **_partial application_**) - applying some but not all of the arguments to create a new, more specialised function.
 
 **More Examples**
 
@@ -491,7 +527,8 @@ For composition to work, the types must match:
 f: A → B
 g: B → C
 g . f: A → C  ✓ (B matches!)
-
+```
+```
 f: A → B
 h: D → E
 h . f: ???  ✗ (B ≠ D, cannot compose!)
@@ -569,7 +606,7 @@ Click **Run Code** `<svg width="16" height="16" viewBox="0 0 16 16" fill="curren
 144
 ```
 
-Now add a function that uses `square` as a helper. Add this to the function panel (above or below `square`):
+Now add a function that uses `square` as a helper. Add this to the function panel (above or below `square`). The order of functions in the panel doesn’t matter — Haskish reads the whole panel before running your code.
 ```
 sumOfSquares a b = square a + square b
 ```
@@ -769,7 +806,7 @@ Now write a function `fib` that calculates the nth Fibonacci number:
 ????
 ```
 
-- Can you explain What happens with `fib 35`? If you look in the **Recursion Examples** in the menu, you will see an implementation `fastFib` that does not have this issue. It uses a technique called **Tail Recursion with Accumulators**. 
+- Can you explain what happens with `fib 35`? If you look in the **Recursion Examples** in the menu, you will see an implementation `fastFib` that does not have this issue. It uses a technique called **Tail Recursion with Accumulators**. 
 
 **~Example 2: Pattern Matching with Lists~**
 
