@@ -1023,5 +1023,259 @@ These next challenges use a common pattern: a main function that calls a helper 
 [50,100,150]
 ```
 
+=== Higher-Order Functions: Map, Filter, and Fold ===
+
+In the **First-Class Functions** exercise, you wrote `applyTwice` - a function that takes another function as an argument and applies it twice:
+
+```
+> applyTwice f x = f (f x)
+> double n = n * 2
+> applyTwice double 3
+12
+```
+
+This is an example of a **_higher-order function_** - a function that either takes functions as arguments or returns functions as results (or both!).
+
+Higher-order functions are fundamental to functional programming. They let you write generic, reusable code that works with many different operations.
+
+**_The Three Essential Higher-Order Functions_**
+
+Three higher-order functions form the backbone of functional programming:
+
+- **`map`** - transforms every element in a list
+- **`filter`** - keeps only elements that satisfy a condition
+- **`foldl`** - combines all elements into a single result
+
+Let's explore each one.
+
+**_Map: Transforming Lists_**
+
+`map` takes a function and a list, and applies that function to every element:
+
+```
+map :: (a -> b) -> [a] -> [b]
+```
+
+Think of it as: "apply this transformation to every item in the list"
+
+**Examples:**
+
+```
+> double x = x * 2
+> map double [1,2,3,4]
+[2,4,6,8]
+
+> square x = x * x
+> map square [1,2,3,4,5]
+[1,4,9,16,25]
+
+> isEven x = mod x 2 == 0
+> map isEven [1,2,3,4,5,6]
+[False,True,False,True,False,True]
+```
+
+Remember `multBy` from the previous exercise? It multiplied every element by a number. That's exactly what `map` does with a multiplication function:
+
+```
+> map (*3) [1,2,3,4]
+[3,6,9,12]
+```
+
+Notice how we used the operator section `(*3)` directly - this is where operator sections really shine with higher-order functions!
+
+**_Filter: Selecting Elements_**
+
+`filter` takes a predicate (a function that returns `True` or `False`) and a list, keeping only elements where the predicate is `True`:
+
+```
+filter :: (a -> Bool) -> [a] -> [a]
+```
+
+Think of it as: "keep only the items that pass this test"
+
+**Examples:**
+
+```
+> isEven x = mod x 2 == 0
+> filter isEven [1,2,3,4,5,6]
+[2,4,6]
+
+> isPositive x = x > 0
+> filter isPositive [-3,-1,0,2,5,-7,8]
+[2,5,8]
+
+> filter (>5) [1,3,6,2,8,4,9]
+[6,8,9]
+
+> filter (=="cat") ["dog","cat","bird","cat","fish"]
+["cat","cat"]
+```
+
+**_Fold: Combining Elements_**
+
+`foldl` (fold left) takes a combining function, an initial value, and a list, then combines all elements into a single result:
+
+```
+foldl :: (b -> a -> b) -> b -> [a] -> b
+```
+
+Think of it as: "combine all items using this operation, starting with this initial value"
+
+The combining function takes two arguments:
+1. The **accumulator** (the result so far)
+2. The **current element** from the list
+
+**Examples:**
+
+```
+> add x y = x + y
+> foldl add 0 [1,2,3,4]
+10
+
+> multiply x y = x * y
+> foldl multiply 1 [2,3,4]
+24
+
+> foldl (+) 0 [1,2,3,4,5]
+15
+
+> foldl (*) 1 [1,2,3,4,5]
+120
+
+> foldl max 0 [3,7,2,9,4]
+9
+```
+
+Let's trace `foldl (+) 0 [1,2,3]`:
+
+1. Start with `0` (the initial value)
+2. `0 + 1 = 1`
+3. `1 + 2 = 3`
+4. `3 + 3 = 6`
+5. Result: `6`
+
+**_Combining Map, Filter, and Fold_**
+
+The real power comes from combining these functions:
+
+```
+> foldl (+) 0 (map (*2) [1,2,3,4])
+20
+```
+
+This doubles each number `[2,4,6,8]` then sums them `2+4+6+8 = 20`
+
+```
+> foldl (+) 0 (filter (>3) [1,2,3,4,5,6])
+15
+```
+
+This keeps numbers greater than 3 `[4,5,6]` then sums them `4+5+6 = 15`
+
+```
+> map (*2) (filter isEven [1,2,3,4,5,6])
+[4,8,12]
+```
+
+This keeps even numbers `[2,4,6]` then doubles them `[4,8,12]`
+
+**~Challenges:~**
+
+**Map Challenges:**
+
+- Use `map` to convert a list of temperatures from Fahrenheit to Celsius using the formula: `C = (F - 32) * 5 / 9`
+```
+> fahrenheitToCelsius f = (f - 32) * 5 / 9
+> map fahrenheitToCelsius [32,50,68,86,104]
+[0,10,20,30,40]
+```
+
+- Use `map` to add an exclamation mark to the end of each string in a list. **Hint:** Use the `(++ "!")` operator section
+```
+> map (++ "!") ["Hello","Goodbye","Welcome"]
+["Hello!","Goodbye!","Welcome!"]
+```
+
+- Use `map` to get the first character of each string in a list
+```
+> map head ["apple","banana","cherry"]
+['a','b','c']
+```
+
+**Filter Challenges:**
+
+- Use `filter` to keep only numbers greater than 10
+```
+> filter (>10) [5,15,3,20,8,25]
+[15,20,25]
+```
+
+- Use `filter` to keep only strings that start with the letter 'a'. **Hint:** Use a lambda or define a helper function that checks if `head s == 'a'`
+```
+> filter (\s -> head s == 'a') ["apple","banana","apricot","cherry"]
+["apple","apricot"]
+```
+
+- Use `filter` to keep only the odd numbers from a list. **Hint:** Use the built-in `odd` function
+```
+> filter odd [1,2,3,4,5,6,7,8,9,10]
+[1,3,5,7,9]
+```
+
+**Fold Challenges:**
+
+- Use `foldl` to find the sum of all even numbers from 1 to 10. **Hint:** First filter for even numbers, then fold with addition
+```
+> foldl (+) 0 (filter even [1,2,3,4,5,6,7,8,9,10])
+30
+```
+
+- Use `foldl` to concatenate a list of strings with the `++` operator
+```
+> foldl (++) "" ["Hello"," ","World","!"]
+"Hello World!"
+```
+
+- Use `foldl` to count how many elements are in a list. **Hint:** The combining function should ignore the current element and just add 1 to the accumulator
+```
+> foldl (\acc x -> acc + 1) 0 [10,20,30,40,50]
+5
+```
+
+**Combined Challenges:**
+
+- Get the sum of squares of all even numbers in a list
+```
+> square x = x * x
+> foldl (+) 0 (map square (filter even [1,2,3,4,5,6]))
+56
+```
+Because: even numbers are `[2,4,6]`, squares are `[4,16,36]`, sum is `4+16+36 = 56`
+
+- Double all numbers greater than 5, then find their product
+```
+> foldl (*) 1 (map (*2) (filter (>5) [3,6,2,8,4,10]))
+3840
+```
+Because: numbers > 5 are `[6,8,10]`, doubled are `[12,16,20]`, product is `12*16*20 = 3840`
+
+- Extract the length of each string, then sum the lengths
+```
+> foldl (+) 0 (map length ["hello","world","functional"])
+20
+```
+
+**_Why This Matters_**
+
+Higher-order functions like `map`, `filter`, and `foldl` are the foundation of functional programming because they:
+
+- **Eliminate explicit recursion** - you don't need to write recursive functions for common patterns
+- **Express intent clearly** - `map square` is clearer than a recursive function that squares elements
+- **Compose beautifully** - you can chain them together to build complex transformations
+- **Are proven correct** - unlike hand-written recursion, these functions are well-tested
+- **Enable parallel processing** - operations like `map` can potentially run on multiple cores
+
+These patterns appear in all functional languages (Haskell, Scala, Clojure, etc.) and even in modern JavaScript, Python, and other languages. Mastering them makes you a better programmer in any language!
+
 
 
