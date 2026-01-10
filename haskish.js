@@ -550,6 +550,53 @@ class HaskishInterpreter {
                     return this.applyFunction(fn, [accumulator, item]);
                 }, acc);
             },
+            'foldl': (fn, acc, list) => {
+                // Alias for fold - both do the same thing (left fold)
+                return this.builtins['fold'](fn, acc, list);
+            },
+            'foldr': (fn, acc, list) => {
+                if (list && list._isInfiniteRange) {
+                    throw new Error('foldr: cannot fold infinite range');
+                }
+                if (typeof list === 'string') {
+                    // Fold over string characters from right to left
+                    return list.split('').reduceRight((accumulator, item) => {
+                        if (fn instanceof Lambda) {
+                            const step1 = fn.apply(item);
+                            if (step1 instanceof Lambda) {
+                                return step1.apply(accumulator);
+                            }
+                            return step1;
+                        }
+                        if (fn instanceof PartialFunction) {
+                            return fn.apply([item, accumulator]);
+                        }
+                        if (fn && fn._isOperatorFunction) {
+                            return fn.apply([item, accumulator]);
+                        }
+                        return this.applyFunction(fn, [item, accumulator]);
+                    }, acc);
+                }
+                if (!Array.isArray(list)) {
+                    throw new Error('foldr: third argument must be a list');
+                }
+                return list.reduceRight((accumulator, item) => {
+                    if (fn instanceof Lambda) {
+                        const step1 = fn.apply(item);
+                        if (step1 instanceof Lambda) {
+                            return step1.apply(accumulator);
+                        }
+                        return step1;
+                    }
+                    if (fn instanceof PartialFunction) {
+                        return fn.apply([item, accumulator]);
+                    }
+                    if (fn && fn._isOperatorFunction) {
+                        return fn.apply([item, accumulator]);
+                    }
+                    return this.applyFunction(fn, [item, accumulator]);
+                }, acc);
+            },
             'length': (list) => {
                 if (list && list._isInfiniteRange) {
                     throw new Error('length: cannot get length of infinite range');
@@ -2055,8 +2102,8 @@ class HaskishInterpreter {
         }
 
         // Operator sections like (<10) or (+) or (+(-1)) or (== "cat") but not negative numbers
-        const opSectionMatch = expr.match(/^\(([+*\/<>=&|]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/) || 
-                               expr.match(/^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=&|]+|\+\+|!!|&&|\|\||\/=)\)$/);
+        const opSectionMatch = expr.match(/^\(([+*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/) || 
+                               expr.match(/^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
         }
@@ -2481,7 +2528,7 @@ class HaskishInterpreter {
                     // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
                     // Match operator sections: operators only, operators with number, string, or parenthesized expr
-                    if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
+                    if (/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -2607,16 +2654,16 @@ class HaskishInterpreter {
 
     // Create operator section function
     createOperatorSection(section) {
-        // Match patterns like (*), (+), (<10), (10+), (&&), (||), etc.
+        // Match patterns like (*), (+), (<10), (10+), (&&), (||), (:), etc.
         // But NOT negative numbers like (-5) which could be (0 - 5) evaluated
-        const opOnlyMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/);  // Removed - from here
+        const opOnlyMatch = section.match(/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);  // Removed - from here
         if (opOnlyMatch) {
             const op = opOnlyMatch[1];
             return this.createOperatorFunction(op);
         }
         
         // Left section with string literal like (== "cat") or (== 'cat')
-        const leftStringMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\s*(["'][^"']*["'])\)$/);
+        const leftStringMatch = section.match(/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\s*(["'][^"']*["'])\)$/);
         if (leftStringMatch) {
             const [, op, str] = leftStringMatch;
             const stringValue = this.evaluate(str);
@@ -2624,14 +2671,14 @@ class HaskishInterpreter {
         }
         
         // Left section like (<10), (>5), (*2) but not (- or (-5)
-        const leftMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\s*(\d+)\)$/);  // Removed -
+        const leftMatch = section.match(/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\s*(\d+)\)$/);  // Removed -
         if (leftMatch) {
             const [, op, num] = leftMatch;
             return this.createPartialOperatorFunction(op, null, parseFloat(num));
         }
         
         // Left section with parenthesized expression like (+(..))  
-        const leftParenMatch = section.match(/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\s*(\(.+\))\)$/);
+        const leftParenMatch = section.match(/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\s*(\(.+\))\)$/);
         if (leftParenMatch) {
             const [, op, parenExpr] = leftParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
@@ -2639,7 +2686,7 @@ class HaskishInterpreter {
         }
         
         // Right section with string literal like ("cat" ==) or ('cat' ==)
-        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/);
+        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
         if (rightStringMatch) {
             const [, str, op] = rightStringMatch;
             const stringValue = this.evaluate(str);
@@ -2647,14 +2694,14 @@ class HaskishInterpreter {
         }
         
         // Right section like (10+), (5*) but not (-10)
-        const rightMatch = section.match(/^\((\d+)\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/);  // Removed -
+        const rightMatch = section.match(/^\((\d+)\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);  // Removed -
         if (rightMatch) {
             const [, num, op] = rightMatch;
             return this.createPartialOperatorFunction(op, parseFloat(num), null);
         }
         
         // Right section with parenthesized expression like ((..)+)
-        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/);
+        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
         if (rightParenMatch) {
             const [, parenExpr, op] = rightParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);

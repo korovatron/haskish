@@ -529,10 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Normalize line endings first (Windows uses \r\n, we want just \n)
         content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         
-        // Normalize 3+ newlines to exactly 2 (1 blank line)
-        content = content.replace(/\n{3,}/g, '\n\n');
-        
-        // Convert code blocks ```...``` to <pre><code>...</code></pre>
+        // Convert code blocks ```...``` to <pre><code>...</code></pre> BEFORE normalizing newlines
         content = content.replace(/```([\s\S]*?)```/g, (match, code) => {
             
             // Split into lines
@@ -565,6 +562,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<pre><code class="language-haskell">${code}</code></pre>`;
         });
         
+        // NOW normalize 3+ newlines to exactly 2 (1 blank line) - but this won't affect code blocks
+        content = content.replace(/\n{3,}/g, '\n\n');
+        
         // Convert inline code `...` to <code>...</code>
         content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
         
@@ -577,8 +577,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Convert bold **...** to <strong>...</strong>
         content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         
+        // Protect newlines inside code blocks from being used as paragraph separators
+        // Replace \n\n inside <pre><code>...</code></pre> with a placeholder
+        const codeBlockPlaceholder = '\u0000CODEBLOCK_NEWLINE\u0000';
+        content = content.replace(/(<pre><code[^>]*>)([\s\S]*?)(<\/code><\/pre>)/g, (match, openTag, code, closeTag) => {
+            // Replace double newlines inside code blocks with placeholder
+            const protectedCode = code.replace(/\n\n/g, codeBlockPlaceholder);
+            return openTag + protectedCode + closeTag;
+        });
+        
         // Convert double newlines to paragraphs, but handle lists and code blocks specially
-        const paragraphs = content.split('\n\n').map(para => {
+        let paragraphs = content.split('\n\n').map(para => {
             para = para.trim();
             
             // If it's ONLY a code block, return as-is
@@ -635,6 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // For regular paragraphs, join lines with spaces
             return para ? `<p>${para.replace(/\n/g, ' ')}</p>` : '';
         }).filter(p => p).join('\n\n');
+        
+        // Restore the protected newlines inside code blocks
+        paragraphs = paragraphs.replace(/\u0000CODEBLOCK_NEWLINE\u0000/g, '\n\n');
         
         return paragraphs;
     } 
