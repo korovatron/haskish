@@ -2,7 +2,7 @@
 Get familiar with the Interactive **_REPL_** (**R**ead-**E**val-**P**rint **L**oop).
 The REPL shows results immediately. 
 
-**~Experiment!~**
+**~Experiment~**
 
 Try these expressions:
 
@@ -174,7 +174,7 @@ Haskish interprets this as: "`add` is a function that takes one parameter `x` an
 
 3. The result is 8
 
-In other words, `add 3 5` is actually shorthand for `(add 3) 5`!
+In other words, `add 3 5` is actually shorthand for `(add 3) 5`
 
 Try this in the REPL:
 ```
@@ -218,7 +218,7 @@ Partial application is incredibly useful for creating specialised functions from
 
 Try creating some specialised functions through partial application.
 
-- Create a function `subtract x y = x - y`, then use partial application to create `subtractFromHundred` (which subtracts its argument from 100). Be careful about parameter order!
+- Create a function `subtract x y = x - y`, then use partial application to create `subtractFromHundred` (which subtracts its argument from 100).
 ```
 > subtractFromHundred 30
 70
@@ -254,7 +254,7 @@ Partial application allows you to:
 - Create specialised functions without writing new code
 - Build complex functions by combining simpler ones
 
-This is a fundamental concept in functional programming that you'll use throughout your journey with Haskish and other functional languages such as Haskell!
+This is a fundamental concept in functional programming that you'll use throughout your journey with Haskish and other functional languages such as Haskell.
 
 
 === First-Class Functions ===
@@ -278,7 +278,7 @@ You're already familiar with first-class objects! In most programming languages,
 > myString = "hello"
 ```
 
-In functional programming, **functions are treated the same way** - they're just another type of value!
+In functional programming, **functions are treated the same way** - they're just another type of value.
 
 **_Functions as Variables_**
 
@@ -356,10 +356,10 @@ The `\x -> x + n` is a **_lambda function_** (anonymous function) - we'll explor
 25
 ```
 
-- Write a function `doTwice` that takes a function `f` and a value `x`, and returns a function that when called with a value `y`, computes `f (f x) + y`. **Hint:** Use a lambda function `\y -> ...`
+- Write a function `doTwice` that takes a function `f` and a value `x`, and returns a function that when called with a value `y`, computes `f (f x) + y`.
 ```
 > doTwice double 3
-\y -> ... (returns a function)
+&lt;function doTwice with 2 bound arg(s)&gt;
 > (doTwice double 3) 1
 13
 ```
