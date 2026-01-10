@@ -2396,9 +2396,16 @@ class HaskishInterpreter {
             return result;
         }
         
-        // Handle parenthesized function followed by arguments: (f . g) x
+        // Handle parenthesized function followed by arguments: (f . g) x or (+10) 3
         if (tokens.length > 1 && tokens[0].type === 'paren') {
-            const funcExpr = this.evaluate(tokens[0].value);
+            // Check if the paren is an operator section like (+10) or (*2)
+            const fullParen = '(' + tokens[0].value + ')';
+            let funcExpr;
+            if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
+                funcExpr = this.createOperatorSection(fullParen);
+            } else {
+                funcExpr = this.evaluate(tokens[0].value);
+            }
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
