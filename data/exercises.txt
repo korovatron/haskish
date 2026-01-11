@@ -891,7 +891,7 @@ Write similar recursive functions:
 "hhii"
 ```
 
-**~Tougher Challenges:~**
+**~Advanced Challenges:~**
 
 - `appendToEach` - appends a given element to the end of each sublist
 ```
@@ -969,7 +969,7 @@ The `otherwise` keyword is just `True` - it catches any case that doesn't match 
 - **if-then-else:** Simple binary choice between two options
 - **Guards:** Multiple conditions or when the logic reads more naturally as a list of cases
 
-**~Practice with Guards and Conditionals~**
+**~Challenges~**
 
 Now practice using guards and if-then-else with these challenges:
 
