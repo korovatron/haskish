@@ -22,7 +22,7 @@ Try these expressions:
 > div 14 3
 > max "clockwork" "orange"
 > (2 == 3) || (2 == 2)
-> ord "A"
+> ord 'A'
 > chr 98
 ```
 
@@ -1482,7 +1482,7 @@ Remember that in Haskish (and Haskell), **String = [Char]** - strings are lists 
 ["H","E","L","L","O"]
 ```
 
-Notice that when we iterate over `"HELLO"`, each element `c` is a single character. In the last example, `[c]` creates a one-character string for each character.
+Notice that when we iterate over `"HELLO"`, each element `c` is a single character (`'H'`, `'E'`, etc.). In the last example, `[c]` wraps each character in a one-element list, creating a list of strings.
 
 **~Challenges:~**
 
