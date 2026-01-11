@@ -2200,7 +2200,7 @@ You can't express this with a simple operator section.
 
 - Use `map` with a lambda to add 10 to numbers greater than 5, but keep numbers 5 or less unchanged. **Hint:** Use `if-then-else` inside the lambda
 ```
-> map (\x -> if x > 5 then x + 10 else x) [1,3,6,8,2,9]
+> map (\x -> ...) [1,3,6,8,2,9]
 [1,3,16,18,2,19]
 ```
 
@@ -2212,6 +2212,7 @@ You can't express this with a simple operator section.
 
 - Write a function `applyTwice` that takes a function and a value, and applies the function twice. Test it with a lambda
 ```
+> applyTwice f x = ...
 > applyTwice (\x -> x * 2) 3
 12
 > applyTwice (\x -> x ++ "!") "hi"
@@ -2234,19 +2235,20 @@ You can't express this with a simple operator section.
 
 - Write `filterMap` that filters a list with one lambda and then maps another lambda over the result
 ```
+> filterMap predicate transform xs = ...
 > filterMap (\x -> x > 2) (\x -> x * 10) [1,2,3,4,5]
 [30,40,50]
 ```
 
 - Use `map` with a lambda to apply different functions to odd and even numbers: multiply odd by 3, even by 2
 ```
-> map (\x -> if mod x 2 == 0 then x * 2 else x * 3) [1,2,3,4,5]
+> map (\x -> ...) [1,2,3,4,5]
 [3,4,9,8,15]
 ```
 
 - Write `compose` that takes two functions and returns a lambda that applies them in sequence (function composition using lambdas)
 ```
-> compose f g = \x -> f (g x)
+> compose f g = ...
 > double x = x * 2
 > addOne x = x + 1
 > doubleThenAdd = compose addOne double
@@ -2256,7 +2258,7 @@ You can't express this with a simple operator section.
 
 - Use `fold` with a lambda to find the maximum element in a list (assume non-empty list)
 ```
-> fold (\acc x -> if x > acc then x else acc) (head [3,7,2,9,1]) (tail [3,7,2,9,1])
+> fold (\acc x -> ...) (head [3,7,2,9,1]) (tail [3,7,2,9,1])
 9
 ```
 
@@ -2264,6 +2266,7 @@ You can't express this with a simple operator section.
 
 - Write `sumOfSquaresOfEvens` using only lambdas with `map`, `filter`, and `fold`
 ```
+> sumOfSquaresOfEvens xs = ...
 > sumOfSquaresOfEvens [1,2,3,4,5,6]
 56
 ```
@@ -2271,21 +2274,15 @@ Because: evens are `[2,4,6]`, squares are `[4,16,36]`, sum is `56`
 
 - Use lambdas to extract all second elements from a list of pairs, double them, keep only those greater than 10, and sum them
 ```
-> fold (\acc x -> acc + x) 0 (filter (\x -> x > 10) (map (\x -> x * 2) (map (\p -> snd p) [(1,5), (2,7), (3,9)])))
-46
-```
-Because: seconds are `[5,7,9]`, doubled `[10,14,18]`, greater than 10 `[14,18]`, sum `32`... wait let me recalculate: `14 + 18 = 32`, not 46. Let me use a different example.
-
-Actually, let me simplify:
-```
-> processData xs = fold (\acc x -> acc + x) 0 (filter (\x -> x > 10) (map (\x -> x * 2) (map (\(a,b) -> b) xs)))
+> processData xs = ...
 > processData [(1,5), (2,7), (3,9)]
 32
 ```
+Because: seconds are `[5,7,9]`, doubled `[10,14,18]`, greater than 10 `[14,18]`, sum `32`
 
 - Create a function that takes a list of numbers and returns a list of strings, where even numbers become "EVEN" and odd numbers become "ODD". Use only a lambda with `map`
 ```
-> map (\x -> if mod x 2 == 0 then "EVEN" else "ODD") [1,2,3,4,5]
+> map (\x -> if ... then ... else ...) [1,2,3,4,5]
 ["ODD","EVEN","ODD","EVEN","ODD"]
 ```
 
