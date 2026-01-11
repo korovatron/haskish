@@ -630,3 +630,28 @@ codeFor (pair:pairs) ww nn
 -- compress "the cat sat on the mat the dog sat on the log"
 -- → [0,3,1,2,0,4,0,5,1,2,0,6]
 -- "the" (4×) = 0, "sat" (2×) = 1, "on" (2×) = 2, others get higher codes
+
+=== Newton's Method - Square Root ===
+-- Compute square root using Newton's method
+-- Iteratively improves guess until close enough
+
+-- Helper: absolute value
+abs n
+  | n < 0     = -n
+  | otherwise = n
+
+-- Square root function
+sqrt n
+  | n < 0     = error "Cannot compute square root of negative number"
+  | n == 0    = 0
+  | otherwise = sqrtHelper n 1.0
+
+sqrtHelper n guess
+  | abs (guess * guess - n) < 0.0001 = guess
+  | otherwise                         = sqrtHelper n ((guess + n / guess) / 2)
+
+-- Tests:
+-- sqrt 16     → 4.0
+-- sqrt 25     → 5.0
+-- sqrt 2      → 1.414...
+-- sqrt 100    → 10.0

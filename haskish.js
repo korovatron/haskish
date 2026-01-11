@@ -587,6 +587,10 @@ class HaskishInterpreter {
                 return !bool;
             },
             'error': (message) => {
+                // Convert Haskish string (array of chars) to JavaScript string
+                if (Array.isArray(message)) {
+                    message = message.join('');
+                }
                 throw new Error(message);
             },
             'mod': (a, b) => {

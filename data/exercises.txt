@@ -309,8 +309,8 @@ Try creating some specialised functions through partial application.
 ```
 > addMr "Spock"
 "Mr. Spock"
-> addMr "Ben"
-"Mr. Ben"
+> addMr "Benn"
+"Mr. Benn"
 ```
 
 **_Why This Matters_**
@@ -1876,6 +1876,11 @@ True
 **Hint:** Use two list comprehensions to extract firsts and seconds separately, or use recursion to build both lists
 
 **~Advanced Challenges:~**
+
+For these challenges, you'll need a `sum` function. Define it first:
+```
+> sum xs = fold (+) 0 xs
+```
 
 - Write `dotProduct` that computes the dot product of two vectors (represented as lists). The dot product is the sum of the products of corresponding elements. **Hint:** First implement `zip` (from above), then use it to pair up elements, multiply and sum
 ```

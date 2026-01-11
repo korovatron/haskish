@@ -237,6 +237,19 @@ fib 0 = 0
 fib 1 = 1
 fib n = fib (n - 1) + fib (n - 2)
 
+Note: This solution works but becomes extremely slow for larger values like fib 35.
+Why? Because it recalculates the same values many, many times!
+
+For example, calculating fib 5:
+- fib 5 calls fib 4 and fib 3
+- fib 4 calls fib 3 and fib 2
+- fib 3 is calculated twice already!
+- This exponential explosion means fib 35 requires billions of function calls
+
+The examples.txt file shows a much faster version called "fastFib" that uses tail 
+recursion with accumulators - it calculates fib 1000 almost instantly by avoiding 
+redundant calculations. This demonstrates that choosing the right algorithm matters!
+
 
 Question
 sumList - adds all numbers in a list
@@ -706,6 +719,7 @@ Question
 dotProduct - computes the dot product of two vectors
 
 Solution
+sum xs = fold (+) 0 xs
 dotProduct xs ys = sum [x * y | (x, y) <- zip xs ys]
 
 
