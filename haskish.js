@@ -1274,45 +1274,57 @@ class HaskishInterpreter {
         }
 
         // Check for infinite range syntax: [start..] or [start,next..]
-        const infiniteRangeMatch = listStr.match(/^(-?\d+)\s*(?:,\s*(-?\d+)\s*)?\.\.\s*$/);
+        // Allow expressions, not just literal numbers
+        const infiniteRangeMatch = listStr.match(/^(.+?)\s*(?:,\s*(.+?)\s*)?\.\.\s*$/);
         if (infiniteRangeMatch) {
-            const start = parseInt(infiniteRangeMatch[1]);
-            const next = infiniteRangeMatch[2] ? parseInt(infiniteRangeMatch[2]) : null;
-            const step = next !== null ? (next - start) : 1;
+            const start = this.evaluate(infiniteRangeMatch[1].trim());
+            const next = infiniteRangeMatch[2] ? this.evaluate(infiniteRangeMatch[2].trim()) : null;
             
-            if (step === 0) {
-                throw new Error('Range step cannot be zero');
+            // Validate that they are numbers
+            if (typeof start === 'number' && (next === null || typeof next === 'number')) {
+                const step = next !== null ? (next - start) : 1;
+                
+                if (step === 0) {
+                    throw new Error('Range step cannot be zero');
+                }
+                
+                return new InfiniteRange(start, step);
             }
-            
-            return new InfiniteRange(start, step);
+            // Not a valid range, fall through to regular list parsing
         }
 
         // Check for finite range syntax: [start..end] or [start,next..end]
-        const rangeMatch = listStr.match(/^(-?\d+)\s*(?:,\s*(-?\d+)\s*)?\.\.\s*(-?\d+)\s*$/);
+        // Allow expressions, not just literal numbers (e.g., [1..n-1])
+        const rangeMatch = listStr.match(/^(.+?)\s*(?:,\s*(.+?)\s*)?\.\.\s*(.+?)\s*$/);
         if (rangeMatch) {
-            const start = parseInt(rangeMatch[1]);
-            const end = parseInt(rangeMatch[3]);
-            const next = rangeMatch[2] ? parseInt(rangeMatch[2]) : null;
+            const start = this.evaluate(rangeMatch[1].trim());
+            const end = this.evaluate(rangeMatch[3].trim());
+            const next = rangeMatch[2] ? this.evaluate(rangeMatch[2].trim()) : null;
             
-            // Calculate step
-            const step = next !== null ? (next - start) : (start <= end ? 1 : -1);
-            
-            if (step === 0) {
-                throw new Error('Range step cannot be zero');
-            }
-            
-            // Generate range
-            const result = [];
-            if (step > 0) {
-                for (let i = start; i <= end; i += step) {
-                    result.push(i);
+            // Validate that they are numbers
+            if (typeof start === 'number' && typeof end === 'number' && (next === null || typeof next === 'number')) {
+                // Calculate step (defaults to 1 if not explicitly specified)
+                const step = next !== null ? (next - start) : 1;
+                
+                if (step === 0) {
+                    throw new Error('Range step cannot be zero');
                 }
-            } else {
-                for (let i = start; i >= end; i += step) {
-                    result.push(i);
+                
+                // Generate range (only if direction is valid)
+                const result = [];
+                if (step > 0 && start <= end) {
+                    for (let i = start; i <= end; i += step) {
+                        result.push(i);
+                    }
+                } else if (step < 0 && start >= end) {
+                    for (let i = start; i >= end; i += step) {
+                        result.push(i);
+                    }
                 }
+                // Otherwise return empty list (e.g., [1..0] or [5..10] with negative step)
+                return result;
             }
-            return result;
+            // Not a valid range, fall through to regular list parsing
         }
 
         const elements = [];

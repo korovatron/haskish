@@ -583,6 +583,16 @@ Solution
 [x | xs <- [[1],[2,3],[4,5,6],[7,8,9,10]], length xs > 2, x <- xs]
 
 
+Question
+Find all perfect numbers from 1 to 100
+
+Solution
+divisors n = [x | x <- [1..n-1], mod n x == 0]
+sum xs = fold (+) 0 xs
+isPerfect n = sum (divisors n) == n
+[n | n <- [1..100], isPerfect n]
+
+
 ================================================================================
 Exercise 14 - Tuples and Destructuring
 ================================================================================

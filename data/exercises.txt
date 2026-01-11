@@ -1580,6 +1580,12 @@ For these challenges, you'll need a `sum` function. Define it first:
 [4,5,6,7,8,9,10]
 ```
 
+- Find all perfect numbers from 1 to 100. A perfect number equals the sum of its proper divisors (divisors less than itself). **Hint:** You'll need a `divisors` function to find all divisors of n less than n, a `sum` function, and an `isPerfect` function to check if the sum of divisors equals n
+```
+> [n | n <- [1..100], ...]
+[6,28]
+```
+
 **_List Comprehensions vs Map/Filter/Fold_**
 
 You might notice that list comprehensions can replace many uses of `map` and `filter`:
