@@ -1,7 +1,7 @@
 HASKISH - POSSIBLE SOLUTIONS TO EXERCISES
 
 This file contains possible solutions to the challenges in exercises.txt.
-Remember: There are often multiple valid solutions to each problem!
+Remember: There are often multiple valid solutions to each problem.
 
 ================================================================================
 Exercise 1 - Using the REPL
@@ -246,7 +246,7 @@ For example, calculating fib 5:
 - fib 3 is calculated twice already!
 - This exponential explosion means fib 35 requires billions of function calls
 
-The examples.txt file shows a much faster version called "fastFib" that uses tail 
+The Recursion examples shows a much faster version called "fastFib" that uses tail 
 recursion with accumulators - it calculates fib 1000 almost instantly by avoiding 
 redundant calculations. This demonstrates that choosing the right algorithm matters!
 
