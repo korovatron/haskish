@@ -655,3 +655,100 @@ sqrtHelper n guess
 -- sqrt 25     → 5.0
 -- sqrt 2      → 1.414...
 -- sqrt 100    → 10.0
+
+=== Polynomial Calculus - Differentiation & Integration ===
+-- Polynomials represented as lists of coefficients [a0, a1, a2, ...]
+-- For polynomial: a0 + a1*x + a2*x^2 + a3*x^3 + ...
+-- Example: [3, -5, 0, 2] represents 3 - 5x + 2x³
+
+-- Evaluate polynomial at a given x value
+-- Uses Horner's method for efficiency: a0 + x*(a1 + x*(a2 + x*a3))
+evalPoly [] x = 0
+evalPoly coeffs x = evalPolyHelper 0 (reverse coeffs) x
+
+evalPolyHelper acc [] x = acc
+evalPolyHelper acc (c:cs) x = evalPolyHelper (acc * x + c) cs x
+
+-- Differentiate polynomial using power rule: d/dx(ax^n) = n*a*x^(n-1)
+polyDerivative [] = []
+polyDerivative [a] = [0]
+polyDerivative (a:rest) = polyDerivHelper rest 1
+
+polyDerivHelper [] n = []
+polyDerivHelper (c:cs) n = (n * c) : polyDerivHelper cs (n + 1)
+
+-- Integrate polynomial: ∫(ax^n)dx = a/(n+1) * x^(n+1) + C
+-- Constant of integration C is assumed to be 0
+polyIntegral coeffs = 0 : polyIntegralHelper coeffs 0
+
+polyIntegralHelper [] n = []
+polyIntegralHelper (c:cs) n = (c / (n + 1)) : polyIntegralHelper cs (n + 1)
+
+-- Add two polynomials
+polyAdd [] ys = ys
+polyAdd xs [] = xs
+polyAdd (x:xs) (y:ys) = (x + y) : polyAdd xs ys
+
+-- Multiply polynomial by a constant
+polyScale k [] = []
+polyScale k (c:cs) = (k * c) : polyScale k cs
+
+-- Multiply two polynomials
+polyMult [] ys = []
+polyMult (x:xs) ys = polyAdd (polyScale x ys) (0 : polyMult xs ys)
+
+-- Remove leading zeros from polynomial
+polyTrim [] = []
+polyTrim cs = polyTrimHelper (reverse cs)
+
+polyTrimHelper [] = []
+polyTrimHelper (c:cs)
+  | c == 0    = polyTrimHelper cs
+  | otherwise = reverse (c:cs)
+
+-- Degree of polynomial (highest power with non-zero coefficient)
+polyDegree [] = 0
+polyDegree cs = length (polyTrim cs) - 1
+
+-- Apply derivative n times
+polyDerivativeN 0 poly = poly
+polyDerivativeN n poly = polyDerivativeN (n - 1) (polyDerivative poly)
+
+-- Tests:
+-- Polynomial: 3 + 2x + x² is represented as [3, 2, 1]
+-- evalPoly [3, 2, 1] 2                      → 11  (3 + 2*2 + 2² = 11)
+-- evalPoly [1, 0, 1] 3                      → 10  (1 + 3² = 10)
+
+-- Derivative: d/dx(3 + 2x + x²) = 2 + 2x
+-- polyDerivative [3, 2, 1]                  → [2, 2]
+
+-- Polynomial: 5 - 6x + 3x² - 2x³ is [5, -6, 3, -2]
+-- polyDerivative [5, -6, 3, -2]             → [-6, 6, -6]  (which is -6 + 6x - 6x²)
+
+-- Second derivative: d²/dx²(x⁴) = 12x²
+-- polyDerivativeN 2 [0, 0, 0, 0, 1]         → [0, 0, 12]
+
+-- Integral: ∫(2 + 2x)dx = 2x + x² (+ C)
+-- polyIntegral [2, 2]                       → [0, 2, 1]
+
+-- Integral: ∫(6x² - 6x)dx = 2x³ - 3x²
+-- polyIntegral [0, -6, 6]                   → [0, 0, -3, 2]
+
+-- Add: (3 + 2x) + (1 + x) = 4 + 3x
+-- polyAdd [3, 2] [1, 1]                     → [4, 3]
+
+-- Multiply: (1 + x) * (1 + x) = 1 + 2x + x²
+-- polyMult [1, 1] [1, 1]                    → [1, 2, 1]
+
+-- Multiply: (2 + x) * (3 - x) = 6 + x - x²
+-- polyMult [2, 1] [3, -1]                   → [6, 1, -1]
+
+-- Fundamental Theorem of Calculus check:
+-- If P'(x) = p(x), then integrating p(x) gives P(x)
+-- Start with [3, 2, 1] (3 + 2x + x²)
+-- polyIntegral (polyDerivative [3, 2, 1])   → [0, 2, 1]  (differs by constant!)
+
+-- Degree examples:
+-- polyDegree [1, 2, 3]                      → 2  (polynomial is degree 2)
+-- polyDegree [5]                            → 0  (constant)
+-- polyDegree [1, 0, 0, 0, 2]                → 4  (degree 4)
