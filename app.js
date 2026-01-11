@@ -1,5 +1,8 @@
 // Haskish App - UI Controller
 
+// Version number
+const HASKISH_VERSION = '1.0.0';
+
 const interpreter = new HaskishInterpreter();
 
 // REPL command history (for up/down arrow navigation)
@@ -151,6 +154,11 @@ const closeAbout = document.getElementById('closeAbout');
 
 aboutButton.addEventListener('click', function() {
     aboutOverlay.classList.add('visible');
+    // Display version number
+    const versionDisplay = document.getElementById('versionDisplay');
+    if (versionDisplay) {
+        versionDisplay.textContent = `Version ${HASKISH_VERSION}`;
+    }
     closeMenuFunc();
 });
 
