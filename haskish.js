@@ -2359,7 +2359,11 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1).split(''); // Convert to char array
+                if (token.type === 'string') {
+                    const str = token.value.slice(1, -1);
+                    // Single-char strings are Chars, not Strings (arrays)
+                    return str.length === 1 ? str : str.split('');
+                }
                 if (token.type === 'paren') {
                     // Handle unit () as null
                     return token.value.trim() === '' ? null : this.evaluate(token.value);
@@ -2393,7 +2397,11 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1).split(''); // Convert to char array
+                if (token.type === 'string') {
+                    const str = token.value.slice(1, -1);
+                    // Single-char strings are Chars, not Strings (arrays)
+                    return str.length === 1 ? str : str.split('');
+                }
                 if (token.type === 'paren') {
                     // Handle unit () as null
                     return token.value.trim() === '' ? null : this.evaluate(token.value);
@@ -2436,7 +2444,11 @@ class HaskishInterpreter {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1).split(''); // Convert to char array
+                if (token.type === 'string') {
+                    const str = token.value.slice(1, -1);
+                    // Single-char strings are Chars, not Strings (arrays)
+                    return str.length === 1 ? str : str.split('');
+                }
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
                     // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
