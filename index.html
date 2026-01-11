@@ -13,20 +13,20 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Free Haskell-style functional programming playground for teachers and students. Practice recursion, pattern matching, higher-order functions and more with no software installation. Covers all AQA Computer Science requirements and much more.">
-    <meta name="keywords" content="Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, map, filter, fold, free online programming, education, teachers, students, no installation">
+    <meta name="description" content="Free Haskell-style functional programming playground for teachers and students. Practice recursion, pattern matching, list comprehensions, higher-order functions, lambdas, tuples and more with no software installation. Includes guided exercises and examples. Works offline as a PWA. Covers all AQA Computer Science requirements and much more.">
+    <meta name="keywords" content="Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, map, filter, fold, list comprehensions, lambda functions, tuples, currying, lazy evaluation, free online programming, REPL, interactive coding, education, teachers, students, no installation, PWA, offline, exercises, tutorials">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Haskish - Functional Programming in Your Browser">
-    <meta property="og:description" content="Free Haskell-style functional programming playground suitable for AQA Computer Science and beyond. No installation required.">
+    <meta property="og:description" content="Free Haskell-style functional programming playground with guided exercises, list comprehensions, lambdas, and more. Perfect for AQA Computer Science students and teachers. No installation required - works offline as a PWA.">
     <meta property="og:image" content="https://www.korovatron.co.uk/haskish/images/preview-v3.png">
     <meta property="og:url" content="https://www.korovatron.co.uk/haskish">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Haskish - Functional Programming in Your Browser">
-    <meta name="twitter:description" content="Free Haskell-style functional programming playground suitable for AQA Computer Science and beyond. No installation required.">
+    <meta name="twitter:description" content="Free Haskell-style functional programming playground with guided exercises, list comprehensions, lambdas, and more. Perfect for AQA Computer Science students and teachers. No installation required - works offline as a PWA.">
     <meta name="twitter:image" content="https://www.korovatron.co.uk/haskish/images/preview-v3.png">
     
     <!-- PWA -->
@@ -128,21 +128,26 @@
                 </button>
             </div>
             <div class="about-content">
-                <p><strong>Haskish</strong> is a fun, no-fuss introduction to functional programming with Haskell-style syntax. No installation, no setup - just open your browser and start exploring.</p>
+                <p><strong>Haskish</strong> is a fun, no-fuss introduction to functional programming with Haskell-style syntax. No installation, no setup - just open your browser and start exploring. Can be installed as a Progressive Web App for offline use.</p>
                 <p>Perfect for students, teachers, and anyone curious about functional programming, Haskish combines ease of use with powerful features including:</p>
                 <ul>
+                    <li>Interactive REPL with syntax highlighting and helpful commands (:help, :functions, :vars, :show, :info)</li>
+                    <li>Guided exercises and examples with comprehensive tutorials</li>
+                    <li>Pattern matching, recursion, guards, and if/then/else expressions</li>
                     <li>List comprehensions with mathematical set notation</li>
-                    <li>Full list operations (cons :, concatenation ++, indexing !!, pattern matching)</li>
-                    <li>Recursion, guards, and if/then/else expressions</li>
-                    <li>Higher-order functions (map, filter, fold)</li>
-                    <li>Function composition and operator sections</li>
+                    <li>Full list operations (cons :, concatenation ++, indexing !!, ranges, infinite lists)</li>
+                    <li>Higher-order functions (map, filter, fold, foldr)</li>
+                    <li>Lambda/anonymous functions with flexible syntax</li>
+                    <li>Function composition (.) and operator sections</li>
                     <li>Partial application (currying)</li>
-                    <li>Lambda/anonymous functions</li>
-                    <li>Infinite ranges with lazy evaluation</li>
-                    <li>Tuples with pattern destructuring and character manipulation (ord/chr)</li>
+                    <li>Tuples with pattern destructuring (support mixed types)</li>
+                    <li>Character manipulation (ord/chr) and string operations</li>
+                    <li>Lazy evaluation with infinite ranges</li>
+                    <li>Save/load functionality to preserve your work</li>
+                    <li>Built-in functions reference panel</li>
                 </ul>
                 <p>Haskish covers the AQA A Level Computer Science specification (4.12) and much, much more for curious students (and teachers!).</p>
-                <p><strong>Note:</strong> Like Haskell, strings are treated as lists of characters, so all list functions (head, tail, map, filter, etc.) work on strings.</p>
+                <p><strong>Note:</strong> Like Haskell, strings are treated as lists of characters ([Char]), so all list functions (head, tail, map, filter, etc.) work on strings.</p>
                 <p class="about-footer">Created by Neil Kendall © 2025-2026<br>More @ <a href="https://www.korovatron.co.uk" target="_blank">www.korovatron.co.uk</a></p>
             </div>
         </div>
@@ -243,8 +248,11 @@
                 
                 <h3>REPL Commands</h3>
                 <ul>
-                    <li><code>:show</code> - Show all defined functions and variables</li>
                     <li><code>:help</code> - Show all available REPL commands</li>
+                    <li><code>:show</code> - Show all defined functions and variables</li>
+                    <li><code>:functions</code> - List all user-defined functions</li>
+                    <li><code>:vars</code> - List all user-defined variables</li>
+                    <li><code>:info functionName</code> - Show definition(s) of a specific function</li>
                 </ul>
             </div>
         </div>
