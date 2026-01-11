@@ -758,6 +758,14 @@ Now try the following commands, carefully noting any **errors**:
 - What is the problem with `tail head heroesAndVillains`?
 - What does the result of `tail (head heroesAndVillains)` tell you about how strings are stored?
 
+**~Note on Strings:~**
+
+In Haskish (like Haskell), **String = [Char]**. This means strings are actually lists of characters!
+
+When you write `"hello"`, it's equivalent to `['h','e','l','l','o']`
+
+This is why you can use list functions like `head`, `tail`, `map`, and `filter` on strings, and why you can pattern match on strings with `(x:xs)`. The result of `tail (head heroesAndVillains)` demonstrates this: taking the head gives you a string, and taking the tail of that string gives you the remaining characters!
+
 Finally try out these code snippets:
 ```
 > length heroesAndVillains == 6
@@ -1390,7 +1398,7 @@ This keeps only numbers that are even AND greater than 10.
 > [x * 2 | x <- [1..10], x > 5]
 [12,14,16,18,20]
 
-> [x | x <- "Hello World", x /= 'o']
+> [c | c <- "Hello World", c /= 'o']
 "Hell Wrld"
 ```
 
@@ -1460,19 +1468,21 @@ This finds pairs where x < y, x is even, and y is odd.
 
 **_String Comprehensions_**
 
-Remember that strings are lists of characters, so comprehensions work on them too!
+Remember that in Haskish (and Haskell), **String = [Char]** - strings are lists of characters! This means comprehensions work on them too:
 
 ```
 > [c | c <- "Hello World", c /= ' ']
-["H","e","l","l","o","W","o","r","l","d"]
+"HelloWorld"
 
 > isVowel c = c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'
 > [c | c <- "functional", isVowel c]
-["u","i","o","a"]
+"uioa"
 
 > [[c] | c <- "HELLO"]
-[["H"],["E"],["L"],["L"],["O"]]
+["H","E","L","L","O"]
 ```
+
+Notice that when we iterate over `"HELLO"`, each element `c` is a single character. In the last example, `[c]` creates a one-character string for each character.
 
 **~Challenges:~**
 
@@ -1514,7 +1524,7 @@ Remember that strings are lists of characters, so comprehensions work on them to
 ```
 > isVowel c = c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'
 > [c | c <- "Functional Programming", ...]
-["u","i","o","a","o","i"]
+"uioaoi"
 ```
 
 **~Multiple Generators:~**
