@@ -1791,8 +1791,11 @@ class HaskishInterpreter {
             return '[' + value.map(v => this.formatForSubstitution(v)).join(',') + ']';
         }
         if (typeof value === 'string') {
-            // Single character - format as double-quoted string for tokenizer
-            // The tokenizer will convert "A" back to ['A'] which is correct
+            // Single character - must use SINGLE quotes so it stays as Char, not becomes String array
+            if (value.length === 1) {
+                return "'" + value + "'";
+            }
+            // Multi-char string (shouldn't normally happen, but handle it)
             return '"' + value + '"';
         }
         if (typeof value === 'boolean') {
