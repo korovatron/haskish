@@ -1591,11 +1591,17 @@ Notice that when we iterate over `"HELLO"`, each element `c` is a single charact
 
 You might notice that list comprehensions can replace many uses of `map` and `filter`:
 
-| Operation | Using map/filter | Using comprehension |
-|-----------|-----------------|---------------------|
-| Transform | `map (*2) [1..5]` | `[x*2 | x <- [1..5]]` |
-| Filter | `filter (\x -> mod x 2 == 0) [1..10]` | `[x | x <- [1..10], mod x 2 == 0]` |
-| Both | `map (*2) (filter (\x -> mod x 2 == 0) [1..10])` | `[x*2 | x <- [1..10], mod x 2 == 0]` |
+**Transform:**
+- Using map/filter: `map (*2) [1..5]`
+- Using comprehension: `[x*2 | x <- [1..5]]`
+
+**Filter:**
+- Using map/filter: `filter (\x -> mod x 2 == 0) [1..10]`
+- Using comprehension: `[x | x <- [1..10], mod x 2 == 0]`
+
+**Both (filter + transform):**
+- Using map/filter: `map (*2) (filter (\x -> mod x 2 == 0) [1..10])`
+- Using comprehension: `[x*2 | x <- [1..10], mod x 2 == 0]`
 
 Choose based on readability:
 - **List comprehensions** are great when you want a concise, mathematical expression
