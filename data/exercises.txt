@@ -1615,7 +1615,7 @@ List comprehensions are powerful because they:
 - **Are concise** - express complex list operations in a single, readable line
 - **Combine filtering and mapping** - no need to chain multiple operations
 - **Support multiple generators** - naturally express combinations and nested iterations
-- **Are optimized** - the compiler can often optimize comprehensions better than explicit recursion
+- **Are optimised** - the compiler can often optimise comprehensions better than explicit recursion
 
 List comprehensions appear in Python, Haskell, Scala, and other modern languages. They're one of the most elegant features borrowed from mathematics into programming!
 
