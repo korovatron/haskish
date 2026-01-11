@@ -1562,12 +1562,6 @@ Notice that when we iterate over `"HELLO"`, each element `c` is a single charact
 
 **~Advanced Challenges:~**
 
-- Create a list of all numbers from 1 to 100 that are perfect squares. **Hint:** Check if `sqrt x == fromIntegral (floor (sqrt x))`
-```
-> [x | x <- [1..100], ...]
-[1,4,9,16,25,36,49,64,81,100]
-```
-
 - Generate the first 10 triangular numbers (1, 3, 6, 10, 15, ...) where the nth triangular number is the sum of integers from 1 to n. **Hint:** Use `sum [1..n]`
 ```
 > [sum [1..n] | ...]
@@ -1620,5 +1614,330 @@ List comprehensions are powerful because they:
 
 List comprehensions appear in Python, Haskell, Scala, and other modern languages. They're one of the most elegant features borrowed from mathematics into programming!
 
+=== Tuples and Destructuring ===
+
+In functional programming, **_tuples_** are fixed-size collections that can hold values of different types. Unlike lists (which have variable length and all elements must be the same type), tuples have a fixed number of elements that can each be of different types.
+
+**_Creating Tuples_**
+
+Tuples are created using parentheses and commas:
+
+```
+> (1, 2)
+(1,2)
+
+> ("Alice", 25, True)
+("Alice",25,True)
+
+> ('x', "hello", 42)
+('x',"hello",42)
+```
+
+The most common tuples are **_pairs_** (2 elements) and **_triples_** (3 elements):
+
+```
+> pair = (10, 20)
+> triple = ("John", 30, 175.5)
+> coordinate = (45.5, -122.6)
+```
+
+**_Why Use Tuples?_**
+
+Tuples are useful when you want to:
+- **Return multiple values** from a function
+- **Group related data** temporarily without defining a new type
+- **Represent fixed structures** like coordinates, key-value pairs, or records
+
+**_Pattern Matching with Tuples (Destructuring)_**
+
+The most powerful way to work with tuples is **_pattern matching_** (also called **_destructuring_**). This lets you extract all elements at once:
+
+```
+> addPair (x, y) = x + y
+> addPair (3, 5)
+8
+
+> fullName (first, last) = first ++ " " ++ last
+> fullName ("Ada", "Lovelace")
+"Ada Lovelace"
+```
+
+Notice how `(x, y)` in the function definition matches the structure of the input tuple and binds `x` to the first element and `y` to the second.
+
+**_Destructuring Triples and Larger Tuples_**
+
+You can pattern match on tuples of any size:
+
+```
+> addTriple (x, y, z) = x + y + z
+> addTriple (10, 20, 30)
+60
+
+> getMiddle (a, b, c) = b
+> getMiddle (1, 2, 3)
+2
+
+> describe (name, age) = name ++ " is a person"
+> describe ("Bob", 42)
+"Bob is a person"
+```
+
+**_Nested Tuples_**
+
+Tuples can contain other tuples, and you can destructure them too:
+
+```
+> addPairs ((a, b), (c, d)) = (a + c, b + d)
+> addPairs ((1, 2), (3, 4))
+(4,6)
+
+> swapNested ((a, b), c) = ((b, a), c)
+> swapNested ((1, 2), 3)
+((2,1),3)
+```
+
+**_Tuples in Lists_**
+
+You can have lists of tuples, which is extremely useful:
+
+```
+> pairs = [(1, 2), (3, 4), (5, 6)]
+> head pairs
+(1,2)
+
+> firstElements xs = [x | (x, y) <- xs]
+> firstElements [(1, 2), (3, 4), (5, 6)]
+[1,3,5]
+
+> sumPairs xs = [x + y | (x, y) <- xs]
+> sumPairs [(1, 2), (3, 4), (5, 6)]
+[3,7,11]
+```
+
+Notice how `(x, y) <- xs` destructures each pair in the list!
+
+**_Processing Lists of Pairs_**
+
+```
+> multiplyPairs xs = [x * y | (x, y) <- xs]
+> multiplyPairs [(2, 3), (4, 5), (6, 7)]
+[6,20,42]
+
+> swapPairs xs = [(y, x) | (x, y) <- xs]
+> swapPairs [(1, 2), (3, 4)]
+[(2,1),(4,3)]
+```
+
+**_Using Tuples with Map and Fold_**
+
+Tuples work well with higher-order functions. You can define helper functions to extract elements:
+
+```
+> fst (x, y) = x
+> snd (x, y) = y
+> map fst [(1, 2), (3, 4), (5, 6)]
+[1,3,5]
+
+> map snd [(1, 2), (3, 4), (5, 6)]
+[2,4,6]
+
+> sumFirsts xs = fold (+) 0 (map fst xs)
+> sumFirsts [(1, 10), (2, 20), (3, 30)]
+6
+```
+
+**~Challenges:~**
+
+**~Basic Tuple Operations:~**
+
+- Write `fst` that returns the first element of a pair
+```
+> fst (10, 20)
+10
+> fst ("Alice", 25)
+"Alice"
+```
+
+- Write `snd` that returns the second element of a pair
+```
+> snd (10, 20)
+20
+> snd ("Alice", 25)
+25
+```
+
+- Write `swap` that swaps the elements of a pair
+```
+> swap (1, 2)
+(2,1)
+> swap ("hello", "world")
+("world","hello")
+```
+
+- Write `both` that applies a function to both elements of a pair
+```
+> both (*2) (3, 5)
+(6,10)
+> both (++ "!") ("hello", "world")
+("hello!","world!")
+```
+
+- Write `first` that applies a function to only the first element of a pair
+```
+> first (*2) (3, 5)
+(6,5)
+> first (++ "!") ("hello", "world")
+("hello!","world")
+```
+
+- Write `second` that applies a function to only the second element of a pair
+```
+> second (*2) (3, 5)
+(3,10)
+> second (++ "!") ("hello", "world")
+("hello","world!")
+```
+
+**~Working with Triples:~**
+
+- Write `getFirst` that returns the first element of a triple
+```
+> getFirst (1, 2, 3)
+1
+> getFirst ("Alice", 25, True)
+"Alice"
+```
+
+- Write `getThird` that returns the third element of a triple
+```
+> getThird (1, 2, 3)
+3
+> getThird ("Alice", 25, True)
+True
+```
+
+- Write `rotateTriple` that rotates elements: (a,b,c) becomes (b,c,a)
+```
+> rotateTriple (1, 2, 3)
+(2,3,1)
+> rotateTriple ("x", "y", "z")
+("y","z","x")
+```
+
+**~List of Tuples Challenges:~**
+
+- Write `sumPairList` that sums the elements in each pair and returns a list of sums
+```
+> sumPairList [(1, 2), (3, 4), (5, 6)]
+[3,7,11]
+> sumPairList [(10, 20), (30, 40)]
+[30,70]
+```
+
+- Write `filterByFirst` that keeps only pairs where the first element is greater than a given value
+```
+> filterByFirst 5 [(3, 10), (7, 20), (2, 30), (8, 40)]
+[(7,20),(8,40)]
+> filterByFirst 0 [(-1, 5), (2, 10), (-3, 15)]
+[(2,10)]
+```
+
+- Write `maxPair` that returns the maximum of each pair
+```
+> maxPairs [(3, 7), (10, 5), (8, 12)]
+[7,10,12]
+> maxPairs [(1, 1), (5, 3)]
+[1,5]
+```
+
+- Write `zip` that takes two lists and returns a list of pairs, combining corresponding elements (stop when either list runs out)
+```
+> zip [1, 2, 3] [4, 5, 6]
+[(1,4),(2,5),(3,6)]
+> zip "abc" [1, 2, 3]
+[('a',1),('b',2),('c',3)]
+> zip [1, 2] [10, 20, 30, 40]
+[(1,10),(2,20)]
+```
+**Hint:** Use pattern matching with `(x:xs)` and `(y:ys)`, base case is when either list is empty
+
+- Write `unzip` that separates a list of pairs into two lists (this is the opposite of `zip`)
+```
+> unzip [(1, 4), (2, 5), (3, 6)]
+([1,2,3],[4,5,6])
+> unzip [('a', 1), ('b', 2), ('c', 3)]
+("abc",[1,2,3])
+```
+**Hint:** Use two list comprehensions to extract firsts and seconds separately, or use recursion to build both lists
+
+**~Advanced Challenges:~**
+
+- Write `dotProduct` that computes the dot product of two vectors (represented as lists). The dot product is the sum of the products of corresponding elements. **Hint:** First implement `zip` (from above), then use it to pair up elements, multiply and sum
+```
+> dotProduct [1, 2, 3] [4, 5, 6]
+32
+> dotProduct [2, 3] [4, 5]
+23
+```
+Because: `1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32` and `2*4 + 3*5 = 8 + 15 = 23`
+
+- Write `zipWith` that takes a function and two lists, and combines them element-wise using that function
+```
+> zipWith (+) [1, 2, 3] [4, 5, 6]
+[5,7,9]
+> zipWith (*) [2, 3, 4] [5, 6, 7]
+[10,18,28]
+> zipWith max [1, 5, 3] [4, 2, 6]
+[4,5,6]
+```
+**Hint:** First `zip` the lists (using your `zip` function from above), then `map` the function over pairs
+
+- Write `enumerate` that pairs each element with its index (starting from 0)
+```
+> enumerate ["apple", "banana", "cherry"]
+[(0,"apple"),(1,"banana"),(2,"cherry")]
+> enumerate [10, 20, 30]
+[(0,10),(1,20),(2,30)]
+```
+**Hint:** Use a helper function with an accumulator to track the index, or use your `zip` function with an infinite list `[0..]`
+
+- Write `splitAt` that takes a number n and a list, and returns a pair of lists: the first n elements and the remaining elements
+```
+> splitAt 2 [1, 2, 3, 4, 5]
+([1,2],[3,4,5])
+> splitAt 3 "hello"
+("hel","lo")
+```
+
+**~Tuples with Pattern Matching in Recursion:~**
+
+- Write `pairwiseSum` that takes two lists and returns a list of their pairwise sums (stop when either list runs out)
+```
+> pairwiseSum [1, 2, 3] [4, 5, 6]
+[5,7,9]
+> pairwiseSum [1, 2] [10, 20, 30, 40]
+[11,22]
+```
+**Hint:** Use pattern matching with `(x:xs)` and `(y:ys)`, and handle the base cases
+
+- Write `mergeAlternate` that merges two lists by alternating elements
+```
+> mergeAlternate [1, 2, 3] [10, 20, 30]
+[1,10,2,20,3,30]
+> mergeAlternate "abc" "123"
+"a1b2c3"
+```
+
+**_Why This Matters_**
+
+Tuples and destructuring are fundamental to functional programming because they:
+
+- **Allow multiple return values** - functions can return complex data without defining custom types
+- **Enable elegant pattern matching** - destructure data exactly where you use it
+- **Provide type safety** - tuples of different sizes are different types
+- **Simplify data processing** - combine with `map` and comprehensions for powerful transformations
+- **Express mathematical concepts** - coordinates, points, pairs, relations are all naturally tuples
+
+Mastering tuples and destructuring will make your code more concise and expressive. Combined with pattern matching, they form one of the most elegant features of functional programming!
 
 
