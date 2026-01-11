@@ -10,7 +10,29 @@ class Lambda {
     }
 
     apply(arg) {
-        // Create a binding for the parameter, merging with captured closure
+        // Check if parameter is a tuple pattern like (x,y)
+        if (this.param.startsWith('(') && this.param.endsWith(')')) {
+            // Extract variable names from tuple pattern
+            const tuplePattern = this.param.slice(1, -1); // Remove outer parens
+            const varNames = tuplePattern.split(',').map(v => v.trim());
+            
+            // Check if arg is a tuple
+            if (arg && arg._isTuple && arg.elements) {
+                if (arg.elements.length !== varNames.length) {
+                    throw new Error(`Tuple pattern ${this.param} expects ${varNames.length} elements but got ${arg.elements.length}`);
+                }
+                // Create bindings for each variable in the pattern
+                const bindings = { ...this.closure };
+                for (let i = 0; i < varNames.length; i++) {
+                    bindings[varNames[i]] = arg.elements[i];
+                }
+                return this.interpreter.evaluateWithBindings(this.body, bindings);
+            } else {
+                throw new Error(`Expected tuple for pattern ${this.param} but got ${typeof arg}`);
+            }
+        }
+        
+        // Regular single parameter binding
         const bindings = { ...this.closure, [this.param]: arg };
         return this.interpreter.evaluateWithBindings(this.body, bindings);
     }
@@ -1035,15 +1057,33 @@ class HaskishInterpreter {
                 }
                 const parenContent = expr.slice(i + 1, j - 1).trim();
                 
-                // Check for tuple (contains commas at depth 0)
+                // Check for tuple (contains commas at depth 0, not inside strings)
                 let hasTupleComma = false;
                 let tupleDepth = 0;
+                let inString = false;
+                let stringChar = null;
                 for (let k = 0; k < parenContent.length; k++) {
-                    if (parenContent[k] === '(' || parenContent[k] === '[') tupleDepth++;
-                    if (parenContent[k] === ')' || parenContent[k] === ']') tupleDepth--;
-                    if (tupleDepth === 0 && parenContent[k] === ',') {
-                        hasTupleComma = true;
-                        break;
+                    const ch = parenContent[k];
+                    
+                    // Track string boundaries
+                    if ((ch === '"' || ch === "'") && (k === 0 || parenContent[k - 1] !== '\\')) {
+                        if (!inString) {
+                            inString = true;
+                            stringChar = ch;
+                        } else if (ch === stringChar) {
+                            inString = false;
+                            stringChar = null;
+                        }
+                    }
+                    
+                    // Only track depth and check for commas outside of strings
+                    if (!inString) {
+                        if (ch === '(' || ch === '[') tupleDepth++;
+                        if (ch === ')' || ch === ']') tupleDepth--;
+                        if (tupleDepth === 0 && ch === ',') {
+                            hasTupleComma = true;
+                            break;
+                        }
                     }
                 }
                 
@@ -1316,17 +1356,36 @@ class HaskishInterpreter {
         const elements = [];
         let current = '';
         let depth = 0;
+        let inString = false;
+        let stringChar = null;
 
-        for (let char of tupleStr) {
-            if (char === '(' || char === '[') depth++;
-            if (char === ')' || char === ']') depth--;
+        for (let i = 0; i < tupleStr.length; i++) {
+            const char = tupleStr[i];
             
-            if (char === ',' && depth === 0) {
-                elements.push(this.evaluate(current.trim()));
-                current = '';
-            } else {
-                current += char;
+            // Track string boundaries
+            if ((char === '"' || char === "'") && (i === 0 || tupleStr[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = char;
+                } else if (char === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
             }
+            
+            // Only track depth and split on commas outside of strings
+            if (!inString) {
+                if (char === '(' || char === '[') depth++;
+                if (char === ')' || char === ']') depth--;
+                
+                if (char === ',' && depth === 0) {
+                    elements.push(this.evaluate(current.trim()));
+                    current = '';
+                    continue;
+                }
+            }
+            
+            current += char;
         }
 
         if (current.trim()) {
@@ -2458,7 +2517,8 @@ class HaskishInterpreter {
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
                     // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
-                    const lambdaMatch = token.value.match(/^\\?([\w\s]+)\s*->\s*(.+)$/);
+                    // Also support tuple patterns like \(x,y) -> x + y
+                    const lambdaMatch = token.value.match(/^\\?([\w\s().,]+)\s*->\s*(.+)$/);
                     if (lambdaMatch) {
                         const [, paramsStr, body] = lambdaMatch;
                         const params = paramsStr.trim().split(/\s+/);

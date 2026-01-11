@@ -1940,4 +1940,366 @@ Tuples and destructuring are fundamental to functional programming because they:
 
 Mastering tuples and destructuring will make your code more concise and expressive. Combined with pattern matching, they form one of the most elegant features of functional programming!
 
+=== Lambda Functions ===
+
+You've seen **_lambda functions_** (also called **_anonymous functions_**) mentioned briefly before. Now it's time to explore them in depth.
+
+**_What is a Lambda Function?_**
+
+A lambda function is a function without a name. You create it on the spot when you need it, use it, and don't save it for later. Think of it as a "disposable" function.
+
+**_Lambda Syntax_**
+
+In Haskish, lambda functions use the backslash `\` (which looks like the Greek letter λ "lambda"):
+
+```
+\parameter -> expression
+```
+
+The `\` starts the lambda, followed by the parameter(s), then `->`, then the expression that becomes the result.
+
+**Basic Examples:**
+
+```
+> (\x -> x * 2) 5
+10
+
+> (\x -> x + 10) 7
+17
+
+> (\s -> s ++ "!") "hello"
+"hello!"
+```
+
+Notice how we put the lambda in parentheses `(\x -> x * 2)` and then apply it to an argument.
+
+Lambdas are also commonly used with higher-order functions like `map`:
+
+```
+> map (\x -> x * 2) [1,2,3]
+[2,4,6]
+
+> map (\s -> s ++ "!") ["hello", "world"]
+["hello!","world!"]
+```
+
+**_Multiple Parameters_**
+
+Lambda functions can take multiple parameters:
+
+```
+> add = \x y -> x + y
+> add 3 5
+8
+
+> calculate = \a b c -> a * b + c
+> calculate 2 3 4
+10
+
+> combine = \x y -> x ++ " and " ++ y
+> combine "cats" "dogs"
+"cats and dogs"
+```
+
+**_Why Use Lambda Functions?_**
+
+Lambda functions are useful when:
+
+1. **You need a simple function only once** - no need to give it a name
+2. **The function is too trivial to name** - naming it might make code less clear
+3. **You're passing a function as an argument** - especially with `map`, `filter`, `fold`
+
+**_Lambdas with Map_**
+
+Instead of defining a named function, you can use a lambda directly:
+
+**With named function:**
+```
+> double x = x * 2
+> map double [1,2,3,4]
+[2,4,6,8]
+```
+
+**With lambda:**
+```
+> map (\x -> x * 2) [1,2,3,4]
+[2,4,6,8]
+```
+
+More examples:
+```
+> map (\x -> x + 1) [1,2,3,4,5]
+[2,3,4,5,6]
+
+> map (\x -> x * x) [1,2,3,4]
+[1,4,9,16]
+
+> map (\s -> s ++ "!") ["hello", "world"]
+["hello!","world!"]
+
+> map (\x -> x * 2 + 1) [1,2,3]
+[3,5,7]
+```
+
+**_Lambdas with Filter_**
+
+Lambdas are perfect for quick predicates:
+
+```
+> filter (\x -> x > 5) [1,3,7,2,9,4]
+[7,9]
+
+> filter (\x -> mod x 2 == 0) [1,2,3,4,5,6]
+[2,4,6]
+
+> filter (\s -> head s == 'a') ["apple", "banana", "apricot"]
+["apple","apricot"]
+
+> filter (\x -> x /= ' ') "hello world"
+"helloworld"
+```
+
+**_Lambdas with Fold_**
+
+```
+> fold (\acc x -> acc + x) 0 [1,2,3,4]
+10
+
+> fold (\acc x -> acc * x) 1 [1,2,3,4]
+24
+
+> fold (\acc x -> x : acc) [] [1,2,3]
+[3,2,1]
+```
+
+The last example reverses a list! The accumulator starts as `[]`, and we cons each element onto the front.
+
+**_Combining Map, Filter, and Lambdas_**
+
+```
+> map (\x -> x * 2) (filter (\x -> x > 3) [1,2,3,4,5,6])
+[8,10,12]
+
+> fold (\acc x -> acc + x) 0 (map (\x -> x * x) [1,2,3,4])
+30
+```
+
+The second example squares `[1,4,9,16]` then sums them `= 30`
+
+**_Lambdas in List Comprehensions_**
+
+You can use lambdas inside list comprehensions too:
+
+```
+> [(\x -> x * 2) y | y <- [1,2,3,4]]
+[2,4,6,8]
+
+> map (\(x,y) -> x + y) [(1,2), (3,4), (5,6)]
+[3,7,11]
+```
+
+The second example uses a lambda with pattern matching on tuples!
+
+**_Returning Lambda Functions_**
+
+Functions can return lambda functions:
+
+```
+> makeAdder n = \x -> x + n
+> addTen = makeAdder 10
+> addTen 5
+15
+
+> makeMultiplier m = \x -> x * m
+> triple = makeMultiplier 3
+> triple 7
+21
+```
+
+This is what you saw earlier in the "First-Class Functions" exercise!
+
+**_Lambdas vs Named Functions_**
+
+**When to use lambdas:**
+- Simple, one-time use functions
+- Very short operations (like `\x -> x * 2`)
+- Inline with `map`, `filter`, `fold`
+
+**When to use named functions:**
+- Complex logic that's hard to read in one line
+- Functions you'll use multiple times
+- Functions that deserve a descriptive name for clarity
+
+**Compare:**
+
+```
+> map (\x -> x * 2 + 1) [1,2,3]
+[3,5,7]
+```
+
+vs
+
+```
+> doubleAndAddOne x = x * 2 + 1
+> map doubleAndAddOne [1,2,3]
+[3,5,7]
+```
+
+The lambda is fine for simple cases. The named function is better if the logic is used elsewhere or is complex.
+
+**_Operator Sections vs Lambdas_**
+
+Sometimes operator sections are clearer than lambdas:
+
+```
+> map (\x -> x * 2) [1,2,3]
+[2,4,6]
+
+> map (*2) [1,2,3]
+[2,4,6]
+```
+
+The operator section `(*2)` is more concise! But lambdas are more flexible:
+
+```
+> map (\x -> 2 * x + 1) [1,2,3]
+[3,5,7]
+```
+
+You can't express this with a simple operator section.
+
+**~Challenges:~**
+
+**~Basic Lambda Challenges:~**
+
+- Use a lambda with `map` to convert a list of numbers to their negatives
+```
+> map (\x -> ...) [1,2,3,4,5]
+[-1,-2,-3,-4,-5]
+```
+
+- Use a lambda with `filter` to keep only strings longer than 3 characters. **Hint:** Use `length`
+```
+> filter (\s -> ...) ["hi", "hello", "bye", "world"]
+["hello","world"]
+```
+
+- Use a lambda with `map` to extract the second element from each pair
+```
+> map (\p -> ...) [(1,2), (3,4), (5,6)]
+[2,4,6]
+```
+
+- Use a lambda with `fold` to multiply all numbers in a list
+```
+> fold (\acc x -> ...) 1 [2,3,4]
+24
+```
+
+**~Intermediate Challenges:~**
+
+- Use `map` with a lambda to add 10 to numbers greater than 5, but keep numbers 5 or less unchanged. **Hint:** Use `if-then-else` inside the lambda
+```
+> map (\x -> if x > 5 then x + 10 else x) [1,3,6,8,2,9]
+[1,3,16,18,2,19]
+```
+
+- Use `filter` with a lambda to keep only pairs where the first element is less than the second
+```
+> filter (\p -> ...) [(1,2), (5,3), (2,8), (4,4)]
+[(1,2),(2,8)]
+```
+
+- Write a function `applyTwice` that takes a function and a value, and applies the function twice. Test it with a lambda
+```
+> applyTwice (\x -> x * 2) 3
+12
+> applyTwice (\x -> x ++ "!") "hi"
+"hi!!"
+```
+
+- Use `map` with a lambda that takes a pair and returns a pair with the elements swapped
+```
+> map (\pair -> ...) [(1,2), (3,4), (5,6)]
+[(2,1),(4,3),(6,5)]
+```
+
+**~Advanced Challenges:~**
+
+- Use `fold` with a lambda to reverse a list
+```
+> fold (\acc x -> ...) [] [1,2,3,4]
+[4,3,2,1]
+```
+
+- Write `filterMap` that filters a list with one lambda and then maps another lambda over the result
+```
+> filterMap (\x -> x > 2) (\x -> x * 10) [1,2,3,4,5]
+[30,40,50]
+```
+
+- Use `map` with a lambda to apply different functions to odd and even numbers: multiply odd by 3, even by 2
+```
+> map (\x -> if mod x 2 == 0 then x * 2 else x * 3) [1,2,3,4,5]
+[3,4,9,8,15]
+```
+
+- Write `compose` that takes two functions and returns a lambda that applies them in sequence (function composition using lambdas)
+```
+> compose f g = \x -> f (g x)
+> double x = x * 2
+> addOne x = x + 1
+> doubleThenAdd = compose addOne double
+> doubleThenAdd 5
+11
+```
+
+- Use `fold` with a lambda to find the maximum element in a list (assume non-empty list)
+```
+> fold (\acc x -> if x > acc then x else acc) (head [3,7,2,9,1]) (tail [3,7,2,9,1])
+9
+```
+
+**~Combining Everything:~**
+
+- Write `sumOfSquaresOfEvens` using only lambdas with `map`, `filter`, and `fold`
+```
+> sumOfSquaresOfEvens [1,2,3,4,5,6]
+56
+```
+Because: evens are `[2,4,6]`, squares are `[4,16,36]`, sum is `56`
+
+- Use lambdas to extract all second elements from a list of pairs, double them, keep only those greater than 10, and sum them
+```
+> fold (\acc x -> acc + x) 0 (filter (\x -> x > 10) (map (\x -> x * 2) (map (\p -> snd p) [(1,5), (2,7), (3,9)])))
+46
+```
+Because: seconds are `[5,7,9]`, doubled `[10,14,18]`, greater than 10 `[14,18]`, sum `32`... wait let me recalculate: `14 + 18 = 32`, not 46. Let me use a different example.
+
+Actually, let me simplify:
+```
+> processData xs = fold (\acc x -> acc + x) 0 (filter (\x -> x > 10) (map (\x -> x * 2) (map (\(a,b) -> b) xs)))
+> processData [(1,5), (2,7), (3,9)]
+32
+```
+
+- Create a function that takes a list of numbers and returns a list of strings, where even numbers become "EVEN" and odd numbers become "ODD". Use only a lambda with `map`
+```
+> map (\x -> if mod x 2 == 0 then "EVEN" else "ODD") [1,2,3,4,5]
+["ODD","EVEN","ODD","EVEN","ODD"]
+```
+
+**_Why This Matters_**
+
+Lambda functions are essential in functional programming because they:
+
+- **Reduce boilerplate** - no need to name every tiny function
+- **Enable inline logic** - keep related code together
+- **Support functional composition** - pass functions around naturally
+- **Make code concise** - especially with `map`, `filter`, and `fold`
+- **Are fundamental** - many functional patterns rely on lambdas
+
+Every modern programming language has adopted lambda functions (Python, JavaScript, Java, C#, Ruby, etc.) because they're so useful. In functional languages like Haskish and Haskell, they're absolutely essential!
+
+Mastering lambdas lets you write elegant, concise code. Combined with higher-order functions, they give you incredible expressive power!
 
