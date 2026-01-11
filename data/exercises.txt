@@ -2,6 +2,19 @@
 Get familiar with the Interactive **_REPL_** (**R**ead-**E**val-**P**rint **L**oop).
 The REPL shows results immediately. 
 
+**~Important: Characters vs Strings~**
+
+In Haskish (like Haskell), there's an important distinction:
+
+- **Single quotes** `'a'` create a **Char** (a single character)
+- **Double quotes** `"abc"` create a **String** (a list of characters)
+
+So `"hello"` is actually the same as `['h','e','l','l','o']` - a list of individual characters!
+
+This is why functions like `ord` (which converts a character to its numeric code) require a **Char**, not a String:
+- ✅ `ord 'A'` works (single character)
+- ❌ `ord "A"` doesn't work (that's a list containing one character)
+
 **~Experiment~**
 
 Try these expressions:
