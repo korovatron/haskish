@@ -1297,5 +1297,299 @@ Higher-order functions like `map`, `filter`, and `fold` are the foundation of fu
 
 These patterns appear in all functional languages (Haskell, Scala, Clojure, etc.) and even in modern JavaScript, Python, and other languages. Mastering them makes you a better programmer in any language!
 
+=== List Comprehensions ===
+
+In mathematics, you've probably seen **_set-builder notation_** - a concise way to define sets:
+
+```
+{ x² | x ∈ ℕ, x < 10 }
+```
+
+This reads as: "the set of all x² such that x is a natural number and x is less than 10", which gives us `{0, 1, 4, 9, 16, 25, 36, 49, 64, 81}`
+
+**_List comprehensions_** in Haskish use almost identical syntax to describe lists. They provide a clear, concise way to create and transform lists that closely mirrors mathematical notation.
+
+**_Basic Syntax_**
+
+The general form of a list comprehension is:
+
+```
+[ expression | variable <- list ]
+```
+
+Think of it as: "create a list by evaluating **expression** for each **variable** drawn from **list**"
+
+Let's see how the mathematical set notation translates to Haskish:
+
+**Mathematics:**
+```
+{ x² | x ∈ {1,2,3,4,5} }
+```
+
+**Haskish:**
+```
+> [x * x | x <- [1,2,3,4,5]]
+[1,4,9,16,25]
+```
+
+The `|` symbol means "such that" (just like in mathematics), and `<-` means "drawn from".
+
+**More Examples:**
+
+```
+> [x * 2 | x <- [1,2,3,4]]
+[2,4,6,8]
+
+> [x + 10 | x <- [1,2,3]]
+[11,12,13]
+
+> isEven x = mod x 2 == 0
+> [isEven x | x <- [1,2,3,4,5,6]]
+[False,True,False,True,False,True]
+```
+
+Notice how this is similar to using `map`:
+
+```
+> map (*2) [1,2,3,4]
+[2,4,6,8]
+```
+
+But list comprehensions can do much more!
+
+**_Adding Predicates (Filters)_**
+
+In mathematics, we often add conditions to set-builder notation:
+
+**Mathematics:**
+```
+{ x² | x ∈ ℕ, x < 10, x is even }
+```
+
+**Haskish:**
+```
+> [x * x | x <- [0..9], mod x 2 == 0]
+[0,4,16,36,64]
+```
+
+The part after the first condition (`mod x 2 == 0`) is called a **_predicate_** or **_guard_**. You can have multiple predicates separated by commas:
+
+```
+> [x | x <- [1..20], mod x 2 == 0, x > 10]
+[12,14,16,18,20]
+```
+
+This keeps only numbers that are even AND greater than 10.
+
+**More Examples:**
+
+```
+> [x | x <- [1..10], mod x 2 /= 0]
+[1,3,5,7,9]
+
+> [x * 2 | x <- [1..10], x > 5]
+[12,14,16,18,20]
+
+> [x | x <- "Hello World", x /= 'o']
+"Hell Wrld"
+```
+
+This is similar to combining `filter` and `map`:
+
+```
+> map (*2) (filter (>5) [1..10])
+[12,14,16,18,20]
+```
+
+But the list comprehension syntax is often more readable!
+
+**_Multiple Generators_**
+
+List comprehensions can draw from multiple lists, creating combinations:
+
+**Mathematics:**
+```
+{ (x,y) | x ∈ {1,2,3}, y ∈ {4,5} }
+```
+
+**Haskish:**
+```
+> [(x,y) | x <- [1,2,3], y <- [4,5]]
+[(1,4),(1,5),(2,4),(2,5),(3,4),(3,5)]
+```
+
+The order matters! The rightmost generator varies fastest (like nested loops in other languages).
+
+```
+> [(x,y) | x <- [1,2], y <- [3,4]]
+[(1,3),(1,4),(2,3),(2,4)]
+
+> [x + y | x <- [1,2,3], y <- [10,20]]
+[11,21,12,22,13,23]
+
+> [x * y | x <- [2,3], y <- [4,5]]
+[8,10,12,15]
+```
+
+You can also use earlier generators in later ones:
+
+```
+> [(x,y) | x <- [1..3], y <- [x..3]]
+[(1,1),(1,2),(1,3),(2,2),(2,3),(3,3)]
+```
+
+This creates pairs where the second element is greater than or equal to the first!
+
+**_Combining with Predicates_**
+
+You can use multiple generators AND predicates together:
+
+```
+> [(x,y) | x <- [1..5], y <- [1..5], x + y == 7]
+[(2,5),(3,4),(4,3),(5,2)]
+```
+
+This finds all pairs that sum to 7.
+
+```
+> [(x,y) | x <- [1..10], y <- [1..10], x < y, mod x 2 == 0, mod y 2 /= 0]
+[(2,3),(2,5),(2,7),(2,9),(4,5),(4,7),(4,9),(6,7),(6,9),(8,9)]
+```
+
+This finds pairs where x < y, x is even, and y is odd.
+
+**_String Comprehensions_**
+
+Remember that strings are lists of characters, so comprehensions work on them too!
+
+```
+> [c | c <- "Hello World", c /= ' ']
+["H","e","l","l","o","W","o","r","l","d"]
+
+> isVowel c = c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'
+> [c | c <- "functional", isVowel c]
+["u","i","o","a"]
+
+> [[c] | c <- "HELLO"]
+[["H"],["E"],["L"],["L"],["O"]]
+```
+
+**~Challenges:~**
+
+**~Basic Comprehensions:~**
+
+- Create a list of the first 10 perfect squares (1, 4, 9, 16, ...)
+```
+> [... | x <- [1..10]]
+[1,4,9,16,25,36,49,64,81,100]
+```
+
+- Create a list that adds 5 to every number from 1 to 8
+```
+> [... | x <- [1..8]]
+[6,7,8,9,10,11,12,13]
+```
+
+- Create a list of all numbers from 1 to 20 that are divisible by 3. **Hint:** Use `mod x 3 == 0`
+```
+> [x | x <- [1..20], ...]
+[3,6,9,12,15,18]
+```
+
+**~Comprehensions with Predicates:~**
+
+- Create a list of all even numbers from 1 to 20, then square each one
+```
+> [... | x <- [1..20], mod x 2 == 0]
+[4,16,36,64,100,144,196,256,324,400]
+```
+
+- Create a list of all numbers from 1 to 50 that are divisible by both 3 and 5
+```
+> [x | x <- [1..50], ...]
+[15,30,45]
+```
+
+- Extract all lowercase vowels from the string "Functional Programming"
+```
+> isVowel c = c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u'
+> [c | c <- "Functional Programming", ...]
+["u","i","o","a","o","i"]
+```
+
+**~Multiple Generators:~**
+
+- Create a multiplication table: all products of x and y where both x and y range from 1 to 5
+```
+> [x * y | ...]
+[1,2,3,4,5,2,4,6,8,10,3,6,9,12,15,4,8,12,16,20,5,10,15,20,25]
+```
+
+- Create all possible pairs of a number from `[1,2,3]` and a letter from `"abc"`
+```
+> [(x,y) | ...]
+[(1,'a'),(1,'b'),(1,'c'),(2,'a'),(2,'b'),(2,'c'),(3,'a'),(3,'b'),(3,'c')]
+```
+
+- Generate all Pythagorean triples (a,b,c) where a² + b² = c² and all values are between 1 and 20. **Hint:** Use three generators and a predicate checking `a*a + b*b == c*c`
+```
+> [(a,b,c) | a <- [1..20], b <- [1..20], c <- [1..20], a*a + b*b == c*c]
+[(3,4,5),(4,3,5),(5,12,13),(6,8,10),(8,6,10),(8,15,17),(9,12,15),(12,5,13),(12,9,15),(15,8,17)]
+```
+
+**~Advanced Challenges:~**
+
+- Create a list of all numbers from 1 to 100 that are perfect squares. **Hint:** Check if `sqrt x == fromIntegral (floor (sqrt x))`
+```
+> [x | x <- [1..100], ...]
+[1,4,9,16,25,36,49,64,81,100]
+```
+
+- Generate the first 10 triangular numbers (1, 3, 6, 10, 15, ...) where the nth triangular number is the sum of integers from 1 to n. **Hint:** Use `sum [1..n]`
+```
+> [sum [1..n] | ...]
+[1,3,6,10,15,21,28,36,45,55]
+```
+
+- Create a "flattened" list from a list of lists, but only including sublists that have more than 2 elements. **Hint:** Use a predicate `length xs > 2` and concatenate with `++`
+```
+> flatten xss = [x | xs <- xss, length xs > 2, x <- xs]
+> flatten [[1],[2,3],[4,5,6],[7,8,9,10]]
+[4,5,6,7,8,9,10]
+```
+
+- Find all numbers from 1 to 100 where the number is equal to the sum of its divisors (excluding itself). These are called perfect numbers. **Hint:** First create a helper that finds divisors: `divisors n = [x | x <- [1..n-1], mod n x == 0]`
+```
+> [n | n <- [1..100], sum [x | x <- [1..n-1], mod n x == 0] == n]
+[6,28]
+```
+
+**_List Comprehensions vs Map/Filter/Fold_**
+
+You might notice that list comprehensions can replace many uses of `map` and `filter`:
+
+| Operation | Using map/filter | Using comprehension |
+|-----------|-----------------|---------------------|
+| Transform | `map (*2) [1..5]` | `[x*2 | x <- [1..5]]` |
+| Filter | `filter (\x -> mod x 2 == 0) [1..10]` | `[x | x <- [1..10], mod x 2 == 0]` |
+| Both | `map (*2) (filter (\x -> mod x 2 == 0) [1..10])` | `[x*2 | x <- [1..10], mod x 2 == 0]` |
+
+Choose based on readability:
+- **List comprehensions** are great when you want a concise, mathematical expression
+- **map/filter** are better when you already have named functions or are building pipelines with composition
+- **fold** is still needed when you want to combine elements into a single result
+
+**_Why This Matters_**
+
+List comprehensions are powerful because they:
+
+- **Mirror mathematical notation** - making code easier to understand for those with math background
+- **Are concise** - express complex list operations in a single, readable line
+- **Combine filtering and mapping** - no need to chain multiple operations
+- **Support multiple generators** - naturally express combinations and nested iterations
+- **Are optimized** - the compiler can often optimize comprehensions better than explicit recursion
+
+List comprehensions appear in Python, Haskell, Scala, and other modern languages. They're one of the most elegant features borrowed from mathematics into programming!
+
 
 
