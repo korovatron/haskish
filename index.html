@@ -13,20 +13,20 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Free Haskell-style functional programming playground for teachers and students. Practice recursion, pattern matching, list comprehensions, higher-order functions, lambdas, tuples and more with no software installation. Includes guided exercises and examples. Works offline as a PWA. Covers all AQA Computer Science requirements and much more.">
-    <meta name="keywords" content="Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, map, filter, fold, list comprehensions, lambda functions, tuples, currying, lazy evaluation, free online programming, REPL, interactive coding, education, teachers, students, no installation, PWA, offline, exercises, tutorials">
+    <meta name="description" content="Free Haskell-style functional programming playground for teachers and students. Practice recursion, pattern matching, list comprehensions, higher-order functions, lambdas, tuples and more with no software installation. Includes guided lessons and examples. Works offline as a PWA. Covers all AQA Computer Science requirements and much more.">
+    <meta name="keywords" content="Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, map, filter, fold, list comprehensions, lambda functions, tuples, currying, lazy evaluation, free online programming, REPL, interactive coding, education, teachers, students, no installation, PWA, offline, lessons, tutorials">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Haskish - Functional Programming in Your Browser">
-    <meta property="og:description" content="Free Haskell-style functional programming playground with guided exercises, list comprehensions, lambdas, and more. Perfect for AQA Computer Science students and teachers. No installation required - works offline as a PWA.">
+    <meta property="og:description" content="Free Haskell-style functional programming playground with guided lessons, list comprehensions, lambdas, and more. Perfect for AQA Computer Science students and teachers. No installation required - works offline as a PWA.">
     <meta property="og:image" content="https://www.korovatron.co.uk/haskish/images/preview-v3.png">
     <meta property="og:url" content="https://www.korovatron.co.uk/haskish">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Haskish - Functional Programming in Your Browser">
-    <meta name="twitter:description" content="Free Haskell-style functional programming playground with guided exercises, list comprehensions, lambdas, and more. Perfect for AQA Computer Science students and teachers. No installation required - works offline as a PWA.">
+    <meta name="twitter:description" content="Free Haskell-style functional programming playground with guided lessons, list comprehensions, lambdas, and more. Perfect for AQA Computer Science students and teachers. No installation required - works offline as a PWA.">
     <meta name="twitter:image" content="https://www.korovatron.co.uk/haskish/images/preview-v3.png">
     
     <!-- PWA -->
@@ -81,7 +81,7 @@
                     <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
                     <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                <span>Toggle Exercises</span>
+                <span>Toggle Lessons</span>
             </button>
             <div class="menu-item-group">
                 <button id="examplesToggle" class="menu-item menu-item-expandable">
@@ -132,7 +132,7 @@
                 <p>Perfect for students, teachers, and anyone curious about functional programming, Haskish combines ease of use with powerful features including:</p>
                 <ul>
                     <li>Interactive REPL with syntax highlighting and helpful commands (:help, :functions, :vars, :show, :info)</li>
-                    <li>Guided exercises and examples with comprehensive tutorials</li>
+                    <li>Guided lessons and examples</li>
                     <li>Pattern matching, recursion, guards, and if/then/else expressions</li>
                     <li>List comprehensions with mathematical set notation</li>
                     <li>Full list operations (cons :, concatenation ++, indexing !!, ranges, infinite lists)</li>
@@ -149,6 +149,31 @@
                 <p>Haskish covers the AQA A Level Computer Science specification (4.12) and much, much more for curious students (and teachers!).</p>
                 <p><strong>Note:</strong> Like Haskell, strings are treated as lists of characters ([Char]), so all list functions (head, tail, map, filter, etc.) work on strings.</p>
                 <p class="about-footer">Created by Neil Kendall © 2025-2026<br>More @ <a href="https://www.korovatron.co.uk" target="_blank">www.korovatron.co.uk</a><br><span id="versionDisplay"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="about-overlay">
+        <div class="about-modal welcome-modal">
+            <div class="about-header welcome-header">
+                <img src="images/headerLogo.png" alt="Haskish Logo" class="welcome-logo">
+                <h2>Welcome to Haskish</h2>
+            </div>
+            <div class="about-content welcome-content">
+                <p>Use the menu 
+                    <svg class="inline-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M2 4h16M2 10h16M2 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    at the top right to access:</p>
+                <p class="welcome-detail"><strong>Lessons</strong> - step-by-step tutorials and challenges</p>
+                <p class="welcome-detail"><strong>Examples</strong> - syntax and working programs</p>
+                <p class="version-text">Version <span id="welcomeVersion"></span></p>
+                <button id="startCoding" class="btn btn-primary">Curry On!</button>
+                <div class="welcome-checkbox">
+                    <input type="checkbox" id="showWelcome">
+                    <label for="showWelcome">Show at start</label>
+                </div>
             </div>
         </div>
     </div>
@@ -320,7 +345,7 @@
                 <!-- Exercise Selector Bar -->
                 <div class="exercise-selector-bar">
                     <div class="exercise-header-row">
-                        <h2>Exercises</h2>
+                        <h2>Lessons</h2>
                     </div>
                     <div class="exercise-buttons-wrapper">
                         <div class="exercise-buttons-container">
@@ -332,10 +357,10 @@
                 <!-- Exercise Content Panel -->
                 <div id="exercisePanel" class="panel exercise-content-panel">
                     <div class="panel-header" id="exercisePanelHeader">
-                        <h2 id="exerciseTitle">Exercise</h2>
+                        <h2 id="exerciseTitle">Lesson</h2>
                     </div>
                     <div id="exerciseContent" class="exercise-content">
-                        Click an exercise button above to begin.
+                        Click a lesson button above to begin.
                     </div>
                 </div>
             </div>
@@ -345,9 +370,9 @@
     <!-- Mobile Exercise Navigator (hidden on desktop) -->
     <div class="mobile-exercise-nav" style="display: none;">
             <div class="mobile-exercise-nav">
-                <button id="prevExercise" class="nav-arrow" title="Previous exercise">&lt;&lt;</button>
-                <span id="currentExerciseLabel" class="exercise-label">Select an exercise</span>
-                <button id="nextExercise" class="nav-arrow" title="Next exercise">&gt;&gt;</button>
+                <button id="prevExercise" class="nav-arrow" title="Previous lesson">&lt;&lt;</button>
+                <span id="currentExerciseLabel" class="exercise-label">Select a lesson</span>
+                <button id="nextExercise" class="nav-arrow" title="Next lesson">&gt;&gt;</button>
             </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>

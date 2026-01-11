@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haskish-v1.0.0';
+const CACHE_NAME = 'haskish-v1.0.1';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const urlsToCache = [
   './styles.css',
   './manifest.json',
   './data/examples.txt',
-  './data/exercises.txt',
+  './data/lessons.txt',
   './images/headerLogo.png',
   './favicon.png',
   './icon-192.png',

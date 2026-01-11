@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.0';
+const HASKISH_VERSION = '1.0.1';
 
 const interpreter = new HaskishInterpreter();
 
@@ -144,6 +144,49 @@ closeBuiltins.addEventListener('click', function() {
 builtinsOverlay.addEventListener('click', function(e) {
     if (e.target === builtinsOverlay) {
         builtinsOverlay.classList.remove('visible');
+    }
+});
+
+// Welcome modal
+const welcomeModal = document.getElementById('welcomeModal');
+const startCodingBtn = document.getElementById('startCoding');
+const showWelcomeCheckbox = document.getElementById('showWelcome');
+const welcomeVersion = document.getElementById('welcomeVersion');
+
+// Set version in welcome modal
+welcomeVersion.textContent = HASKISH_VERSION;
+
+// Check if we should show the welcome modal
+function shouldShowWelcome() {
+    const showWelcome = localStorage.getItem('haskish_showWelcome');
+    // Default to true if not set
+    return showWelcome === null || showWelcome === 'true';
+}
+
+// Initialize checkbox state
+showWelcomeCheckbox.checked = shouldShowWelcome();
+
+// Show welcome modal on first load
+if (shouldShowWelcome()) {
+    setTimeout(() => {
+        welcomeModal.classList.add('visible');
+    }, 300);
+}
+
+// Handle Start Coding button
+startCodingBtn.addEventListener('click', function() {
+    welcomeModal.classList.remove('visible');
+});
+
+// Handle checkbox change
+showWelcomeCheckbox.addEventListener('change', function() {
+    localStorage.setItem('haskish_showWelcome', this.checked.toString());
+});
+
+// Close modal when clicking overlay
+welcomeModal.addEventListener('click', function(e) {
+    if (e.target === welcomeModal) {
+        welcomeModal.classList.remove('visible');
     }
 });
 
@@ -489,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load and parse exercises file
     async function loadExercisesFile() {
         try {
-            const response = await fetch('data/exercises.txt');
+            const response = await fetch('data/lessons.txt');
             if (!response.ok) {
                 throw new Error('Failed to load exercises');
             }
@@ -913,13 +956,13 @@ function initMobileNavigation() {
     window.updateMobileNavigationLabel = function() {
         if (currentExerciseId) {
             const exId = parseInt(currentExerciseId);
-            const title = exerciseTitles[exId - 1] || `Exercise ${exId}`;
+            const title = exerciseTitles[exId - 1] || `Lesson ${exId}`;
             label.textContent = `${exId}. ${title}`;
             
             prevBtn.disabled = exId <= 1;
             nextBtn.disabled = exId >= exerciseTitles.length;
         } else {
-            label.textContent = 'Select an exercise';
+            label.textContent = 'Select a lesson';
             prevBtn.disabled = true;
             nextBtn.disabled = true;
         }

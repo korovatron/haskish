@@ -1,24 +1,24 @@
-HASKISH - POSSIBLE SOLUTIONS TO EXERCISES
+HASKISH - POSSIBLE SOLUTIONS TO LESSONS
 
-This file contains possible solutions to the challenges in exercises.txt.
+This file contains possible solutions to the challenges in lessons.txt.
 Remember: There are often multiple valid solutions to each problem.
 
 ================================================================================
-Exercise 1 - Using the REPL
+Lesson 1 - Using the REPL
 ================================================================================
 
 No Challenges
 
 
 ================================================================================
-Exercise 2 - Variables
+Lesson 2 - Variables
 ================================================================================
 
 No Challenges
 
 
 ================================================================================
-Exercise 3 - Simple Functions
+Lesson 3 - Simple Functions
 ================================================================================
 
 Question
@@ -71,7 +71,7 @@ isEven n = mod n 2 == 0
 
 
 ================================================================================
-Exercise 4 - Partial Function Application
+Lesson 4 - Partial Function Application
 ================================================================================
 
 Question
@@ -106,7 +106,7 @@ addMr = addPrefix "Mr. "
 
 
 ================================================================================
-Exercise 5 - First-Class Functions
+Lesson 5 - First-Class Functions
 ================================================================================
 
 Question
@@ -138,7 +138,7 @@ applyBoth f g x = f x + g x
 
 
 ================================================================================
-Exercise 6 - Function Composition
+Lesson 6 - Function Composition
 ================================================================================
 
 Question
@@ -187,7 +187,7 @@ secondElement = head . tail
 
 
 ================================================================================
-Exercise 7 - Using the Function Panel
+Lesson 7 - Using the Function Panel
 ================================================================================
 
 Question
@@ -200,7 +200,7 @@ isRightTriangle a b c = sumOfSquares a b == square c
 
 
 ================================================================================
-Exercise 8 - Building More Complex Programs
+Lesson 8 - Building More Complex Programs
 ================================================================================
 
 Question
@@ -219,14 +219,14 @@ hasOneRoot a b c = discriminant a b c == 0
 
 
 ================================================================================
-Exercise 9 - Introduction to Lists
+Lesson 9 - Introduction to Lists
 ================================================================================
 
 No Challenges (Questions only)
 
 
 ================================================================================
-Exercise 10 - Pattern Matching & Recursion
+Lesson 10 - Pattern Matching & Recursion
 ================================================================================
 
 Question
@@ -311,7 +311,7 @@ countOccurrences e (x:xs)
 
 
 ================================================================================
-Exercise 11 - Guards & Conditionals
+Lesson 11 - Guards & Conditionals
 ================================================================================
 
 Question
@@ -419,7 +419,7 @@ multBy n (x:xs) = (n * x) : multBy n xs
 
 
 ================================================================================
-Exercise 12 - Higher-Order Functions: Map, Filter, and Fold
+Lesson 12 - Higher-Order Functions: Map, Filter, and Fold
 ================================================================================
 
 Question
@@ -514,7 +514,7 @@ fold (+) 0 (map length ["hello","world","functional"])
 
 
 ================================================================================
-Exercise 13 - List Comprehensions
+Lesson 13 - List Comprehensions
 ================================================================================
 
 Question
@@ -607,7 +607,7 @@ isPerfect n = sum (divisors n) == n
 
 
 ================================================================================
-Exercise 14 - Tuples and Destructuring
+Lesson 14 - Tuples and Destructuring
 ================================================================================
 
 Question
@@ -766,7 +766,7 @@ mergeAlternate (x:xs) (y:ys) = x : y : mergeAlternate xs ys
 
 
 ================================================================================
-Exercise 15 - Lambda Functions
+Lesson 15 - Lambda Functions
 ================================================================================
 
 Question
