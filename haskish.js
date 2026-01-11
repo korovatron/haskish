@@ -407,12 +407,6 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     return list.head();
                 }
-                if (typeof list === 'string') {
-                    if (list.length === 0) {
-                        throw new Error('head: empty list');
-                    }
-                    return list[0];
-                }
                 if (!Array.isArray(list) || list.length === 0) {
                     throw new Error('head: empty list');
                 }
@@ -421,12 +415,6 @@ class HaskishInterpreter {
             'tail': (list) => {
                 if (list && list._isInfiniteRange) {
                     return list.tail();
-                }
-                if (typeof list === 'string') {
-                    if (list.length === 0) {
-                        throw new Error('tail: empty list');
-                    }
-                    return list.slice(1);
                 }
                 if (!Array.isArray(list) || list.length === 0) {
                     throw new Error('tail: empty list');
@@ -437,21 +425,6 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     // Return a new MappedInfiniteRange for lazy mapping
                     return new MappedInfiniteRange(list, fn, this);
-                }
-                if (typeof list === 'string') {
-                    // Map over string characters, return array of results
-                    return list.split('').map(item => {
-                        if (fn instanceof Lambda) {
-                            return fn.apply(item);
-                        }
-                        if (fn instanceof PartialFunction) {
-                            return fn.apply([item]);
-                        }
-                        if (fn && fn._isOperatorFunction) {
-                            return fn.apply([item]);
-                        }
-                        return this.applyFunction(fn, [item]);
-                    });
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('map: second argument must be a list');
@@ -474,21 +447,6 @@ class HaskishInterpreter {
                     // Return a new FilteredInfiniteRange for lazy filtering
                     return new FilteredInfiniteRange(list, predicate, this);
                 }
-                if (typeof list === 'string') {
-                    // Filter string characters, return string
-                    return list.split('').filter(item => {
-                        if (predicate instanceof Lambda) {
-                            return predicate.apply(item);
-                        }
-                        if (predicate instanceof PartialFunction) {
-                            return predicate.apply([item]);
-                        }
-                        if (predicate && predicate._isOperatorFunction) {
-                            return predicate.apply([item]);
-                        }
-                        return this.applyFunction(predicate, [item]);
-                    }).join('');
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('filter: second argument must be a list');
                 }
@@ -508,26 +466,6 @@ class HaskishInterpreter {
             'fold': (fn, acc, list) => {
                 if (list && list._isInfiniteRange) {
                     throw new Error('fold: cannot fold infinite range');
-                }
-                if (typeof list === 'string') {
-                    // Fold over string characters
-                    return list.split('').reduce((accumulator, item) => {
-                        if (fn instanceof Lambda) {
-                            // Multi-parameter lambdas are curried: apply accumulator, then item
-                            const step1 = fn.apply(accumulator);
-                            if (step1 instanceof Lambda) {
-                                return step1.apply(item);
-                            }
-                            return step1;
-                        }
-                        if (fn instanceof PartialFunction) {
-                            return fn.apply([accumulator, item]);
-                        }
-                        if (fn && fn._isOperatorFunction) {
-                            return fn.apply([accumulator, item]);
-                        }
-                        return this.applyFunction(fn, [accumulator, item]);
-                    }, acc);
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('fold: third argument must be a list');
@@ -558,25 +496,6 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     throw new Error('foldr: cannot fold infinite range');
                 }
-                if (typeof list === 'string') {
-                    // Fold over string characters from right to left
-                    return list.split('').reduceRight((accumulator, item) => {
-                        if (fn instanceof Lambda) {
-                            const step1 = fn.apply(item);
-                            if (step1 instanceof Lambda) {
-                                return step1.apply(accumulator);
-                            }
-                            return step1;
-                        }
-                        if (fn instanceof PartialFunction) {
-                            return fn.apply([item, accumulator]);
-                        }
-                        if (fn && fn._isOperatorFunction) {
-                            return fn.apply([item, accumulator]);
-                        }
-                        return this.applyFunction(fn, [item, accumulator]);
-                    }, acc);
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('foldr: third argument must be a list');
                 }
@@ -601,9 +520,6 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     throw new Error('length: cannot get length of infinite range');
                 }
-                if (typeof list === 'string') {
-                    return list.length;
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('length: argument must be a list');
                 }
@@ -612,9 +528,6 @@ class HaskishInterpreter {
             'null': (list) => {
                 if (list && list._isInfiniteRange) {
                     return false; // Infinite ranges are never empty
-                }
-                if (typeof list === 'string') {
-                    return list.length === 0;
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('null: argument must be a list');
@@ -625,9 +538,6 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     throw new Error('reverse: cannot reverse infinite range');
                 }
-                if (typeof list === 'string') {
-                    return list.split('').reverse().join('');
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('reverse: argument must be a list');
                 }
@@ -637,9 +547,6 @@ class HaskishInterpreter {
                 if (list && list._isInfiniteRange) {
                     return list.take(n);
                 }
-                if (typeof list === 'string') {
-                    return list.slice(0, n);
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('take: second argument must be a list');
                 }
@@ -648,9 +555,6 @@ class HaskishInterpreter {
             'drop': (n, list) => {
                 if (list && list._isInfiniteRange) {
                     return list.drop(n);
-                }
-                if (typeof list === 'string') {
-                    return list.slice(n);
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('drop: second argument must be a list');
@@ -1559,9 +1463,6 @@ class HaskishInterpreter {
         if (listExpr && listExpr._isInfiniteRange) {
             // For infinite ranges in comprehensions, take first 100 elements
             sourceList = listExpr.take(100);
-        } else if (typeof listExpr === 'string') {
-            // Handle strings as character lists
-            sourceList = listExpr.split('');
         } else if (Array.isArray(listExpr)) {
             sourceList = listExpr;
         } else {
@@ -2121,12 +2022,6 @@ class HaskishInterpreter {
                     }
                     return list.at(Math.floor(index));
                 }
-                if (typeof list === 'string') {
-                    if (typeof index !== 'number' || index < 0 || index >= list.length) {
-                        throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
-                    }
-                    return list[Math.floor(index)];
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('(!!) requires a list as the first argument');
                 }
@@ -2136,10 +2031,6 @@ class HaskishInterpreter {
                 return list[Math.floor(index)];
             }},
             { op: '++', fn: (a, b) => {
-                // Handle string concatenation
-                if (typeof a === 'string' && typeof b === 'string') {
-                    return a + b;
-                }
                 // Can prepend finite list to infinite range, but not append
                 if (b && b._isInfiniteRange) {
                     if (a && a._isInfiniteRange) {
@@ -2388,12 +2279,14 @@ class HaskishInterpreter {
             return this.parseList(expr);
         }
 
-        // String literal (basic support) - check AFTER binary operations
+        // String literal (double quotes) - convert to list of characters (true Haskell behavior: String = [Char])
         if (expr.startsWith('"') && expr.endsWith('"')) {
-            return expr.slice(1, -1);
+            const content = expr.slice(1, -1);
+            // Split into array of single-character strings
+            return content.split('');
         }
         
-        // String literal with single quotes
+        // String literal with single quotes - single character (Char type)
         if (expr.startsWith("'") && expr.endsWith("'")) {
             return expr.slice(1, -1);
         }
@@ -2422,7 +2315,7 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
+                if (token.type === 'string') return token.value.slice(1, -1).split(''); // Convert to char array
                 if (token.type === 'paren') {
                     // Handle unit () as null
                     return token.value.trim() === '' ? null : this.evaluate(token.value);
@@ -2456,7 +2349,7 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
+                if (token.type === 'string') return token.value.slice(1, -1).split(''); // Convert to char array
                 if (token.type === 'paren') {
                     // Handle unit () as null
                     return token.value.trim() === '' ? null : this.evaluate(token.value);
@@ -2499,7 +2392,7 @@ class HaskishInterpreter {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1); // Remove quotes
+                if (token.type === 'string') return token.value.slice(1, -1).split(''); // Convert to char array
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
                     // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
@@ -2728,25 +2621,13 @@ class HaskishInterpreter {
             '&&': (a, b) => a && b,
             '||': (a, b) => a || b,
             '++': (a, b) => {
-                // Concatenate lists or strings
-                if (typeof a === 'string' && typeof b === 'string') {
-                    return a + b;
-                }
+                // Concatenate lists (strings are now lists)
                 if (Array.isArray(a) && Array.isArray(b)) {
                     return [...a, ...b];
                 }
-                if (typeof a === 'string' && typeof b === 'string') {
-                    return a + b;
-                }
-                throw new Error('(++) requires two lists or two strings');
+                throw new Error('(++) requires two lists');
             },
             '!!': (list, index) => {
-                if (typeof list === 'string') {
-                    if (typeof index !== 'number' || index < 0 || index >= list.length) {
-                        throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
-                    }
-                    return list[Math.floor(index)];
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('(!!) requires a list as the first argument');
                 }
@@ -2801,21 +2682,12 @@ class HaskishInterpreter {
             '&&': (a, b) => a && b,
             '||': (a, b) => a || b,
             '++': (a, b) => {
-                if (typeof a === 'string' && typeof b === 'string') {
-                    return a + b;
-                }
                 if (Array.isArray(a) && Array.isArray(b)) {
                     return [...a, ...b];
                 }
-                throw new Error('(++) requires two lists or two strings');
+                throw new Error('(++) requires two lists');
             },
             '!!': (list, index) => {
-                if (typeof list === 'string') {
-                    if (typeof index !== 'number' || index < 0 || index >= list.length) {
-                        throw new Error(`(!!) index ${index} out of range for list of length ${list.length}`);
-                    }
-                    return list[Math.floor(index)];
-                }
                 if (!Array.isArray(list)) {
                     throw new Error('(!!) requires a list as the first argument');
                 }
@@ -2879,9 +2751,19 @@ class HaskishInterpreter {
             return '(' + value.elements.map(v => this.formatOutput(v)).join(',') + ')';
         }
         if (Array.isArray(value)) {
+            // Check if this is a character array (String = [Char] in Haskell)
+            // Display as "string" if all elements are single-character strings
+            if (value.length > 0 && value.every(item => typeof item === 'string' && item.length === 1)) {
+                return '"' + value.join('') + '"';
+            }
             return '[' + value.map(v => this.formatOutput(v)).join(',') + ']';
         }
         if (typeof value === 'string') {
+            // Single character (Char type) - display with single quotes
+            if (value.length === 1) {
+                return "'" + value + "'";
+            }
+            // Shouldn't happen with new implementation, but handle gracefully
             return '"' + value + '"';
         }
         if (typeof value === 'boolean') {
