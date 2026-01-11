@@ -202,15 +202,31 @@ because function application is left‑associative. The steps are:
 
 In other words, `add 3 5` is actually shorthand for `(add 3) 5`
 
-In Haskish (and Haskell) we write the **_type definition_** as
+In Haskish (and Haskell) we write the **_type definition_** for the function
+
 ```
-add :: Integer -> (Integer -> Integer)
+add x y = x + y
 ```
+
+as
+
+<div style="font-family: monospace; padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0;">
+add :: <span style="color: #2196F3; font-weight: bold;">Integer</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #9C27B0; font-weight: bold;">(</span><span style="color: #4CAF50; font-weight: bold;">Integer</span> <span style="color: #9C27B0; font-weight: bold;">-></span> <span style="color: #F44336; font-weight: bold;">Integer</span><span style="color: #9C27B0; font-weight: bold;">)</span>
+</div>
+
 or more concisely as
-```
-add :: Integer -> Integer -> Integer
-```
-meaning: the function takes **one integer** and returns a **new function**. That new function takes another **integer** and returns the final result. Each `->` represents a function. 
+
+<div style="font-family: monospace; padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0;">
+add :: <span style="color: #2196F3; font-weight: bold;">Integer</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #4CAF50; font-weight: bold;">Integer</span> <span style="color: #9C27B0; font-weight: bold;">-></span> <span style="color: #F44336; font-weight: bold;">Integer</span>
+</div>
+
+This shows how the function definition maps to the type:
+
+<div style="font-family: monospace; padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0;">
+add <span style="color: #2196F3; font-weight: bold;">x</span> <span style="color: #4CAF50; font-weight: bold;">y</span> = <span style="color: #2196F3; font-weight: bold;">x</span> + <span style="color: #4CAF50; font-weight: bold;">y</span>
+</div>
+
+meaning: the function takes **<span style="color: #2196F3">one integer (x)</span>** and returns a **<span style="color: #FF9800">function</span>**. That **<span style="color: #9C27B0">new function</span>** takes another **<span style="color: #4CAF50">integer (y)</span>** and returns the **<span style="color: #F44336">final result</span>**. Each arrow represents a function. 
 
 Try this in the REPL:
 ```
@@ -1051,11 +1067,11 @@ Let's explore each one.
 
 `map` takes a function and a list, and applies that function to every element:
 
-```
-map :: (a -> b) -> [a] -> [b]
-```
+<div style="font-family: monospace; padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0;">
+map :: <span style="color: #9C27B0; font-weight: bold;">(</span><span style="color: #64B5F6">a</span> <span style="color: #9C27B0">-></span> <span style="color: #81C784">b</span><span style="color: #9C27B0; font-weight: bold;">)</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #64B5F6; font-weight: bold;">[a]</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #81C784; font-weight: bold;">[b]</span>
+</div>
 
-Think of it as: "apply this transformation to every item in the list"
+Think of it as: "apply this <span style="color: #9C27B0; font-weight: bold;">transformation function</span> to every item in the <span style="color: #64B5F6; font-weight: bold;">input list</span>, producing an <span style="color: #81C784; font-weight: bold;">output list</span>"
 
 **Examples:**
 
@@ -1086,11 +1102,11 @@ Notice how we used the operator section `(*3)` directly - this is where operator
 
 `filter` takes a predicate (a function that returns `True` or `False`) and a list, keeping only elements where the predicate is `True`:
 
-```
-filter :: (a -> Bool) -> [a] -> [a]
-```
+<div style="font-family: monospace; padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0;">
+filter :: <span style="color: #9C27B0; font-weight: bold;">(</span><span style="color: #64B5F6">a</span> <span style="color: #9C27B0">-></span> <span style="color: #FFB74D">Bool</span><span style="color: #9C27B0; font-weight: bold;">)</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #64B5F6; font-weight: bold;">[a]</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #64B5F6; font-weight: bold;">[a]</span>
+</div>
 
-Think of it as: "keep only the items that pass this test"
+Think of it as: "keep only the items from the <span style="color: #64B5F6; font-weight: bold;">input list</span> that pass the <span style="color: #9C27B0; font-weight: bold;">predicate test</span>"
 
 **Examples:**
 
@@ -1114,11 +1130,11 @@ Think of it as: "keep only the items that pass this test"
 
 `fold` takes a combining function, an initial value, and a list, then combines all elements into a single result:
 
-```
-fold :: (b -> a -> b) -> b -> [a] -> b
-```
+<div style="font-family: monospace; padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0;">
+fold :: <span style="color: #9C27B0; font-weight: bold;">(</span><span style="color: #F48FB1">b</span> <span style="color: #9C27B0">-></span> <span style="color: #64B5F6">a</span> <span style="color: #9C27B0">-></span> <span style="color: #F48FB1">b</span><span style="color: #9C27B0; font-weight: bold;">)</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #F48FB1; font-weight: bold;">b</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #64B5F6; font-weight: bold;">[a]</span> <span style="color: #FF9800; font-weight: bold;">-></span> <span style="color: #F48FB1; font-weight: bold;">b</span>
+</div>
 
-Think of it as: "combine all items using this operation, starting with this initial value"
+Think of it as: "combine all items from the <span style="color: #64B5F6; font-weight: bold;">input list</span> using the <span style="color: #9C27B0; font-weight: bold;">combining function</span>, starting with the <span style="color: #F48FB1; font-weight: bold;">initial accumulator</span>, producing a <span style="color: #F48FB1; font-weight: bold;">final result</span>"
 
 The combining function takes two arguments:
 
