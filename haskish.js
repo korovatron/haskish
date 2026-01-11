@@ -1003,9 +1003,9 @@ class HaskishInterpreter {
                     j++;
                 }
                 if (j < expr.length) j++; // Include closing quote
-                // Convert to double-quoted string format
+                // Convert to double-quoted string format but mark as char literal
                 const content = expr.slice(i + 1, j - 1);
-                tokens.push({ type: 'string', value: '"' + content + '"' });
+                tokens.push({ type: 'string', value: '"' + content + '"', isChar: true });
                 i = j;
                 continue;
             }
@@ -2362,8 +2362,8 @@ class HaskishInterpreter {
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') {
                     const str = token.value.slice(1, -1);
-                    // Single-char strings are Chars, not Strings (arrays)
-                    return str.length === 1 ? str : str.split('');
+                    // Single-quoted literals are Chars, double-quoted are Strings
+                    return token.isChar ? str : str.split('');
                 }
                 if (token.type === 'paren') {
                     // Handle unit () as null
@@ -2398,7 +2398,12 @@ class HaskishInterpreter {
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1).split('');
+                if (token.type === 'string') {
+                    const str = token.value.slice(1, -1);
+                    // Single-quoted literals are Chars (single-char strings)
+                    // Double-quoted literals are Strings (arrays)
+                    return token.isChar ? str : str.split('');
+                }
                 if (token.type === 'paren') {
                     // Handle unit () as null
                     return token.value.trim() === '' ? null : this.evaluate(token.value);
@@ -2441,7 +2446,12 @@ class HaskishInterpreter {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
-                if (token.type === 'string') return token.value.slice(1, -1).split('');
+                if (token.type === 'string') {
+                    const str = token.value.slice(1, -1);
+                    // Single-quoted literals are Chars (single-char strings)
+                    // Double-quoted literals are Strings (arrays)
+                    return token.isChar ? str : str.split('');
+                }
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
                     // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
