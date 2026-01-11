@@ -1,0 +1,39 @@
+Test cases for String = [Char] implementation:
+
+1. Basic string creation:
+   "hello"
+   Expected: "hello" (displayed as string, internally ['h','e','l','l','o'])
+
+2. String operations:
+   head "hello"
+   Expected: 'h'
+   
+   tail "hello"
+   Expected: "ello"
+   
+   "hello" ++ " world"
+   Expected: "hello world"
+   
+3. Cons operator:
+   'h' : "ello"
+   Expected: "hello"
+   
+4. Map over string:
+   map (\c -> c) "hello"
+   Expected: "hello" (not changed)
+   
+5. Filter on string:
+   filter (\c -> c /= 'l') "hello"
+   Expected: "heo"
+   
+6. List comprehension:
+   [c | c <- "hello"]
+   Expected: "hello"
+   
+7. Pattern matching:
+   (x:xs) pattern on "hello"
+   x should be 'h', xs should be "ello"
+
+8. Comparison:
+   "hello" == ['h','e','l','l','o']
+   Expected: True (they're the same now!)

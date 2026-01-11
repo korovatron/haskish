@@ -1821,8 +1821,8 @@ class HaskishInterpreter {
             });
         }
         
-        // For function objects (Lambda, operator sections, etc), store them in the variables table
-        // during evaluation, since they can't be stringified
+        // For function objects and single-char strings (Chars), store them in the variables table
+        // during evaluation, since they can't be safely stringified and re-parsed
         const tempVars = {};
         
         for (let [varName, value] of Object.entries(bindings)) {
@@ -1832,6 +1832,10 @@ class HaskishInterpreter {
                 (value && value._isComposedFunction) ||
                 value instanceof PartialFunction) {
                 // Store directly in variables table under the binding name
+                tempVars[varName] = value;
+            }
+            // Also store single-char strings (Chars) to avoid array conversion
+            else if (typeof value === 'string' && value.length === 1) {
                 tempVars[varName] = value;
             }
         }
