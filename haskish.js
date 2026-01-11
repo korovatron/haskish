@@ -1821,8 +1821,8 @@ class HaskishInterpreter {
             });
         }
         
-        // For function objects and single-char strings (Chars), store them in the variables table
-        // during evaluation, since they can't be safely stringified and re-parsed
+        // For function objects, store them in the variables table
+        // during evaluation, since they can't be stringified
         const tempVars = {};
         
         for (let [varName, value] of Object.entries(bindings)) {
@@ -1834,10 +1834,9 @@ class HaskishInterpreter {
                 // Store directly in variables table under the binding name
                 tempVars[varName] = value;
             }
-            // Also store single-char strings (Chars) to avoid array conversion
-            else if (typeof value === 'string' && value.length === 1) {
-                tempVars[varName] = value;
-            }
+            // Note: Single-char strings are NOT stored in tempVars
+            // They are substituted as strings and converted back to arrays when re-parsed
+            // This ensures functions like head/tail work correctly
         }
         
         // Temporarily add function objects to the variables table
