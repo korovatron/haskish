@@ -1761,6 +1761,46 @@ class HaskishInterpreter {
         return patterns;
     }
 
+    // Format value for substitution back into expressions
+    // Different from formatOutput which is for display to users
+    formatForSubstitution(value) {
+        if (value instanceof Lambda) {
+            return value.toString();
+        }
+        if (value instanceof PartialFunction) {
+            return value.toString();
+        }
+        if (value && value._isComposedFunction) {
+            return value.toString();
+        }
+        if (value && value._isOperatorFunction) {
+            return value.toString();
+        }
+        if (value && value._isInfiniteRange) {
+            return value.toString();
+        }
+        if (value && value._isTuple) {
+            return '(' + value.elements.map(v => this.formatForSubstitution(v)).join(',') + ')';
+        }
+        if (Array.isArray(value)) {
+            // Check if this is a character array (String = [Char] in Haskell)
+            // Format as double-quoted string so tokenizer will convert back to array
+            if (value.length > 0 && value.every(item => typeof item === 'string' && item.length === 1)) {
+                return '"' + value.join('') + '"';
+            }
+            return '[' + value.map(v => this.formatForSubstitution(v)).join(',') + ']';
+        }
+        if (typeof value === 'string') {
+            // Single character - format as double-quoted string for tokenizer
+            // The tokenizer will convert "A" back to ['A'] which is correct
+            return '"' + value + '"';
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'True' : 'False';
+        }
+        return String(value);
+    }
+
     // Evaluate expression with variable bindings
     evaluateWithBindings(expr, bindings) {
         // Preprocess: Add implicit multiplication (3x becomes 3*x) BEFORE substitution
@@ -1827,8 +1867,8 @@ class HaskishInterpreter {
                         replacement = numStr;
                     }
                 } else {
-                    // Use formatOutput to properly handle booleans (True/False) and other types
-                    replacement = this.formatOutput(value);
+                    // Use formatForSubstitution to properly handle all types for re-evaluation
+                    replacement = this.formatForSubstitution(value);
                 }
                 result = result.replace(varRegex, replacement);
             }
