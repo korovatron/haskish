@@ -821,6 +821,13 @@ class HaskishInterpreter {
         
         // Don't forget any remaining buffer
         if (buffer.trim()) {
+            // Check if brackets are still unclosed
+            if (bracketDepth > 0) {
+                throw new Error(`Unclosed brackets on line ${bufferStartLine}: missing ${bracketDepth} closing bracket(s)`);
+            } else if (bracketDepth < 0) {
+                throw new Error(`Too many closing brackets on line ${bufferStartLine}: ${-bracketDepth} extra closing bracket(s)`);
+            }
+            
             // Replace internal newlines with spaces for parsing, and strip comments
             const normalizedBuffer = buffer.split('\n').map(l => {
                 let line = l.trim();
