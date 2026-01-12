@@ -192,6 +192,12 @@
             <div class="about-content builtins-content">
                 <p><strong>Note:</strong> All list functions work on strings (treated as <code>[Char]</code>).</p>
                 
+                <h3>Pattern Matching</h3>
+                <ul>
+                    <li><code>_</code> - Wildcard pattern (matches any value without binding)<br>
+                        Example: <code>getThird _ _ x = x</code></li>
+                </ul>
+                
                 <h3>Control Flow</h3>
                 <ul>
                     <li><code>if condition then expr1 else expr2</code> - Conditional expression (both branches required)<br>

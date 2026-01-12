@@ -1968,6 +1968,11 @@ class HaskishInterpreter {
             return value === false ? {} : null;
         }
 
+        // Wildcard pattern - matches anything without binding
+        if (pattern === '_') {
+            return {};
+        }
+
         // Simple variable binding
         if (/^[a-zA-Z_]\w*'*$/.test(pattern)) {
             return { [pattern]: value };
@@ -2366,6 +2371,10 @@ class HaskishInterpreter {
 
         // Check if it's a variable reference
         if (/^[a-zA-Z_]\w*'*$/.test(expr) && this.variables[expr] !== undefined) {
+            // Prevent using _ as a variable (it's a wildcard pattern only)
+            if (expr === '_') {
+                throw new Error("Wildcard '_' cannot be used as a variable. It only matches values in patterns without binding.");
+            }
             return this.variables[expr];
         }
 
