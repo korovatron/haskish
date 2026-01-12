@@ -694,24 +694,89 @@ class HaskishInterpreter {
         this.functions = {};
         this.variables = {};
         this.warnings = [];
-        const lines = code.split('\n').filter(line => {
-            const trimmed = line.trim();
-            return trimmed && !trimmed.startsWith('--');
-        });
+        
+        // First pass: combine lines with unclosed brackets
+        const rawLines = code.split('\n');
+        const combinedLines = [];
+        const lineNumberMap = []; // Track which original line each combined line starts at
+        let buffer = '';
+        let bracketDepth = 0;
+        let bufferStartLine = 0;
+        
+        for (let i = 0; i < rawLines.length; i++) {
+            const rawLine = rawLines[i];
+            const trimmed = rawLine.trim();
+            
+            // Skip empty lines and comments when not continuing
+            if (!buffer && (!trimmed || trimmed.startsWith('--'))) {
+                continue;
+            }
+            
+            // Add to buffer
+            if (buffer) {
+                buffer += '\n' + rawLine;
+            } else {
+                buffer = rawLine;
+                bufferStartLine = i + 1; // 1-indexed
+            }
+            
+            // Count brackets in this line (ignore brackets in strings)
+            let inString = false;
+            let inChar = false;
+            let escapeNext = false;
+            
+            for (let char of trimmed) {
+                if (escapeNext) {
+                    escapeNext = false;
+                    continue;
+                }
+                if (char === '\\') {
+                    escapeNext = true;
+                    continue;
+                }
+                if (char === '"' && !inChar) {
+                    inString = !inString;
+                    continue;
+                }
+                if (char === "'" && !inString && trimmed.indexOf("'") !== trimmed.lastIndexOf("'")) {
+                    inChar = !inChar;
+                    continue;
+                }
+                if (!inString && !inChar) {
+                    if (char === '[' || char === '(') bracketDepth++;
+                    if (char === ']' || char === ')') bracketDepth--;
+                }
+            }
+            
+            // If brackets are balanced and line isn't a comment, flush buffer
+            if (bracketDepth === 0 && trimmed && !trimmed.startsWith('--')) {
+                // Replace internal newlines with spaces for parsing
+                const normalizedBuffer = buffer.split('\n').map(l => l.trim()).join(' ');
+                combinedLines.push(normalizedBuffer);
+                lineNumberMap.push(bufferStartLine);
+                buffer = '';
+            }
+        }
+        
+        // Don't forget any remaining buffer
+        if (buffer.trim()) {
+            // Replace internal newlines with spaces for parsing
+            const normalizedBuffer = buffer.split('\n').map(l => l.trim()).join(' ');
+            combinedLines.push(normalizedBuffer);
+            lineNumberMap.push(bufferStartLine);
+        }
+        
+        const lines = combinedLines;
 
         let currentFunction = null;
         let currentCases = [];
         let currentParams = null;
         let currentParamsLineNumber = null;
         let currentGuards = [];
-        let lineNumber = 0;
-        const originalLines = code.split('\n');
 
-        for (let line of lines) {
-            // Find the line number in the original code
-            lineNumber = originalLines.findIndex((origLine, idx) => 
-                idx >= lineNumber && origLine.trim() === line.trim()
-            ) + 1;
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            const lineNumber = lineNumberMap[i];
 
             line = line.trim();
             if (!line) continue;

@@ -752,3 +752,65 @@ polyDerivativeN n poly = polyDerivativeN (n - 1) (polyDerivative poly)
 -- polyDegree [1, 2, 3]                      → 2  (polynomial is degree 2)
 -- polyDegree [5]                            → 0  (constant)
 -- polyDegree [1, 0, 0, 0, 2]                → 4  (degree 4)
+
+=== Sudoku Validator ===
+-- Validate a Sudoku board (9x9 grid)
+-- Board is a list of 9 rows, each row is a list of 9 numbers (1-9)
+
+-- Check if element is in list
+contains e [] = False
+contains e (x:xs)
+  | e == x    = True
+  | otherwise = contains e xs
+
+-- Check if a group has no duplicates and all values 1-9
+isValidGroup [] = True
+isValidGroup (x:xs)
+  | x < 1 || x > 9 = False
+  | contains x xs  = False
+  | otherwise      = isValidGroup xs
+
+-- Get column n from the board
+getColumn n board = [row !! n | row <- board]
+
+-- Get all 9 columns
+getColumns board = [getColumn i board | i <- [0..8]]
+
+-- Get a 3x3 box starting at row r, column c
+getBox r c board = [board !! (r+i) !! (c+j) | i <- [0..2], j <- [0..2]]
+
+-- Get all 9 boxes
+getBoxes board = [getBox r c board | r <- [0,3,6], c <- [0,3,6]]
+
+-- Check if all groups in a list are valid
+allValid [] = True
+allValid (g:gs) = isValidGroup g && allValid gs
+
+-- Main validation function
+validSudoku board = allValid board && allValid (getColumns board) && allValid (getBoxes board)
+
+-- Example board (valid)
+board = [[5,3,4,6,7,8,9,1,2],
+         [6,7,2,1,9,5,3,4,8],
+         [1,9,8,3,4,2,5,6,7],
+         [8,5,9,7,6,1,4,2,3],
+         [4,2,6,8,5,3,7,9,1],
+         [7,1,3,9,2,4,8,5,6],
+         [9,6,1,5,3,7,2,8,4],
+         [2,8,7,4,1,9,6,3,5],
+         [3,4,5,2,8,6,1,7,9]]
+
+-- Invalid board (duplicate 5 in first row)
+badBoard = [[5,3,4,6,7,8,9,1,5],
+            [6,7,2,1,9,5,3,4,8],
+            [1,9,8,3,4,2,5,6,7],
+            [8,5,9,7,6,1,4,2,3],
+            [4,2,6,8,5,3,7,9,1],
+            [7,1,3,9,2,4,8,5,6],
+            [9,6,1,5,3,7,2,8,4],
+            [2,8,7,4,1,9,6,3,5],
+            [3,4,5,2,8,6,1,7,9]]
+
+-- Tests:
+-- validSudoku board     → True
+-- validSudoku badBoard  → False
