@@ -235,7 +235,16 @@ class FilteredInfiniteRange {
     take(n) {
         const result = [];
         let count = 0;
+        
         for (const value of this.sourceRange) {
+            // Check for timeout if execution is being timed
+            if (this.interpreter.executionStartTime > 0) {
+                const elapsed = Date.now() - this.interpreter.executionStartTime;
+                if (elapsed > this.interpreter.maxExecutionTime) {
+                    throw new Error(`Execution timeout while filtering infinite list. Filter may not match enough elements.`);
+                }
+            }
+            
             if (this._testPredicate(value)) {
                 result.push(value);
                 count++;
@@ -249,6 +258,14 @@ class FilteredInfiniteRange {
     at(index) {
         let count = 0;
         for (const value of this.sourceRange) {
+            // Check for timeout if execution is being timed
+            if (this.interpreter.executionStartTime > 0) {
+                const elapsed = Date.now() - this.interpreter.executionStartTime;
+                if (elapsed > this.interpreter.maxExecutionTime) {
+                    throw new Error(`Execution timeout while filtering infinite list.`);
+                }
+            }
+            
             if (this._testPredicate(value)) {
                 if (count === index) return value;
                 count++;
@@ -295,6 +312,14 @@ class FilteredInfiniteRange {
     // Get first element that passes filter
     head() {
         for (const value of this.sourceRange) {
+            // Check for timeout if execution is being timed
+            if (this.interpreter.executionStartTime > 0) {
+                const elapsed = Date.now() - this.interpreter.executionStartTime;
+                if (elapsed > this.interpreter.maxExecutionTime) {
+                    throw new Error(`Execution timeout while filtering infinite list.`);
+                }
+            }
+            
             if (this._testPredicate(value)) {
                 return value;
             }
