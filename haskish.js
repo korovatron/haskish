@@ -648,6 +648,25 @@ class HaskishInterpreter {
                 }
                 return String.fromCharCode(code);
             },
+            'show': (value) => {
+                // Convert any value to a Haskell string (list of characters)
+                let str;
+                if (typeof value === 'string') {
+                    str = value;
+                } else if (typeof value === 'number') {
+                    str = String(value);
+                } else if (typeof value === 'boolean') {
+                    str = value ? 'True' : 'False';
+                } else if (Array.isArray(value)) {
+                    str = this.formatOutput(value);
+                } else if (value && value._isTuple) {
+                    str = this.formatOutput(value);
+                } else {
+                    str = String(value);
+                }
+                // Convert JavaScript string to Haskell string (array of characters)
+                return Array.from(str);
+            },
             'compose': (g, f) => {
                 // Function composition: (g . f) x = g(f(x))
                 const interpreter = this;
