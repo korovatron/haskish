@@ -720,12 +720,13 @@ class HaskishInterpreter {
                 bufferStartLine = i + 1; // 1-indexed
             }
             
-            // Count brackets in this line (ignore brackets in strings)
+            // Count brackets in this line (ignore brackets in strings and char literals)
             let inString = false;
-            let inChar = false;
             let escapeNext = false;
             
-            for (let char of trimmed) {
+            for (let j = 0; j < trimmed.length; j++) {
+                const char = trimmed[j];
+                
                 if (escapeNext) {
                     escapeNext = false;
                     continue;
@@ -734,15 +735,25 @@ class HaskishInterpreter {
                     escapeNext = true;
                     continue;
                 }
-                if (char === '"' && !inChar) {
+                if (char === '"') {
                     inString = !inString;
                     continue;
                 }
-                if (char === "'" && !inString && trimmed.indexOf("'") !== trimmed.lastIndexOf("'")) {
-                    inChar = !inChar;
-                    continue;
+                // Character literal: 'x' - skip it entirely
+                if (char === "'" && !inString && j + 2 < trimmed.length) {
+                    // Check if it's a valid char literal 'x' or '\x'
+                    if (trimmed[j + 1] === '\\' && j + 3 < trimmed.length && trimmed[j + 3] === "'") {
+                        // Escaped char like '\n'
+                        j += 3; // skip over entire '\x'
+                        continue;
+                    } else if (trimmed[j + 2] === "'") {
+                        // Regular char like 'a'
+                        j += 2; // skip over entire 'x'
+                        continue;
+                    }
                 }
-                if (!inString && !inChar) {
+                
+                if (!inString) {
                     if (char === '[' || char === '(') bracketDepth++;
                     if (char === ']' || char === ')') bracketDepth--;
                 }
@@ -1130,9 +1141,31 @@ class HaskishInterpreter {
             if (expr[i] === '[') {
                 let depth = 1;
                 let j = i + 1;
+                let inString = false;
+                let inChar = false;
+                let escapeNext = false;
+                
                 while (j < expr.length && depth > 0) {
-                    if (expr[j] === '[') depth++;
-                    if (expr[j] === ']') depth--;
+                    if (escapeNext) {
+                        escapeNext = false;
+                        j++;
+                        continue;
+                    }
+                    if (expr[j] === '\\') {
+                        escapeNext = true;
+                        j++;
+                        continue;
+                    }
+                    if (expr[j] === '"' && !inChar) {
+                        inString = !inString;
+                    }
+                    if (expr[j] === "'" && !inString) {
+                        inChar = !inChar;
+                    }
+                    if (!inString && !inChar) {
+                        if (expr[j] === '[') depth++;
+                        if (expr[j] === ']') depth--;
+                    }
                     j++;
                 }
                 tokens.push({ type: 'list', value: expr.slice(i, j) });
@@ -1144,9 +1177,31 @@ class HaskishInterpreter {
             if (expr[i] === '(') {
                 let depth = 1;
                 let j = i + 1;
+                let inString = false;
+                let inChar = false;
+                let escapeNext = false;
+                
                 while (j < expr.length && depth > 0) {
-                    if (expr[j] === '(') depth++;
-                    if (expr[j] === ')') depth--;
+                    if (escapeNext) {
+                        escapeNext = false;
+                        j++;
+                        continue;
+                    }
+                    if (expr[j] === '\\') {
+                        escapeNext = true;
+                        j++;
+                        continue;
+                    }
+                    if (expr[j] === '"' && !inChar) {
+                        inString = !inString;
+                    }
+                    if (expr[j] === "'" && !inString) {
+                        inChar = !inChar;
+                    }
+                    if (!inString && !inChar) {
+                        if (expr[j] === '(') depth++;
+                        if (expr[j] === ')') depth--;
+                    }
                     j++;
                 }
                 const parenContent = expr.slice(i + 1, j - 1).trim();
@@ -1154,7 +1209,8 @@ class HaskishInterpreter {
                 // Check for tuple (contains commas at depth 0, not inside strings)
                 let hasTupleComma = false;
                 let tupleDepth = 0;
-                let inString = false;
+                // Reuse inString and reset it for tuple comma checking
+                inString = false;
                 let stringChar = null;
                 for (let k = 0; k < parenContent.length; k++) {
                     const ch = parenContent[k];
@@ -1424,17 +1480,36 @@ class HaskishInterpreter {
         const elements = [];
         let current = '';
         let depth = 0;
+        let inString = false;
+        let stringChar = null;
 
-        for (let char of listStr) {
-            if (char === '[' || char === '(') depth++;
-            if (char === ']' || char === ')') depth--;
+        for (let i = 0; i < listStr.length; i++) {
+            const char = listStr[i];
             
-            if (char === ',' && depth === 0) {
-                elements.push(this.evaluate(current.trim()));
-                current = '';
-            } else {
-                current += char;
+            // Track string/char literal boundaries
+            if ((char === '"' || char === "'") && (i === 0 || listStr[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = char;
+                } else if (char === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
             }
+            
+            // Only track depth and split on commas outside of strings
+            if (!inString) {
+                if (char === '[' || char === '(') depth++;
+                if (char === ']' || char === ')') depth--;
+                
+                if (char === ',' && depth === 0) {
+                    elements.push(this.evaluate(current.trim()));
+                    current = '';
+                    continue;
+                }
+            }
+            
+            current += char;
         }
 
         if (current.trim()) {
