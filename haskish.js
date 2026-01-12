@@ -720,12 +720,40 @@ class HaskishInterpreter {
                 bufferStartLine = i + 1; // 1-indexed
             }
             
+            // Strip comments before counting brackets (but keep them in buffer)
+            let lineForBrackets = trimmed;
+            const commentIndex = trimmed.indexOf('--');
+            if (commentIndex !== -1) {
+                // Make sure the -- is not inside a string
+                let inStr = false;
+                let strChar = null;
+                let isComment = false;
+                for (let k = 0; k < trimmed.length; k++) {
+                    if (trimmed[k] === '\\') {
+                        k++; // skip escaped char
+                        continue;
+                    }
+                    if ((trimmed[k] === '"' || trimmed[k] === "'") && !inStr) {
+                        inStr = true;
+                        strChar = trimmed[k];
+                    } else if (trimmed[k] === strChar && inStr) {
+                        inStr = false;
+                        strChar = null;
+                    }
+                    if (!inStr && k < trimmed.length - 1 && trimmed[k] === '-' && trimmed[k + 1] === '-') {
+                        lineForBrackets = trimmed.substring(0, k);
+                        isComment = true;
+                        break;
+                    }
+                }
+            }
+            
             // Count brackets in this line (ignore brackets in strings and char literals)
             let inString = false;
             let escapeNext = false;
             
-            for (let j = 0; j < trimmed.length; j++) {
-                const char = trimmed[j];
+            for (let j = 0; j < lineForBrackets.length; j++) {
+                const char = lineForBrackets[j];
                 
                 if (escapeNext) {
                     escapeNext = false;
@@ -740,13 +768,13 @@ class HaskishInterpreter {
                     continue;
                 }
                 // Character literal: 'x' - skip it entirely
-                if (char === "'" && !inString && j + 2 < trimmed.length) {
+                if (char === "'" && !inString && j + 2 < lineForBrackets.length) {
                     // Check if it's a valid char literal 'x' or '\x'
-                    if (trimmed[j + 1] === '\\' && j + 3 < trimmed.length && trimmed[j + 3] === "'") {
+                    if (lineForBrackets[j + 1] === '\\' && j + 3 < lineForBrackets.length && lineForBrackets[j + 3] === "'") {
                         // Escaped char like '\n'
                         j += 3; // skip over entire '\x'
                         continue;
-                    } else if (trimmed[j + 2] === "'") {
+                    } else if (lineForBrackets[j + 2] === "'") {
                         // Regular char like 'a'
                         j += 2; // skip over entire 'x'
                         continue;
@@ -761,8 +789,30 @@ class HaskishInterpreter {
             
             // If brackets are balanced and line isn't a comment, flush buffer
             if (bracketDepth === 0 && trimmed && !trimmed.startsWith('--')) {
-                // Replace internal newlines with spaces for parsing
-                const normalizedBuffer = buffer.split('\n').map(l => l.trim()).join(' ');
+                // Replace internal newlines with spaces for parsing, and strip comments
+                const normalizedBuffer = buffer.split('\n').map(l => {
+                    let line = l.trim();
+                    // Strip comments (but check they're not in strings)
+                    let inStr = false;
+                    let strChar = null;
+                    for (let k = 0; k < line.length; k++) {
+                        if (line[k] === '\\') {
+                            k++; // skip escaped char
+                            continue;
+                        }
+                        if ((line[k] === '"' || line[k] === "'") && !inStr) {
+                            inStr = true;
+                            strChar = line[k];
+                        } else if (line[k] === strChar && inStr) {
+                            inStr = false;
+                            strChar = null;
+                        }
+                        if (!inStr && k < line.length - 1 && line[k] === '-' && line[k + 1] === '-') {
+                            return line.substring(0, k).trim();
+                        }
+                    }
+                    return line;
+                }).join(' ');
                 combinedLines.push(normalizedBuffer);
                 lineNumberMap.push(bufferStartLine);
                 buffer = '';
@@ -771,8 +821,30 @@ class HaskishInterpreter {
         
         // Don't forget any remaining buffer
         if (buffer.trim()) {
-            // Replace internal newlines with spaces for parsing
-            const normalizedBuffer = buffer.split('\n').map(l => l.trim()).join(' ');
+            // Replace internal newlines with spaces for parsing, and strip comments
+            const normalizedBuffer = buffer.split('\n').map(l => {
+                let line = l.trim();
+                // Strip comments (but check they're not in strings)
+                let inStr = false;
+                let strChar = null;
+                for (let k = 0; k < line.length; k++) {
+                    if (line[k] === '\\') {
+                        k++; // skip escaped char
+                        continue;
+                    }
+                    if ((line[k] === '"' || line[k] === "'") && !inStr) {
+                        inStr = true;
+                        strChar = line[k];
+                    } else if (line[k] === strChar && inStr) {
+                        inStr = false;
+                        strChar = null;
+                    }
+                    if (!inStr && k < line.length - 1 && line[k] === '-' && line[k + 1] === '-') {
+                        return line.substring(0, k).trim();
+                    }
+                }
+                return line;
+            }).join(' ');
             combinedLines.push(normalizedBuffer);
             lineNumberMap.push(bufferStartLine);
         }
