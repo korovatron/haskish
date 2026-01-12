@@ -2310,5 +2310,3 @@ Every modern programming language has adopted lambda functions (Python, JavaScri
 
 Mastering lambdas lets you write elegant, concise code. Combined with higher-order functions, they give you incredible expressive power!
 
-
-.
