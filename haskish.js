@@ -3210,8 +3210,6 @@ class HaskishInterpreter {
             this.parseFunctionDefinitions(code);
             const funcCount = Object.keys(this.functions).length;
             const varCount = Object.keys(this.variables).length;
-            console.log('Loaded functions:', Object.keys(this.functions));
-            console.log('Loaded variables:', Object.keys(this.variables));
             return { 
                 success: true, 
                 message: `Loaded ${funcCount} function(s) and ${varCount} variable(s)`,
