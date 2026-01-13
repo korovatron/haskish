@@ -708,11 +708,120 @@ class HaskishInterpreter {
         };
     }
 
+    // Helper function to remove multiline comments from code (supports nesting)
+    removeMultilineComments(code) {
+        let result = '';
+        let inString = false;
+        let stringChar = null;
+        let commentDepth = 0;  // Track nesting level
+        let i = 0;
+        
+        while (i < code.length) {
+            const char = code[i];
+            const nextChar = code[i + 1];
+            
+            // Handle escape sequences in strings
+            if (inString && char === '\\' && i + 1 < code.length) {
+                result += char + nextChar;
+                i += 2;
+                continue;
+            }
+            
+            // Track string boundaries (only when not in comment)
+            if (commentDepth === 0 && (char === '"' || char === "'")) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = char;
+                } else if (char === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                result += char;
+                i++;
+                continue;
+            }
+            
+            // Not in a string, check for multiline comments
+            if (!inString) {
+                // Check for multiline comment start
+                if (char === '{' && nextChar === '-') {
+                    commentDepth++;
+                    i += 2;
+                    continue;
+                }
+                
+                // Check for multiline comment end
+                if (commentDepth > 0 && char === '-' && nextChar === '}') {
+                    commentDepth--;
+                    i += 2;
+                    continue;
+                }
+            }
+            
+            // Add character if not in a comment
+            if (commentDepth === 0) {
+                result += char;
+            }
+            i++;
+        }
+        
+        return result;
+    }
+
+    // Helper function to strip both single-line and multiline comments
+    stripComments(text) {
+        // Note: multiline comments are already removed in preprocessing
+        let result = '';
+        let inString = false;
+        let stringChar = null;
+        let i = 0;
+        
+        while (i < text.length) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+            
+            // Handle escape sequences in strings
+            if (inString && char === '\\' && i + 1 < text.length) {
+                result += char + nextChar;
+                i += 2;
+                continue;
+            }
+            
+            // Track string boundaries
+            if (char === '"' || char === "'") {
+                if (!inString) {
+                    inString = true;
+                    stringChar = char;
+                } else if (char === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                result += char;
+                i++;
+                continue;
+            }
+            
+            // Check for single-line comment
+            if (!inString && char === '-' && nextChar === '-') {
+                // Rest of line is a comment
+                break;
+            }
+            
+            result += char;
+            i++;
+        }
+        
+        return result;
+    }
+
     // Parse function definitions and variable bindings
     parseFunctionDefinitions(code) {
         this.functions = {};
         this.variables = {};
         this.warnings = [];
+        
+        // Preprocess: Remove all multiline comments first
+        code = this.removeMultilineComments(code);
         
         // First pass: combine lines with unclosed brackets
         const rawLines = code.split('\n');
@@ -740,32 +849,7 @@ class HaskishInterpreter {
             }
             
             // Strip comments before counting brackets (but keep them in buffer)
-            let lineForBrackets = trimmed;
-            const commentIndex = trimmed.indexOf('--');
-            if (commentIndex !== -1) {
-                // Make sure the -- is not inside a string
-                let inStr = false;
-                let strChar = null;
-                let isComment = false;
-                for (let k = 0; k < trimmed.length; k++) {
-                    if (trimmed[k] === '\\') {
-                        k++; // skip escaped char
-                        continue;
-                    }
-                    if ((trimmed[k] === '"' || trimmed[k] === "'") && !inStr) {
-                        inStr = true;
-                        strChar = trimmed[k];
-                    } else if (trimmed[k] === strChar && inStr) {
-                        inStr = false;
-                        strChar = null;
-                    }
-                    if (!inStr && k < trimmed.length - 1 && trimmed[k] === '-' && trimmed[k + 1] === '-') {
-                        lineForBrackets = trimmed.substring(0, k);
-                        isComment = true;
-                        break;
-                    }
-                }
-            }
+            let lineForBrackets = this.stripComments(trimmed);
             
             // Count brackets in this line (ignore brackets in strings and char literals)
             let inString = false;
@@ -810,27 +894,7 @@ class HaskishInterpreter {
             if (bracketDepth === 0 && trimmed && !trimmed.startsWith('--')) {
                 // Replace internal newlines with spaces for parsing, and strip comments
                 const normalizedBuffer = buffer.split('\n').map(l => {
-                    let line = l.trim();
-                    // Strip comments (but check they're not in strings)
-                    let inStr = false;
-                    let strChar = null;
-                    for (let k = 0; k < line.length; k++) {
-                        if (line[k] === '\\') {
-                            k++; // skip escaped char
-                            continue;
-                        }
-                        if ((line[k] === '"' || line[k] === "'") && !inStr) {
-                            inStr = true;
-                            strChar = line[k];
-                        } else if (line[k] === strChar && inStr) {
-                            inStr = false;
-                            strChar = null;
-                        }
-                        if (!inStr && k < line.length - 1 && line[k] === '-' && line[k + 1] === '-') {
-                            return line.substring(0, k).trim();
-                        }
-                    }
-                    return line;
+                    return this.stripComments(l.trim());
                 }).join(' ');
                 combinedLines.push(normalizedBuffer);
                 lineNumberMap.push(bufferStartLine);
@@ -849,27 +913,7 @@ class HaskishInterpreter {
             
             // Replace internal newlines with spaces for parsing, and strip comments
             const normalizedBuffer = buffer.split('\n').map(l => {
-                let line = l.trim();
-                // Strip comments (but check they're not in strings)
-                let inStr = false;
-                let strChar = null;
-                for (let k = 0; k < line.length; k++) {
-                    if (line[k] === '\\') {
-                        k++; // skip escaped char
-                        continue;
-                    }
-                    if ((line[k] === '"' || line[k] === "'") && !inStr) {
-                        inStr = true;
-                        strChar = line[k];
-                    } else if (line[k] === strChar && inStr) {
-                        inStr = false;
-                        strChar = null;
-                    }
-                    if (!inStr && k < line.length - 1 && line[k] === '-' && line[k + 1] === '-') {
-                        return line.substring(0, k).trim();
-                    }
-                }
-                return line;
+                return this.stripComments(l.trim());
             }).join(' ');
             combinedLines.push(normalizedBuffer);
             lineNumberMap.push(bufferStartLine);
