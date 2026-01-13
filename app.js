@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.10';
+const HASKISH_VERSION = '1.0.11';
 
 const interpreter = new HaskishInterpreter();
 
@@ -106,7 +106,8 @@ menuOverlay.addEventListener('click', closeMenuFunc);
 
 // Toggle exercises column
 const toggleExercisesBtn = document.getElementById('toggleExercises');
-toggleExercisesBtn.addEventListener('click', function() {
+
+function toggleExercisesPanel() {
     const exercisesColumn = document.getElementById('exercisesColumn');
     const mainContent = document.getElementById('mainContent');
     const isVisible = exercisesColumn.style.display !== 'none';
@@ -122,9 +123,18 @@ toggleExercisesBtn.addEventListener('click', function() {
         document.body.classList.add('exercises-visible');
         toggleExercisesBtn.classList.add('active');
     }
-    
+}
+
+toggleExercisesBtn.addEventListener('click', function() {
+    toggleExercisesPanel();
     // Close menu after toggling
     closeMenuFunc();
+});
+
+// Close lessons button in the panel itself
+const closeLessonsBtn = document.getElementById('closeLessons');
+closeLessonsBtn.addEventListener('click', function() {
+    toggleExercisesPanel();
 });
 
 // Built-in Functions overlay

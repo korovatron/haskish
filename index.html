@@ -350,11 +350,16 @@
 
             <!-- Exercises Panel (Column 3) -->
             <div class="column exercises-column" id="exercisesColumn" style="display: none;">
-                <!-- Exercise Selector Bar -->
                 <div class="exercise-selector-bar">
-                    <div class="exercise-header-row">
+                    <div class="panel-header">
                         <h2>Lessons</h2>
+                        <button id="closeLessons" class="btn btn-secondary btn-small" title="Close Lessons">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
                     </div>
+                    <!-- Exercise Selector Bar -->
                     <div class="exercise-buttons-wrapper">
                         <div class="exercise-buttons-container">
                             <!-- Exercise buttons will be dynamically generated from data/exercises.txt -->

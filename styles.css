@@ -631,39 +631,17 @@ body.menu-open .repl-history {
 
 .exercise-selector-bar {
     background: var(--panel-bg);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    padding: 20px;
     flex-shrink: 0;
 }
 
-.exercise-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.exercise-header-row h2 {
-    color: var(--primary-color);
-    font-size: 1.3em;
-    margin: 0;
-}
-
-.exercise-header-row #resetProgress {
-    min-width: 32px;
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.exercise-header-row #resetProgress svg {
-    display: block;
+.exercises-column .panel-header {
+    padding: 0 0 10px 0;
 }
 
 .exercise-buttons-wrapper {
     width: 100%;
+    padding-top: 15px;
 }
 
 .exercise-buttons-container {
@@ -680,7 +658,7 @@ body.menu-open .repl-history {
     padding: 0;
     border: 2px solid var(--border-color);
     border-radius: 6px;
-    background-color: var(--panel-bg);
+    background-color: var(--code-bg);
     color: var(--text-color);
     font-size: 0.95em;
     font-weight: 600;
@@ -1706,6 +1684,7 @@ footer a:hover {
     
     .exercise-selector-bar {
         display: flex;
+        flex-direction: column;
     }
     
     header {
