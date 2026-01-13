@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.12';
+const HASKISH_VERSION = '1.0.13';
 
 const interpreter = new HaskishInterpreter();
 
@@ -151,12 +151,6 @@ closeBuiltins.addEventListener('click', function() {
     builtinsOverlay.classList.remove('visible');
 });
 
-builtinsOverlay.addEventListener('click', function(e) {
-    if (e.target === builtinsOverlay) {
-        builtinsOverlay.classList.remove('visible');
-    }
-});
-
 // Welcome modal
 const welcomeModal = document.getElementById('welcomeModal');
 const startCodingBtn = document.getElementById('startCoding');
@@ -193,10 +187,19 @@ showWelcomeCheckbox.addEventListener('change', function() {
     localStorage.setItem('haskish_showWelcome', this.checked.toString());
 });
 
-// Close modal when clicking overlay
-welcomeModal.addEventListener('click', function(e) {
-    if (e.target === welcomeModal) {
-        welcomeModal.classList.remove('visible');
+// Handle keyboard accessibility for all modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        if (welcomeModal.classList.contains('visible')) {
+            e.preventDefault();
+            welcomeModal.classList.remove('visible');
+        } else if (aboutOverlay.classList.contains('visible')) {
+            e.preventDefault();
+            aboutOverlay.classList.remove('visible');
+        } else if (builtinsOverlay.classList.contains('visible')) {
+            e.preventDefault();
+            builtinsOverlay.classList.remove('visible');
+        }
     }
 });
 
@@ -217,12 +220,6 @@ aboutButton.addEventListener('click', function() {
 
 closeAbout.addEventListener('click', function() {
     aboutOverlay.classList.remove('visible');
-});
-
-aboutOverlay.addEventListener('click', function(e) {
-    if (e.target === aboutOverlay) {
-        aboutOverlay.classList.remove('visible');
-    }
 });
 
 // Exercise content data - loaded from exercises.txt
