@@ -304,10 +304,11 @@ Question
 countOccurrences - counts how many times an element appears in a list
 
 Solution
+boolToInt True  = 1
+boolToInt False = 0
+
 countOccurrences e [] = 0
-countOccurrences e (x:xs)
-  | e == x    = 1 + countOccurrences e xs
-  | otherwise = countOccurrences e xs
+countOccurrences e (x:xs) = boolToInt (e == x) + countOccurrences e xs
 
 
 ================================================================================
