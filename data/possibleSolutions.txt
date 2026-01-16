@@ -792,45 +792,45 @@ map (\(x,y) -> y) [(1,2), (3,4), (5,6)]
 
 
 Question
-Use a lambda with fold to multiply all numbers in a list
+Use a lambda with fold to find the sum of all numbers in a list
 
 Solution
-fold (\acc x -> acc * x) 1 [2,3,4]
+fold (\acc x -> acc + x) 0 [1,2,3,4]
 
 
 Question
-Use map with a lambda to add 10 to numbers greater than 5, but keep numbers 5 or less unchanged
+Use map with a lambda to square only the even numbers, leave odd numbers unchanged
 
 Solution
-map (\x -> if x > 5 then x + 10 else x) [1,3,6,8,2,9]
+map (\x -> if mod x 2 == 0 then x * x else x) [1,2,3,4,5,6]
 
 
 Question
-Use filter with a lambda to keep only pairs where the first element is less than the second
+Use filter with a lambda to keep only pairs where both elements are even
 
 Solution
-filter (\(x,y) -> x < y) [(1,2), (5,3), (2,8), (4,4)]
+filter (\(x,y) -> mod x 2 == 0 && mod y 2 == 0) [(1,2), (4,6), (3,5), (8,10)]
 
 
 Question
-Write a function applyTwice that takes a function and a value, and applies the function twice
+Write a function applyThrice that takes a function and a value, and applies the function three times
 
 Solution
-applyTwice f x = f (f x)
+applyThrice f x = f (f (f x))
 
 
 Question
-Use map with a lambda that takes a pair and returns a pair with the elements swapped
+Use map with a lambda to turn each pair into a sum
 
 Solution
-map (\(x,y) -> (y,x)) [(1,2), (3,4), (5,6)]
+map (\(x,y) -> x + y) [(1,2), (3,4), (5,6)]
 
 
 Question
-Use fold with a lambda to reverse a list
+Use fold with a lambda to count how many numbers in a list are greater than 5
 
 Solution
-fold (\acc x -> x : acc) [] [1,2,3,4]
+fold (\acc x -> if x > 5 then acc + 1 else acc) 0 [1,7,3,9,2,8]
 
 
 Question

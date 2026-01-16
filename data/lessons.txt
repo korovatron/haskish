@@ -2000,21 +2000,37 @@ Lambdas are also commonly used with higher-order functions like `map`:
 
 **_Multiple Parameters_**
 
-Lambda functions can take multiple parameters:
+Lambda functions can take multiple parameters. They're especially useful when you need a quick function inline:
 
 ```
-> add = \x y -> x + y
-> add 3 5
-8
+> fold (\acc x -> acc + x * 2) 0 [1,2,3,4]
+20
 
-> calculate = \a b c -> a * b + c
-> calculate 2 3 4
-10
+> fold (\result n -> result ++ show n ++ " ") "" [1,2,3]
+"1 2 3 "
 
-> combine = \x y -> x ++ " and " ++ y
-> combine "cats" "dogs"
-"cats and dogs"
+> filter (\x -> x > 10 && x < 50) [5,15,25,55,45,35]
+[15,25,45,35]
 ```
+
+**_When to assign vs when to stay anonymous:_**
+
+If you'll use the function **once**, keep it anonymous:
+```
+> map (\x -> x * 2 + 1) [1,2,3]
+[3,5,7]
+```
+
+If you'll use it **multiple times**, give it a name:
+```
+> transform x = x * 2 + 1
+> map transform [1,2,3]
+[3,5,7]
+> transform 10
+21
+```
+
+The whole point of "anonymous" is that you don't need to name it!
 
 **_Why Use Lambda Functions?_**
 
@@ -2026,26 +2042,19 @@ Lambda functions are useful when:
 
 **_Lambdas with Map_**
 
-Instead of defining a named function, you can use a lambda directly:
+Lambdas are useful when you can't express the operation with an operator section:
 
-**With named function:**
+**When operator sections work - use them:**
 ```
-> double x = x * 2
-> map double [1,2,3,4]
+> map (*2) [1,2,3,4]
 [2,4,6,8]
-```
 
-**With lambda:**
-```
-> map (\x -> x * 2) [1,2,3,4]
-[2,4,6,8]
-```
-
-More examples:
-```
-> map (\x -> x + 1) [1,2,3,4,5]
+> map (+1) [1,2,3,4,5]
 [2,3,4,5,6]
+```
 
+**When you need more complex logic - use lambdas:**
+```
 > map (\x -> x * x) [1,2,3,4]
 [1,4,9,16]
 
@@ -2056,23 +2065,32 @@ More examples:
 [3,5,7]
 ```
 
+Operator sections like `(*2)` or `(+1)` are more concise when they work. Use lambdas when you need multiple operations or can't express it as a simple section.
+
 **_Lambdas with Filter_**
 
-Lambdas are perfect for quick predicates:
-
+**When operator sections work - use them:**
 ```
-> filter (\x -> x > 5) [1,3,7,2,9,4]
+> filter (>5) [1,3,7,2,9,4]
 [7,9]
 
+> filter (/=' ') "hello world"
+"helloworld"
+```
+
+**When you need more complex logic - use lambdas:**
+```
 > filter (\x -> mod x 2 == 0) [1,2,3,4,5,6]
 [2,4,6]
 
 > filter (\s -> head s == 'a') ["apple", "banana", "apricot"]
 ["apple","apricot"]
 
-> filter (\x -> x /= ' ') "hello world"
-"helloworld"
+> filter (\x -> x > 10 && x < 20) [5,12,18,25,15]
+[12,18,15]
 ```
+
+Use operator sections when possible - they're clearer. Use lambdas when you need multiple conditions or operations that can't fit in a section.
 
 **_Lambdas with Fold_**
 
@@ -2101,19 +2119,22 @@ The last example reverses a list! The accumulator starts as `[]`, and we cons ea
 
 The second example squares `[1,4,9,16]` then sums them `= 30`
 
-**_Lambdas in List Comprehensions_**
+**_Lambdas with Tuple Destructuring_**
 
-You can use lambdas inside list comprehensions too:
+Where lambdas really shine is when working with tuples - you can pattern match right in the lambda:
 
 ```
-> [(\x -> x * 2) y | y <- [1,2,3,4]]
-[2,4,6,8]
-
 > map (\(x,y) -> x + y) [(1,2), (3,4), (5,6)]
 [3,7,11]
+
+> map (\(name,age) -> name ++ " is " ++ show age) [("Alice",25), ("Bob",30)]
+["Alice is 25","Bob is 30"]
+
+> filter (\(x,y) -> x > y) [(5,3), (2,8), (7,1)]
+[(5,3),(7,1)]
 ```
 
-The second example uses a lambda with pattern matching on tuples!
+This is much cleaner than extracting tuple elements with `fst` and `snd`!
 
 **_Returning Lambda Functions_**
 
@@ -2205,47 +2226,47 @@ You can't express this with a simple operator section.
 [2,4,6]
 ```
 
-- Use a lambda with `fold` to multiply all numbers in a list
+- Use a lambda with `fold` to find the sum of all numbers in a list
 ```
-> fold (\acc x -> ...) 1 [2,3,4]
-24
+> fold (\acc x -> ...) 0 [1,2,3,4]
+10
 ```
 
 **~Intermediate Challenges:~**
 
-- Use `map` with a lambda to add 10 to numbers greater than 5, but keep numbers 5 or less unchanged. **Hint:** Use `if-then-else` inside the lambda
+- Use `map` with a lambda to square only the even numbers, leave odd numbers unchanged. **Hint:** Use `if-then-else` and `mod`
 ```
-> map (\x -> ...) [1,3,6,8,2,9]
-[1,3,16,18,2,19]
-```
-
-- Use `filter` with a lambda to keep only pairs where the first element is less than the second
-```
-> filter (\p -> ...) [(1,2), (5,3), (2,8), (4,4)]
-[(1,2),(2,8)]
+> map (\x -> ...) [1,2,3,4,5,6]
+[1,4,3,16,5,36]
 ```
 
-- Write a function `applyTwice` that takes a function and a value, and applies the function twice. Test it with a lambda
+- Use `filter` with a lambda to keep only pairs where both elements are even
 ```
-> applyTwice f x = ...
-> applyTwice (\x -> x * 2) 3
-12
-> applyTwice (\x -> x ++ "!") "hi"
-"hi!!"
+> filter (\p -> ...) [(1,2), (4,6), (3,5), (8,10)]
+[(4,6),(8,10)]
 ```
 
-- Use `map` with a lambda that takes a pair and returns a pair with the elements swapped
+- Write a function `applyThrice` that takes a function and a value, and applies the function three times
+```
+> applyThrice f x = ...
+> applyThrice (\x -> x + 1) 5
+8
+> applyThrice (\x -> x ++ "!") "wow"
+"wow!!!"
+```
+
+- Use `map` with a lambda to turn each pair into a sum
 ```
 > map (\pair -> ...) [(1,2), (3,4), (5,6)]
-[(2,1),(4,3),(6,5)]
+[3,7,11]
 ```
 
 **~Advanced Challenges:~**
 
-- Use `fold` with a lambda to reverse a list
+- Use `fold` with a lambda to count how many numbers in a list are greater than 5
 ```
-> fold (\acc x -> ...) [] [1,2,3,4]
-[4,3,2,1]
+> fold (\acc x -> ...) 0 [1,7,3,9,2,8]
+3
 ```
 
 - Write `filterMap` that filters a list with one lambda and then maps another lambda over the result
@@ -2271,21 +2292,20 @@ You can't express this with a simple operator section.
 11
 ```
 
-- Use `fold` with a lambda to find the maximum element in a list (assume non-empty list)
+- Use `fold` with a lambda to find the maximum element in a list. **Hint:** What should your starting accumulator be?
 ```
-> fold (\acc x -> ...) (head [3,7,2,9,1]) (tail [3,7,2,9,1])
+> fold (\acc x -> ...) ... [3,7,2,9,1]
 9
 ```
 
 **~Combining Everything:~**
 
-- Write `sumOfSquaresOfEvens` using only lambdas with `map`, `filter`, and `fold`
+- Write `sumOfSquaresOfEvens` using only lambdas with `map`, `filter`, and `fold`. First filter evens, then square them, then sum.
 ```
 > sumOfSquaresOfEvens xs = ...
 > sumOfSquaresOfEvens [1,2,3,4,5,6]
 56
 ```
-Because: evens are `[2,4,6]`, squares are `[4,16,36]`, sum is `56`
 
 - Use lambdas to extract all second elements from a list of pairs, double them, keep only those greater than 10, and sum them
 ```
@@ -2293,7 +2313,6 @@ Because: evens are `[2,4,6]`, squares are `[4,16,36]`, sum is `56`
 > processData [(1,5), (2,7), (3,9)]
 32
 ```
-Because: seconds are `[5,7,9]`, doubled `[10,14,18]`, greater than 10 `[14,18]`, sum `32`
 
 - Create a function that takes a list of numbers and returns a list of strings, where even numbers become "EVEN" and odd numbers become "ODD". Use only a lambda with `map`
 ```
