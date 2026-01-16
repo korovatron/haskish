@@ -10,22 +10,72 @@ class Lambda {
     }
 
     apply(arg) {
-        // Check if parameter is a tuple pattern like (x,y)
+        // Check if parameter is a tuple pattern like (x,y) or ((a,b),(c,d))
         if (this.param.startsWith('(') && this.param.endsWith(')')) {
-            // Extract variable names from tuple pattern
+            // Extract variable names from tuple pattern, handling nested patterns
             const tuplePattern = this.param.slice(1, -1); // Remove outer parens
-            const varNames = tuplePattern.split(',').map(v => v.trim());
+            
+            // Parse tuple pattern to extract variable names (including nested)
+            const parsePattern = (pattern) => {
+                const varNames = [];
+                let current = '';
+                let depth = 0;
+                
+                for (let i = 0; i < pattern.length; i++) {
+                    const ch = pattern[i];
+                    if (ch === '(') depth++;
+                    if (ch === ')') depth--;
+                    
+                    if (ch === ',' && depth === 0) {
+                        varNames.push(current.trim());
+                        current = '';
+                    } else {
+                        current += ch;
+                    }
+                }
+                if (current.trim()) {
+                    varNames.push(current.trim());
+                }
+                return varNames;
+            };
+            
+            const varPatterns = parsePattern(tuplePattern);
             
             // Check if arg is a tuple
             if (arg && arg._isTuple && arg.elements) {
-                if (arg.elements.length !== varNames.length) {
-                    throw new Error(`Tuple pattern ${this.param} expects ${varNames.length} elements but got ${arg.elements.length}`);
+                if (arg.elements.length !== varPatterns.length) {
+                    throw new Error(`Tuple pattern ${this.param} expects ${varPatterns.length} elements but got ${arg.elements.length}`);
                 }
                 // Create bindings for each variable in the pattern
                 const bindings = { ...this.closure };
-                for (let i = 0; i < varNames.length; i++) {
-                    bindings[varNames[i]] = arg.elements[i];
+                
+                for (let i = 0; i < varPatterns.length; i++) {
+                    const pattern = varPatterns[i];
+                    const value = arg.elements[i];
+                    
+                    // Check if this pattern is itself a nested tuple pattern
+                    if (pattern.startsWith('(') && pattern.endsWith(')')) {
+                        // Nested tuple pattern - recursively destructure
+                        const nestedPattern = pattern.slice(1, -1);
+                        const nestedVarPatterns = parsePattern(nestedPattern);
+                        
+                        if (!value || !value._isTuple || !value.elements) {
+                            throw new Error(`Expected tuple for nested pattern ${pattern}`);
+                        }
+                        if (value.elements.length !== nestedVarPatterns.length) {
+                            throw new Error(`Nested tuple pattern ${pattern} expects ${nestedVarPatterns.length} elements but got ${value.elements.length}`);
+                        }
+                        
+                        // Bind nested variables
+                        for (let j = 0; j < nestedVarPatterns.length; j++) {
+                            bindings[nestedVarPatterns[j]] = value.elements[j];
+                        }
+                    } else {
+                        // Simple variable binding
+                        bindings[pattern] = value;
+                    }
                 }
+                
                 return this.interpreter.evaluateWithBindings(this.body, bindings);
             } else {
                 throw new Error(`Expected tuple for pattern ${this.param} but got ${typeof arg}`);
@@ -862,7 +912,8 @@ class HaskishInterpreter {
                     escapeNext = false;
                     continue;
                 }
-                if (char === '\\') {
+                // Only treat backslash as escape if we're in a string
+                if (char === '\\' && inString) {
                     escapeNext = true;
                     continue;
                 }
@@ -1329,7 +1380,8 @@ class HaskishInterpreter {
                         j++;
                         continue;
                     }
-                    if (expr[j] === '\\') {
+                    // Only treat backslash as escape if we're in a string
+                    if (expr[j] === '\\' && (inString || inChar)) {
                         escapeNext = true;
                         j++;
                         continue;
@@ -1347,6 +1399,39 @@ class HaskishInterpreter {
                     j++;
                 }
                 const parenContent = expr.slice(i + 1, j - 1).trim();
+                
+                // Check if it's a lambda expression FIRST (before tuple check)
+                // This is important for nested tuple patterns like \((a,b),(c,d)) -> ...
+                // Special case: if it starts with \, treat parens in the parameter as part of the pattern
+                let isLambda = false;
+                let checkDepth = 0;
+                let inLambdaParam = parenContent.startsWith('\\');
+                
+                for (let k = 0; k < parenContent.length - 1; k++) {
+                    // If we're in the lambda parameter section (before ->), don't count parens for tuple patterns
+                    if (inLambdaParam && parenContent[k] === '-' && parenContent[k + 1] === '>') {
+                        // Found the arrow, so we've left the parameter section
+                        inLambdaParam = false;
+                        isLambda = true;
+                        break;
+                    }
+                    
+                    // Only track depth if we're not in the lambda parameter section
+                    if (!inLambdaParam) {
+                        if (parenContent[k] === '(' || parenContent[k] === '[') checkDepth++;
+                        if (parenContent[k] === ')' || parenContent[k] === ']') checkDepth--;
+                        if (checkDepth === 0 && parenContent[k] === '-' && parenContent[k + 1] === '>') {
+                            isLambda = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isLambda) {
+                    tokens.push({ type: 'lambda', value: parenContent });
+                    i = j;
+                    continue;
+                }
                 
                 // Check for tuple (contains commas at depth 0, not inside strings)
                 let hasTupleComma = false;
@@ -1405,22 +1490,8 @@ class HaskishInterpreter {
                     }
                 }
                 
-                // Check if it's a lambda expression (-> at top level, not in nested parens/brackets)
-                let isLambda = false;
-                let checkDepth = 0;
-                for (let k = 0; k < parenContent.length - 1; k++) {
-                    if (parenContent[k] === '(' || parenContent[k] === '[') checkDepth++;
-                    if (parenContent[k] === ')' || parenContent[k] === ']') checkDepth--;
-                    if (checkDepth === 0 && parenContent[k] === '-' && parenContent[k + 1] === '>') {
-                        isLambda = true;
-                        break;
-                    }
-                }
-                if (isLambda) {
-                    tokens.push({ type: 'lambda', value: parenContent });
-                } else {
-                    tokens.push({ type: 'paren', value: parenContent });
-                }
+                // If not lambda or tuple, it's a regular parenthesized expression
+                tokens.push({ type: 'paren', value: parenContent });
                 i = j;
                 continue;
             }
@@ -1430,19 +1501,30 @@ class HaskishInterpreter {
                 // Find the end of the lambda (up to the end of expression or balanced parens)
                 let j = i + 1;
                 let depth = 0;
+                let seenArrow = false;
+                
                 while (j < expr.length) {
+                    // Check for arrow
+                    if (j < expr.length - 1 && expr[j] === '-' && expr[j + 1] === '>') {
+                        seenArrow = true;
+                        j += 2;
+                        continue;
+                    }
+                    
                     if (expr[j] === '(') depth++;
                     if (expr[j] === ')') {
-                        if (depth === 0) break;
-                        depth--;
+                        // Only break if we've seen the arrow and depth is 0
+                        // Otherwise this ) might be part of a tuple pattern parameter
+                        if (depth === 0 && seenArrow) break;
+                        if (depth > 0) depth--;
                     }
                     if (expr[j] === '[') depth++;
                     if (expr[j] === ']') {
-                        if (depth === 0) break;
-                        depth--;
+                        if (depth === 0 && seenArrow) break;
+                        if (depth > 0) depth--;
                     }
                     // Lambda ends at whitespace when depth is 0 and we've seen ->
-                    if (depth === 0 && /\s/.test(expr[j]) && expr.slice(i, j).includes('->')) {
+                    if (depth === 0 && seenArrow && /\s/.test(expr[j])) {
                         break;
                     }
                     j++;
@@ -2399,7 +2481,8 @@ class HaskishInterpreter {
 
         // Lambda expression (\param -> body)
         // Must be the entire expression, not part of a larger expression like composition
-        const lambdaMatch = expr.match(/^\\(\w+)\s*->\s*(.+)$/);
+        // Support both simple params (\x) and tuple patterns (\(x,y))
+        const lambdaMatch = expr.match(/^\\(\w+|\([^)]+\))\s*->\s*(.+)$/);
         if (lambdaMatch) {
             const [, param, body] = lambdaMatch;
             return new Lambda(param, body.trim(), this);
@@ -2407,7 +2490,8 @@ class HaskishInterpreter {
         
         // Lambda with parens: (\param -> body) - only if it's the complete expression
         // The body cannot contain ) at depth 0 (which would close the lambda early)
-        const parenLambdaMatch = expr.match(/^\(\\(\w+)\s*->\s*([^)]+(?:\([^)]*\)[^)]*)*)\)$/);
+        // Support both simple params and tuple patterns
+        const parenLambdaMatch = expr.match(/^\(\\(\w+|\([^)]+\))\s*->\s*([^)]+(?:\([^)]*\)[^)]*)*)\)$/);
         if (parenLambdaMatch) {
             const [, param, body] = parenLambdaMatch;
             return new Lambda(param, body.trim(), this);
@@ -2748,11 +2832,131 @@ class HaskishInterpreter {
             return this.evaluate(tokens[0].value);
         }
         
+        // Handle single lambda expression
+        if (tokens.length === 1 && tokens[0].type === 'lambda') {
+            // Parse the lambda directly without re-wrapping
+            // Find the arrow (->) at the top level (not inside parens)
+            let arrowPos = -1;
+            let depth = 0;
+            const lambdaStr = tokens[0].value;
+            
+            // Skip leading backslash if present
+            let startPos = lambdaStr.startsWith('\\') ? 1 : 0;
+            
+            for (let i = startPos; i < lambdaStr.length - 1; i++) {
+                if (lambdaStr[i] === '(') depth++;
+                if (lambdaStr[i] === ')') depth--;
+                if (depth === 0 && lambdaStr[i] === '-' && lambdaStr[i + 1] === '>') {
+                    arrowPos = i;
+                    break;
+                }
+            }
+            
+            if (arrowPos === -1) {
+                throw new Error(`Invalid lambda syntax: ${lambdaStr} (arrow not found)`);
+            }
+            
+            const paramsStr = lambdaStr.slice(startPos, arrowPos).trim();
+            const body = lambdaStr.slice(arrowPos + 2).trim();
+            
+            // Smart parameter splitting: split on spaces, but keep tuple patterns together
+            const params = [];
+            let current = '';
+            depth = 0;
+            for (let i = 0; i < paramsStr.length; i++) {
+                const ch = paramsStr[i];
+                if (ch === '(') depth++;
+                if (ch === ')') depth--;
+                
+                if (ch === ' ' && depth === 0) {
+                    if (current.trim()) {
+                        params.push(current.trim());
+                        current = '';
+                    }
+                } else {
+                    current += ch;
+                }
+            }
+            if (current.trim()) {
+                params.push(current.trim());
+            }
+            
+            // If only one parameter, return simple lambda
+            if (params.length === 1) {
+                return new Lambda(params[0], body, this);
+            }
+            
+            // Create nested lambdas for multi-parameter functions
+            let bodyStr = body;
+            for (let i = params.length - 1; i > 0; i--) {
+                bodyStr = `\\${params[i]} -> ${bodyStr}`;
+            }
+            return new Lambda(params[0], bodyStr, this);
+        }
+        
         // Handle lambda followed by arguments: (\x -> x + 1) 5
         if (tokens.length > 1 && tokens[0].type === 'lambda') {
-            const lambda = this.evaluate('(' + tokens[0].value + ')');
+            // Parse the lambda token directly (don't re-evaluate which would re-tokenize)
+            const lambdaToken = tokens[0];
+            
+            // Parse the lambda using the same logic as single lambda
+            let arrowPos = -1;
+            let depth = 0;
+            const lambdaStr = lambdaToken.value;
+            let startPos = lambdaStr.startsWith('\\') ? 1 : 0;
+            
+            for (let i = startPos; i < lambdaStr.length - 1; i++) {
+                if (lambdaStr[i] === '(') depth++;
+                if (lambdaStr[i] === ')') depth--;
+                if (depth === 0 && lambdaStr[i] === '-' && lambdaStr[i + 1] === '>') {
+                    arrowPos = i;
+                    break;
+                }
+            }
+            
+            if (arrowPos === -1) {
+                throw new Error(`Invalid lambda syntax: ${lambdaStr}`);
+            }
+            
+            const paramsStr = lambdaStr.slice(startPos, arrowPos).trim();
+            const body = lambdaStr.slice(arrowPos + 2).trim();
+            
+            // Smart parameter splitting
+            const params = [];
+            let current = '';
+            depth = 0;
+            for (let i = 0; i < paramsStr.length; i++) {
+                const ch = paramsStr[i];
+                if (ch === '(') depth++;
+                if (ch === ')') depth--;
+                if (ch === ' ' && depth === 0) {
+                    if (current.trim()) {
+                        params.push(current.trim());
+                        current = '';
+                    }
+                } else {
+                    current += ch;
+                }
+            }
+            if (current.trim()) {
+                params.push(current.trim());
+            }
+            
+            // Create the lambda
+            let lambda;
+            if (params.length === 1) {
+                lambda = new Lambda(params[0], body, this);
+            } else {
+                let bodyStr = body;
+                for (let i = params.length - 1; i > 0; i--) {
+                    bodyStr = `\\${params[i]} -> ${bodyStr}`;
+                }
+                lambda = new Lambda(params[0], bodyStr, this);
+            }
+            
             const args = tokens.slice(1).map(token => {
                 if (token.type === 'list') return this.parseList(token.value);
+                if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') {
                     const str = token.value.slice(1, -1);
@@ -2849,11 +3053,37 @@ class HaskishInterpreter {
                 if (token.type === 'lambda') {
                     // Parse lambda expression (with or without leading backslash)
                     // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
-                    // Also support tuple patterns like \(x,y) -> x + y
+                    // Also support tuple patterns like \(x,y) -> x + y and \(a,b) (c,d) -> ...
                     const lambdaMatch = token.value.match(/^\\?([\w\s().,]+)\s*->\s*(.+)$/);
                     if (lambdaMatch) {
                         const [, paramsStr, body] = lambdaMatch;
-                        const params = paramsStr.trim().split(/\s+/);
+                        
+                        // Smart parameter splitting: split on spaces, but keep tuple patterns together
+                        const params = [];
+                        let current = '';
+                        let depth = 0;
+                        for (let i = 0; i < paramsStr.length; i++) {
+                            const ch = paramsStr[i];
+                            if (ch === '(') depth++;
+                            if (ch === ')') depth--;
+                            
+                            if (ch === ' ' && depth === 0) {
+                                if (current.trim()) {
+                                    params.push(current.trim());
+                                    current = '';
+                                }
+                            } else {
+                                current += ch;
+                            }
+                        }
+                        if (current.trim()) {
+                            params.push(current.trim());
+                        }
+                        
+                        // If only one parameter, return simple lambda
+                        if (params.length === 1) {
+                            return new Lambda(params[0], body.trim(), this);
+                        }
                         
                         // Create nested lambdas for multi-parameter functions
                         // \acc x -> acc + x becomes \acc -> (\x -> acc + x)
