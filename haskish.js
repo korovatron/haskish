@@ -1021,10 +1021,19 @@ class HaskishInterpreter {
                 }
             }
 
-            // Try to match function definition (has parameters before =)
-            const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*=\s*(.+)$/);
+            // Check if it's a simple variable binding (no parameters) vs function definition (has parameters)
+            // Variable: "name = expr" (name followed directly by optional spaces and =)
+            // Function: "name param1 param2 = body" (name followed by space and params before =)
             
-            if (funcMatch) {
+            // Simple check: does the line have the pattern "word whitespace =" at the start?
+            // If so, it's a variable assignment, not a function definition
+            const isSimpleVar = /^(\w+'*)\s*=\s/.test(line);
+            
+            if (!isSimpleVar) {
+                // Try to match function definition (has parameters before =)
+                const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*=\s*(.+)$/);
+                
+                if (funcMatch) {
                 // Check for incomplete function from previous lines
                 if (currentParams !== null && currentGuards.length === 0) {
                     throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
@@ -1064,6 +1073,7 @@ class HaskishInterpreter {
                 currentParams = null; // Reset since this is a complete definition
                 currentParamsLineNumber = null;
                 continue;
+                }
             }
 
             // Check for function header without = (for guard syntax)
@@ -3617,10 +3627,63 @@ class HaskishInterpreter {
             // Strip optional 'let' keyword at the start
             expr = expr.replace(/^let\s+/, '');
             
-            // Check if it's a function definition (has parameters before =)
-            // Function name must start with a letter (not a number)
-            // Use negative lookbehind/lookahead to avoid matching ==, /=, <=, >=
-            const funcMatch = expr.match(/^([a-zA-Z_]\w*'*)\s+(.+?)\s*(?<![=/<>])=(?![=])(.+)$/);
+            // Find the assignment = more carefully, skipping over string literals
+            // This prevents "fold (\x -> x ++ "=" ++ y)" from being treated as a function definition
+            let assignmentPos = -1;
+            let inString = false;
+            let stringChar = null;
+            let depth = 0;
+            
+            for (let i = 0; i < expr.length; i++) {
+                const ch = expr[i];
+                
+                // Track string boundaries
+                if ((ch === '"' || ch === "'") && (i === 0 || expr[i - 1] !== '\\')) {
+                    if (!inString) {
+                        inString = true;
+                        stringChar = ch;
+                    } else if (ch === stringChar) {
+                        inString = false;
+                        stringChar = null;
+                    }
+                }
+                
+                // Skip if in string
+                if (inString) continue;
+                
+                // Track depth
+                if (ch === '(' || ch === '[') depth++;
+                if (ch === ')' || ch === ']') depth--;
+                
+                // Look for = at depth 0, not part of ==, /=, <=, >=
+                if (depth === 0 && ch === '=' && 
+                    (i === 0 || (expr[i-1] !== '=' && expr[i-1] !== '<' && expr[i-1] !== '>' && expr[i-1] !== '/' && expr[i-1] !== '!')) &&
+                    (i === expr.length - 1 || expr[i+1] !== '=')) {
+                    assignmentPos = i;
+                    break;
+                }
+            }
+            
+            // Check if it's a function definition vs variable assignment
+            let funcMatch = null;
+            if (assignmentPos > 0) {
+                const beforeEq = expr.slice(0, assignmentPos).trim();
+                const afterEq = expr.slice(assignmentPos + 1).trim();
+                
+                // Check if there's a space in beforeEq - indicates parameters
+                const spaceIndex = beforeEq.indexOf(' ');
+                if (spaceIndex > 0) {
+                    // Could be a function definition
+                    const funcName = beforeEq.slice(0, spaceIndex);
+                    const params = beforeEq.slice(spaceIndex + 1).trim();
+                    
+                    // Validate function name
+                    if (/^[a-zA-Z_]\w*'*$/.test(funcName) && params) {
+                        funcMatch = [expr, funcName, params, afterEq];
+                    }
+                }
+            }
+            
             if (funcMatch) {
                 const [, funcName, params, body] = funcMatch;
                 
