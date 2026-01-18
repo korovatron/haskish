@@ -457,13 +457,10 @@
                     .then(registration => {
                         console.log('Service Worker registered successfully:', registration.scope);
                         
-                        // Check for updates on load
-                        registration.update();
-                        
-                        // Check for updates periodically
+                        // Check for updates periodically (once per hour to avoid blocking on slow networks)
                         setInterval(() => {
                             registration.update();
-                        }, 60000);
+                        }, 3600000);
                     })
                     .catch(error => {
                         console.log('Service Worker registration failed:', error);
