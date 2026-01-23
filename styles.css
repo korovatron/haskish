@@ -36,6 +36,13 @@ html {
     --header-gradient-start: #5865f2;
     --header-gradient-end: #a855f7;
     
+    /* Text size options */
+    --text-size-small: 14px;
+    --text-size-medium: 18px;
+    --text-size-large: 22px;
+    --text-size-xlarge: 28px;
+    --current-text-size: var(--text-size-small);
+    
     /* Safe area support for iOS */
     --safe-area-top: env(safe-area-inset-top);
     --safe-area-bottom: env(safe-area-inset-bottom);
@@ -832,12 +839,29 @@ body.menu-open .repl-history {
     border: 1px solid var(--border-color);
     border-radius: 5px;
     font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace !important;
-    font-size: 14px;
+    font-size: var(--current-text-size);
     line-height: 1.5;
     background-color: var(--repl-bg) !important;
     overflow: auto;
     max-width: 100%;
     min-width: 0; /* Allow shrinking below content width */
+}
+
+/* Text size classes */
+body.text-size-small {
+    --current-text-size: var(--text-size-small);
+}
+
+body.text-size-medium {
+    --current-text-size: var(--text-size-medium);
+}
+
+body.text-size-large {
+    --current-text-size: var(--text-size-large);
+}
+
+body.text-size-xlarge {
+    --current-text-size: var(--text-size-xlarge);
 }
 
 .CodeMirror-focused {
@@ -901,7 +925,7 @@ body.menu-open .repl-history {
     user-select: text;
     -webkit-user-select: text;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 14px;
+    font-size: var(--current-text-size);
     transition: background-color 0.3s ease;
 }
 
@@ -914,6 +938,8 @@ body.menu-open .repl-history {
     color: var(--primary-color);
     font-weight: bold;
     margin-right: 5px;
+    font-size: var(--current-text-size);
+    font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
 }
 
 .repl-input {
@@ -923,7 +949,7 @@ body.menu-open .repl-history {
 .repl-input-code,
 .repl-output-code {
     font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace !important;
-    font-size: 14px;
+    font-size: var(--current-text-size);
     line-height: 1.5;
 }
 

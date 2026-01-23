@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.18';
+const HASKISH_VERSION = '1.0.19';
 
 const interpreter = new HaskishInterpreter();
 
@@ -97,6 +97,14 @@ function closeMenuFunc() {
     if (examplesToggle && examplesSubmenu) {
         examplesToggle.classList.remove('expanded');
         examplesSubmenu.classList.remove('expanded');
+    }
+    
+    // Collapse the text size submenu when closing the menu
+    const textSizeToggle = document.getElementById('textSizeToggle');
+    const textSizeSubmenu = document.getElementById('textSizeSubmenu');
+    if (textSizeToggle && textSizeSubmenu) {
+        textSizeToggle.classList.remove('expanded');
+        textSizeSubmenu.classList.remove('expanded');
     }
 }
 
@@ -201,6 +209,62 @@ document.addEventListener('keydown', function(e) {
             builtinsOverlay.classList.remove('visible');
         }
     }
+});
+
+// Text size control
+const textSizeToggle = document.getElementById('textSizeToggle');
+const textSizeSubmenu = document.getElementById('textSizeSubmenu');
+const textSizeOptions = document.querySelectorAll('.text-size-option');
+
+// Load saved text size preference or default to small
+const savedTextSize = localStorage.getItem('haskish-text-size') || 'small';
+document.body.classList.add(`text-size-${savedTextSize}`);
+
+// Set active state on the saved size option
+textSizeOptions.forEach(option => {
+    if (option.dataset.size === savedTextSize) {
+        option.classList.add('active');
+    }
+});
+
+if (textSizeToggle) {
+    textSizeToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        textSizeToggle.classList.toggle('expanded');
+        textSizeSubmenu.classList.toggle('expanded');
+    });
+}
+
+textSizeOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const selectedSize = this.dataset.size;
+        
+        // Remove all text size classes
+        document.body.classList.remove('text-size-small', 'text-size-medium', 'text-size-large', 'text-size-xlarge');
+        
+        // Add the selected size class
+        document.body.classList.add(`text-size-${selectedSize}`);
+        
+        // Save preference
+        localStorage.setItem('haskish-text-size', selectedSize);
+        
+        // Update active state
+        textSizeOptions.forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Refresh CodeMirror editors to apply new size
+        if (codeEditor) {
+            codeEditor.refresh();
+        }
+        if (replEditor) {
+            replEditor.refresh();
+        }
+        
+        // Close the submenu
+        textSizeToggle.classList.remove('expanded');
+        textSizeSubmenu.classList.remove('expanded');
+    });
 });
 
 // About overlay

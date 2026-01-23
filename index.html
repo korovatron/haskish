@@ -106,6 +106,23 @@
                 </svg>
                 <span>Built-in Functions</span>
             </button>
+            <div class="menu-item-group">
+                <button id="textSizeToggle" class="menu-item menu-item-expandable">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <text x="2" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="currentColor">Aa</text>
+                    </svg>
+                    <span>Text Size</span>
+                    <svg class="expand-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div id="textSizeSubmenu" class="submenu">
+                    <button class="submenu-item text-size-option active" data-size="small">Small</button>
+                    <button class="submenu-item text-size-option" data-size="medium">Medium</button>
+                    <button class="submenu-item text-size-option" data-size="large">Large</button>
+                    <button class="submenu-item text-size-option" data-size="xlarge">Extra Large</button>
+                </div>
+            </div>
             <button id="aboutButton" class="menu-item">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
