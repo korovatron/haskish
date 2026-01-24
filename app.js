@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.19';
+const HASKISH_VERSION = '1.0.20';
 
 const interpreter = new HaskishInterpreter();
 
@@ -216,13 +216,12 @@ const textSizeToggle = document.getElementById('textSizeToggle');
 const textSizeSubmenu = document.getElementById('textSizeSubmenu');
 const textSizeOptions = document.querySelectorAll('.text-size-option');
 
-// Load saved text size preference or default to small
-const savedTextSize = localStorage.getItem('haskish-text-size') || 'small';
-document.body.classList.add(`text-size-${savedTextSize}`);
+// Always default to small on startup
+document.body.classList.add('text-size-small');
 
-// Set active state on the saved size option
+// Set active state on the small option
 textSizeOptions.forEach(option => {
-    if (option.dataset.size === savedTextSize) {
+    if (option.dataset.size === 'small') {
         option.classList.add('active');
     }
 });
@@ -245,9 +244,6 @@ textSizeOptions.forEach(option => {
         
         // Add the selected size class
         document.body.classList.add(`text-size-${selectedSize}`);
-        
-        // Save preference
-        localStorage.setItem('haskish-text-size', selectedSize);
         
         // Update active state
         textSizeOptions.forEach(opt => opt.classList.remove('active'));
