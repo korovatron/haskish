@@ -1011,7 +1011,7 @@ body.text-size-xlarge {
 
 .repl-input-container {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     background-color: var(--repl-input-bg);
     border: 2px solid var(--border-color);
     border-radius: 5px;
