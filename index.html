@@ -25,43 +25,34 @@
         };
       }
 
+      // Store tracking functions globally so app.js can attach them to CodeMirror instances
+      window.gaTrackingReady = false;
+      window.trackReplTyping = null;
+      window.trackEditorTyping = null;
+
       // Track user engagement after DOM loads
       window.addEventListener('DOMContentLoaded', () => {
         console.log('GA4 engagement tracking initialized');
         
-        // Track REPL typing (throttled to once per 3 seconds for testing)
-        const replInput = document.getElementById('replInput');
-        if (replInput) {
-          console.log('REPL input found, attaching listener');
-          const trackReplTyping = throttle(() => {
-            console.log('Sending repl_typing event to GA4');
-            gtag('event', 'repl_typing', {
-              event_category: 'engagement',
-              event_label: 'active_coding'
-            });
-          }, 3000); // 3 seconds for testing (change to 30000 for production)
-          
-          replInput.addEventListener('input', trackReplTyping);
-        } else {
-          console.warn('REPL input not found!');
-        }
+        // Create throttled tracking functions for CodeMirror editors (attached in app.js)
+        window.trackReplTyping = throttle(() => {
+          console.log('Sending repl_typing event to GA4');
+          gtag('event', 'repl_typing', {
+            event_category: 'engagement',
+            event_label: 'active_coding'
+          });
+        }, 3000); // 3 seconds for testing (change to 30000 for production)
 
-        // Track code editor typing (throttled to once per 3 seconds for testing)
-        const codeEditor = document.getElementById('codeEditor');
-        if (codeEditor) {
-          console.log('Code editor found, attaching listener');
-          const trackEditorTyping = throttle(() => {
-            console.log('Sending editor_typing event to GA4');
-            gtag('event', 'editor_typing', {
-              event_category: 'engagement',
-              event_label: 'active_coding'
-            });
-          }, 3000); // 3 seconds for testing (change to 30000 for production)
-          
-          codeEditor.addEventListener('input', trackEditorTyping);
-        } else {
-          console.warn('Code editor not found!');
-        }
+        window.trackEditorTyping = throttle(() => {
+          console.log('Sending editor_typing event to GA4');
+          gtag('event', 'editor_typing', {
+            event_category: 'engagement',
+            event_label: 'active_coding'
+          });
+        }, 3000); // 3 seconds for testing (change to 30000 for production)
+
+        window.gaTrackingReady = true;
+        console.log('GA4 tracking functions ready for CodeMirror');
 
         // Track code execution (immediate - important action)
         const runButton = document.getElementById('runCode');

@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.21';
+const HASKISH_VERSION = '1.0.23';
 
 const interpreter = new HaskishInterpreter();
 
@@ -322,6 +322,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Attach GA4 tracking to code editor changes
+    if (window.gaTrackingReady && window.trackEditorTyping) {
+        codeEditor.on('change', window.trackEditorTyping);
+        console.log('GA4 tracking attached to code editor');
+    }
+    
     // Initialize REPL CodeMirror
     const replInputTextarea = document.getElementById('replInput');
     
@@ -472,6 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set CodeMirror editors to dark theme (monokai)
     codeEditor.setOption('theme', 'monokai');
     replEditor.setOption('theme', 'monokai');
+
+    // Attach GA4 tracking to REPL editor changes
+    if (window.gaTrackingReady && window.trackReplTyping) {
+        replEditor.on('change', window.trackReplTyping);
+        console.log('GA4 tracking attached to REPL editor');
+    }
 
     // Auto-save on code editor changes (debounced)
     let saveTimeout;
