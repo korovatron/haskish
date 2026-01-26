@@ -27,52 +27,70 @@
 
       // Track user engagement after DOM loads
       window.addEventListener('DOMContentLoaded', () => {
-        // Track REPL typing (throttled to once per 30 seconds)
+        console.log('GA4 engagement tracking initialized');
+        
+        // Track REPL typing (throttled to once per 3 seconds for testing)
         const replInput = document.getElementById('replInput');
         if (replInput) {
+          console.log('REPL input found, attaching listener');
           const trackReplTyping = throttle(() => {
+            console.log('Sending repl_typing event to GA4');
             gtag('event', 'repl_typing', {
               event_category: 'engagement',
               event_label: 'active_coding'
             });
-          }, 30000); // 30 seconds
+          }, 3000); // 3 seconds for testing (change to 30000 for production)
           
           replInput.addEventListener('input', trackReplTyping);
+        } else {
+          console.warn('REPL input not found!');
         }
 
-        // Track code editor typing (throttled to once per 30 seconds)
+        // Track code editor typing (throttled to once per 3 seconds for testing)
         const codeEditor = document.getElementById('codeEditor');
         if (codeEditor) {
+          console.log('Code editor found, attaching listener');
           const trackEditorTyping = throttle(() => {
+            console.log('Sending editor_typing event to GA4');
             gtag('event', 'editor_typing', {
               event_category: 'engagement',
               event_label: 'active_coding'
             });
-          }, 30000); // 30 seconds
+          }, 3000); // 3 seconds for testing (change to 30000 for production)
           
           codeEditor.addEventListener('input', trackEditorTyping);
+        } else {
+          console.warn('Code editor not found!');
         }
 
         // Track code execution (immediate - important action)
         const runButton = document.getElementById('runCode');
         if (runButton) {
+          console.log('Run button found, attaching listener');
           runButton.addEventListener('click', () => {
+            console.log('Sending run_code event to GA4');
             gtag('event', 'run_code', {
               event_category: 'interaction',
               event_label: 'execute_functions'
             });
           });
+        } else {
+          console.warn('Run button not found!');
         }
 
         // Track lesson viewing
         const lessonToggle = document.getElementById('toggleExercises');
         if (lessonToggle) {
+          console.log('Lesson toggle found, attaching listener');
           lessonToggle.addEventListener('click', () => {
+            console.log('Sending toggle_lessons event to GA4');
             gtag('event', 'toggle_lessons', {
               event_category: 'interaction',
               event_label: 'view_lessons'
             });
           });
+        } else {
+          console.warn('Lesson toggle not found!');
         }
       });
     </script>
