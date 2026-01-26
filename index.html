@@ -11,6 +11,72 @@
       gtag('config', 'G-H5MT68XJY3');
     </script>
     
+    <!-- Engagement Tracking -->
+    <script>
+      // Throttle function - limits event firing to once per interval
+      function throttle(func, delay) {
+        let lastCall = 0;
+        return function(...args) {
+          const now = Date.now();
+          if (now - lastCall >= delay) {
+            lastCall = now;
+            func(...args);
+          }
+        };
+      }
+
+      // Track user engagement after DOM loads
+      window.addEventListener('DOMContentLoaded', () => {
+        // Track REPL typing (throttled to once per 30 seconds)
+        const replInput = document.getElementById('replInput');
+        if (replInput) {
+          const trackReplTyping = throttle(() => {
+            gtag('event', 'repl_typing', {
+              event_category: 'engagement',
+              event_label: 'active_coding'
+            });
+          }, 30000); // 30 seconds
+          
+          replInput.addEventListener('input', trackReplTyping);
+        }
+
+        // Track code editor typing (throttled to once per 30 seconds)
+        const codeEditor = document.getElementById('codeEditor');
+        if (codeEditor) {
+          const trackEditorTyping = throttle(() => {
+            gtag('event', 'editor_typing', {
+              event_category: 'engagement',
+              event_label: 'active_coding'
+            });
+          }, 30000); // 30 seconds
+          
+          codeEditor.addEventListener('input', trackEditorTyping);
+        }
+
+        // Track code execution (immediate - important action)
+        const runButton = document.getElementById('runCode');
+        if (runButton) {
+          runButton.addEventListener('click', () => {
+            gtag('event', 'run_code', {
+              event_category: 'interaction',
+              event_label: 'execute_functions'
+            });
+          });
+        }
+
+        // Track lesson viewing
+        const lessonToggle = document.getElementById('toggleExercises');
+        if (lessonToggle) {
+          lessonToggle.addEventListener('click', () => {
+            gtag('event', 'toggle_lessons', {
+              event_category: 'interaction',
+              event_label: 'view_lessons'
+            });
+          });
+        }
+      });
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Free Haskell-style functional programming playground for teachers and students. Practice recursion, pattern matching, list comprehensions, higher-order functions, lambdas, tuples and more with no software installation. Includes guided lessons and examples. Works offline as a PWA. Covers all AQA Computer Science requirements and much more.">
