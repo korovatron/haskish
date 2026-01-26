@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.23';
+const HASKISH_VERSION = '1.0.24';
 
 const interpreter = new HaskishInterpreter();
 
@@ -323,9 +323,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Attach GA4 tracking to code editor changes
-    if (window.gaTrackingReady && window.trackEditorTyping) {
+    if (window.trackEditorTyping) {
         codeEditor.on('change', window.trackEditorTyping);
-        console.log('GA4 tracking attached to code editor');
+    } else {
+        // Attach when ready
+        const checkEditor = setInterval(() => {
+            if (window.trackEditorTyping) {
+                codeEditor.on('change', window.trackEditorTyping);
+                clearInterval(checkEditor);
+            }
+        }, 100);
     }
     
     // Initialize REPL CodeMirror
@@ -480,9 +487,16 @@ document.addEventListener('DOMContentLoaded', () => {
     replEditor.setOption('theme', 'monokai');
 
     // Attach GA4 tracking to REPL editor changes
-    if (window.gaTrackingReady && window.trackReplTyping) {
+    if (window.trackReplTyping) {
         replEditor.on('change', window.trackReplTyping);
-        console.log('GA4 tracking attached to REPL editor');
+    } else {
+        // Attach when ready
+        const checkRepl = setInterval(() => {
+            if (window.trackReplTyping) {
+                replEditor.on('change', window.trackReplTyping);
+                clearInterval(checkRepl);
+            }
+        }, 100);
     }
 
     // Auto-save on code editor changes (debounced)

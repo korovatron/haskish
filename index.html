@@ -32,56 +32,44 @@
 
       // Track user engagement after DOM loads
       window.addEventListener('DOMContentLoaded', () => {
-        console.log('GA4 engagement tracking initialized');
         
         // Create throttled tracking functions for CodeMirror editors (attached in app.js)
         window.trackReplTyping = throttle(() => {
-          console.log('Sending repl_typing event to GA4');
           gtag('event', 'repl_typing', {
             event_category: 'engagement',
             event_label: 'active_coding'
           });
-        }, 3000); // 3 seconds for testing (change to 30000 for production)
+        }, 30000); // 30 seconds
 
         window.trackEditorTyping = throttle(() => {
-          console.log('Sending editor_typing event to GA4');
           gtag('event', 'editor_typing', {
             event_category: 'engagement',
             event_label: 'active_coding'
           });
-        }, 3000); // 3 seconds for testing (change to 30000 for production)
+        }, 30000); // 30 seconds
 
         window.gaTrackingReady = true;
-        console.log('GA4 tracking functions ready for CodeMirror');
 
         // Track code execution (immediate - important action)
         const runButton = document.getElementById('runCode');
         if (runButton) {
-          console.log('Run button found, attaching listener');
           runButton.addEventListener('click', () => {
-            console.log('Sending run_code event to GA4');
             gtag('event', 'run_code', {
               event_category: 'interaction',
               event_label: 'execute_functions'
             });
           });
-        } else {
-          console.warn('Run button not found!');
         }
 
         // Track lesson viewing
         const lessonToggle = document.getElementById('toggleExercises');
         if (lessonToggle) {
-          console.log('Lesson toggle found, attaching listener');
           lessonToggle.addEventListener('click', () => {
-            console.log('Sending toggle_lessons event to GA4');
             gtag('event', 'toggle_lessons', {
               event_category: 'interaction',
               event_label: 'view_lessons'
             });
           });
-        } else {
-          console.warn('Lesson toggle not found!');
         }
       });
     </script>
