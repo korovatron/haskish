@@ -35,14 +35,14 @@
         
         // Create throttled tracking functions for CodeMirror editors (attached in app.js)
         window.trackReplTyping = throttle(() => {
-          gtag('event', 'repl_typing', {
+          gtag('event', 'HASK_repl_typing', {
             event_category: 'engagement',
             event_label: 'active_coding'
           });
         }, 30000); // 30 seconds
 
         window.trackEditorTyping = throttle(() => {
-          gtag('event', 'editor_typing', {
+          gtag('event', 'HASK_editor_typing', {
             event_category: 'engagement',
             event_label: 'active_coding'
           });
@@ -54,7 +54,7 @@
         const runButton = document.getElementById('runCode');
         if (runButton) {
           runButton.addEventListener('click', () => {
-            gtag('event', 'run_code', {
+            gtag('event', 'HASK_run_code', {
               event_category: 'interaction',
               event_label: 'execute_functions'
             });
@@ -65,7 +65,7 @@
         const lessonToggle = document.getElementById('toggleExercises');
         if (lessonToggle) {
           lessonToggle.addEventListener('click', () => {
-            gtag('event', 'toggle_lessons', {
+            gtag('event', 'HASK_toggle_lessons', {
               event_category: 'interaction',
               event_label: 'view_lessons'
             });
