@@ -1,83 +1,9 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-        <!-- Temporary GA comparison (remove after Cloudflare validation) -->
-        <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H5MT68XJY3"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-H5MT68XJY3');
-    </script>
-
         <!-- Cloudflare Web Analytics -->
         <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
         <!-- End Cloudflare Web Analytics -->
-    
-    <!-- Engagement Tracking -->
-    <script>
-      // Throttle function - limits event firing to once per interval
-      function throttle(func, delay) {
-        let lastCall = 0;
-        return function(...args) {
-          const now = Date.now();
-          if (now - lastCall >= delay) {
-            lastCall = now;
-            func(...args);
-          }
-        };
-      }
-
-      // Store tracking functions globally so app.js can attach them to CodeMirror instances
-      window.gaTrackingReady = false;
-      window.trackReplTyping = null;
-      window.trackEditorTyping = null;
-
-      // Track user engagement after DOM loads
-      window.addEventListener('DOMContentLoaded', () => {
-        
-        // Create throttled tracking functions for CodeMirror editors (attached in app.js)
-        window.trackReplTyping = throttle(() => {
-          gtag('event', 'HASK_repl_typing', {
-            event_category: 'engagement',
-            event_label: 'active_coding'
-          });
-        }, 30000); // 30 seconds
-
-        window.trackEditorTyping = throttle(() => {
-          gtag('event', 'HASK_editor_typing', {
-            event_category: 'engagement',
-            event_label: 'active_coding'
-          });
-        }, 30000); // 30 seconds
-
-        window.gaTrackingReady = true;
-
-        // Track code execution (immediate - important action)
-        const runButton = document.getElementById('runCode');
-        if (runButton) {
-          runButton.addEventListener('click', () => {
-            gtag('event', 'HASK_run_code', {
-              event_category: 'interaction',
-              event_label: 'execute_functions'
-            });
-          });
-        }
-
-        // Track lesson viewing
-        const lessonToggle = document.getElementById('toggleExercises');
-        if (lessonToggle) {
-          lessonToggle.addEventListener('click', () => {
-            gtag('event', 'HASK_toggle_lessons', {
-              event_category: 'interaction',
-              event_label: 'view_lessons'
-            });
-          });
-        }
-      });
-    </script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">

@@ -322,19 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Attach GA4 tracking to code editor changes
-    if (window.trackEditorTyping) {
-        codeEditor.on('change', window.trackEditorTyping);
-    } else {
-        // Attach when ready
-        const checkEditor = setInterval(() => {
-            if (window.trackEditorTyping) {
-                codeEditor.on('change', window.trackEditorTyping);
-                clearInterval(checkEditor);
-            }
-        }, 100);
-    }
-    
     // Initialize REPL CodeMirror
     const replInputTextarea = document.getElementById('replInput');
     
@@ -485,19 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set CodeMirror editors to dark theme (monokai)
     codeEditor.setOption('theme', 'monokai');
     replEditor.setOption('theme', 'monokai');
-
-    // Attach GA4 tracking to REPL editor changes
-    if (window.trackReplTyping) {
-        replEditor.on('change', window.trackReplTyping);
-    } else {
-        // Attach when ready
-        const checkRepl = setInterval(() => {
-            if (window.trackReplTyping) {
-                replEditor.on('change', window.trackReplTyping);
-                clearInterval(checkRepl);
-            }
-        }, 100);
-    }
 
     // Auto-save on code editor changes (debounced)
     let saveTimeout;
