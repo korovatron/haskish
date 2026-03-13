@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.27';
+const HASKISH_VERSION = '1.0.28';
 
 const interpreter = new HaskishInterpreter();
 
@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             
-            addSystemMessage('Now try calling your functions by typing their name below!', 'info');
+            addSystemMessage('Now try calling your functions by typing their name below.', 'info');
         } else {
             addSystemMessage(`✗ Error: ${result.error}`, 'error');
         }
@@ -813,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await writable.write(code);
                 await writable.close();
                 
-                addSystemMessage('✓ Functions saved successfully!', 'result');
+                addSystemMessage('✓ Functions saved successfully.', 'result');
             } else {
                 // Fallback: download file (iOS-compatible)
                 const blob = new Blob([code], { type: 'text/plain' });
@@ -832,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     URL.revokeObjectURL(url);
                 }, 100);
                 
-                addSystemMessage('✓ Functions downloaded to your Downloads folder!', 'result');
+                addSystemMessage('✓ Functions downloaded to your Downloads folder.', 'result');
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -967,7 +967,7 @@ function initExercises() {
         // Scroll REPL to bottom if there's history
         if (savedState.replHistory) {
             replOutput.scrollTop = replOutput.scrollHeight;
-            addSystemMessage('Previous session restored!', 'info');
+            addSystemMessage('Previous session restored.', 'info');
         } else {
             addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
         }
