@@ -985,6 +985,9 @@ class HaskishInterpreter {
             line = line.trim();
             if (!line) continue;
 
+            // Skip type signature lines like: funcName :: Type -> Type
+            if (/^\w+'*\s*::/.test(line)) continue;
+
             // Strip optional 'let' keyword at the start
             const originalLine = line;
             line = line.replace(/^let\s+/, '');
