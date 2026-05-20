@@ -37,6 +37,44 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     
     <title>Haskish &#8211; Haskell&#8209;Style Functional Programming in Your Browser</title>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Haskish",
+      "url": "https://www.korovatron.co.uk/haskish",
+      "description": "A free Haskell-style functional programming playground for students, teachers and beginners. Practice recursion, pattern matching and higher-order functions in your browser. Works offline as a PWA.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires a modern web browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "GBP"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Neil Kendall",
+        "url": "https://www.korovatron.co.uk/"
+      },
+      "featureList": [
+        "Interactive REPL with syntax highlighting",
+        "Pattern matching and recursion",
+        "Higher-order functions: map, filter, fold",
+        "List comprehensions",
+        "Lambda functions and currying",
+        "Lazy evaluation with infinite lists",
+        "Guided lessons and examples",
+        "Works offline as a Progressive Web App",
+        "AQA A Level Computer Science coverage"
+      ],
+      "educationalLevel": "A Level",
+      "keywords": "Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, REPL"
+    }
+    </script>
+
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
@@ -304,6 +342,16 @@
             </div>
         </div>
     </div>
+
+    <p class="visually-hidden">
+      Haskish is a free, lightweight Haskell&#8209;style functional programming playground that runs entirely in your browser.
+      It supports recursion, pattern matching, higher&#8209;order functions (map, filter, fold), list comprehensions, lambda functions,
+      currying, lazy evaluation with infinite lists, and function composition.
+      Guided lessons and examples make it ideal for A&#8209;Level Computer Science students and teachers following the AQA specification (4.12),
+      as well as anyone learning functional programming for the first time.
+      Write and run code instantly with no installation, no accounts, and no tracking.
+      Can be installed as a Progressive Web App for offline use.
+    </p>
 
     <div class="main-container">
         <div class="main-content" id="mainContent">
