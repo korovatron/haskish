@@ -551,6 +551,7 @@ class HaskishInterpreter {
         this.executionStartTime = 0;
         this.maxExecutionTime = 5000; // 5 seconds max execution
         this.functionCallDepth = {}; // tracks recursion depth per function for lazy infinite evaluation
+        this.lazyStreamFunctions = new Set(); // functions that are unconditionally self-recursive (no base case)
         this.initializeBuiltins();
     }
 
@@ -1241,6 +1242,10 @@ class HaskishInterpreter {
                 
                 const [, pattern, valueExpr] = tupleAssignMatch;
                 
+                // Update lazy-stream detection before evaluating, in case the RHS
+                // calls a function that was just defined above on this same Run Code click.
+                this.detectLazyStreamFunctions();
+                
                 // Evaluate the right-hand side
                 const evaluated = this.evaluate(valueExpr.trim());
                 
@@ -1292,6 +1297,9 @@ class HaskishInterpreter {
                 if (this.variables.hasOwnProperty(name)) {
                     throw new Error(`Cannot reassign '${name}' on line ${lineNumber} - variables are immutable in functional programming!`);
                 }
+                // Update lazy-stream detection before evaluating, in case the RHS
+                // calls a function that was just defined above on this same Run Code click.
+                this.detectLazyStreamFunctions();
                 this.variables[name] = this.evaluate(value.trim());
                 continue;
             }
@@ -1318,6 +1326,42 @@ class HaskishInterpreter {
 
         // Validate all function bodies and variable expressions for syntax errors
         this.validateDefinitions();
+        this.detectLazyStreamFunctions();
+    }
+
+    // Detect functions that are unconditionally self-recursive with no non-recursive base case.
+    // These are infinite stream generators (e.g. fibHelper a b = a : fibHelper b (a+b)) and
+    // need lazy treatment even when their arguments are plain scalars — unlike sieve which is
+    // already handled by the _isInfiniteRange arg check.
+    //
+    // A function qualifies if:
+    //   - Every case has a plain body (no guards)
+    //   - Every body contains a self-recursive call
+    //   - No body contains an 'if' keyword (which could hide a non-recursive branch)
+    //
+    // This conservative check avoids false-positives like:
+    //   countdown n = if n == 0 then [] else n : countdown (n-1)
+    // which appears recursive in all cases but is actually finite.
+    detectLazyStreamFunctions() {
+        this.lazyStreamFunctions = new Set();
+        for (const [funcName, cases] of Object.entries(this.functions)) {
+            if (cases.length === 0) continue;
+            // Skip any function that has guard cases — guards can provide non-recursive branches
+            if (cases.some(c => c.guards)) continue;
+            const namePattern = new RegExp('\\b' + funcName + '\\b');
+            const allCasesUnconditionallyRecursive = cases.every(caseObj => {
+                if (!caseObj.body) return false;
+                const body = caseObj.body;
+                // Must call itself
+                if (!namePattern.test(body)) return false;
+                // Must not use 'if' (could hide a non-recursive else/then branch)
+                if (/\bif\b/.test(body)) return false;
+                return true;
+            });
+            if (allCasesUnconditionallyRecursive) {
+                this.lazyStreamFunctions.add(funcName);
+            }
+        }
     }
 
     // Validate function bodies and variable expressions
@@ -2246,12 +2290,16 @@ class HaskishInterpreter {
             throw new Error(`Undefined function: ${funcName}`);
         }
 
-        // Lazy evaluation: when recursively calling a user function with an infinite-range
-        // argument, return a deferred computation instead of recursing eagerly.
-        // This implements the lazy cons semantics needed for infinite recursive functions
-        // like the Sieve of Eratosthenes: sieve (p:xs) = p : sieve [x | x <- xs, ...]
+        // Lazy evaluation: when recursively calling a user function, return a deferred
+        // computation instead of recursing eagerly.  Two cases trigger this:
+        //   1. Any argument is an infinite range (handles sieve-style functions).
+        //   2. The function was detected as an unconditionally self-recursive stream
+        //      generator (handles fibHelper-style functions whose args are always scalars).
         const currentDepth = this.functionCallDepth[funcName] || 0;
-        if (currentDepth >= 1 && args.some(a => a && a._isInfiniteRange)) {
+        if (currentDepth >= 1 && (
+            args.some(a => a && a._isInfiniteRange) ||
+            (this.lazyStreamFunctions && this.lazyStreamFunctions.has(funcName))
+        )) {
             return new LazyFunctionCall(funcName, args, this);
         }
 
@@ -3817,6 +3865,7 @@ class HaskishInterpreter {
                     // In REPL, replace function entirely (like GHCi behavior)
                     // Pattern matching cases should only be added via the definition panel
                     this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
+                    this.detectLazyStreamFunctions();
                     
                     if (isRedefinition) {
                         return { success: true, result: `Redefined function: ${funcName}`, isWarning: true };
