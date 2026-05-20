@@ -158,6 +158,39 @@ evens = [2,4..20]
 -- thirdElement [10,20,30,40]  → 30
 -- oneToTen                    → [1,2,3,4,5,6,7,8,9,10]
 
+=== List Comprehensions ===
+-- Basic mapping: double each element
+doubles = [x*2 | x <- [1..10]]
+
+-- Filtering: only even numbers
+evens = [x | x <- [1..20], mod x 2 == 0]
+
+-- Combine transform and filter
+evenSquares = [x*x | x <- [1..10], mod x 2 == 0]
+
+-- Multiple generators (cartesian product)
+pairs = [(x,y) | x <- [1,2,3], y <- [1,2,3], x /= y]
+
+-- String filtering
+elem x [] = False
+elem x (y:ys)
+  | x == y    = True
+  | otherwise = elem x ys
+
+vowels s = [c | c <- s, elem c "aeiouAEIOU"]
+
+-- Pythagorean triples up to n
+triples n = [(a,b,c) | c <- [1..n], b <- [1..c], a <- [1..b], a*a + b*b == c*c]
+
+-- Tests:
+-- doubles                      → [2,4,6,8,10,12,14,16,18,20]
+-- evens                        → [2,4,6,8,10,12,14,16,18,20]
+-- evenSquares                  → [4,16,36,64,100]
+-- pairs                        → [(1,2),(1,3),(2,1),(2,3),(3,1),(3,2)]
+-- vowels "Haskish"             → "ai"
+-- vowels "Hello World"         → "eoo"
+-- triples 20                   → [(3,4,5),(6,8,10),(5,12,13),(8,15,17),(9,12,15)]
+
 === Recursion ===
 -- Process all elements
 doubleAll [] = []
