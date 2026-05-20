@@ -1612,9 +1612,11 @@ class HaskishInterpreter {
                 const [, funcName, params, rawBody] = funcMatch;
                 
                 // Validate parameters - should only contain valid pattern syntax
-                // Allow: words, numbers, spaces, parentheses, brackets, colons, commas, underscores
+                // Strip char literals first (e.g. '?', ' ', '\n') so their contents aren't flagged
+                // Allow: words, numbers, spaces, parentheses, brackets, colons, commas, underscores, quotes
                 // Disallow: operators like +, -, *, /, etc. in parameters
-                if (!/^[\w\s()\[\]:,_]+$/.test(params)) {
+                const paramsNoCharLiterals = params.replace(/'(?:[^'\\]|\\.)*'/g, '_');
+                if (!/^[\w\s()\[\]:,_'"]+$/.test(paramsNoCharLiterals)) {
                     throw new Error(`Invalid parameters on line ${lineNumber}: "${originalLine}". Parameters cannot contain operators.`);
                 }
                 
@@ -1660,7 +1662,9 @@ class HaskishInterpreter {
                 const [, funcName, params] = headerMatch;
                 
                 // Validate parameters - should only contain valid pattern syntax
-                if (!/^[\w\s()\[\]:,_]+$/.test(params)) {
+                // Strip char literals first (e.g. '?', ' ', '\n') so their contents aren't flagged
+                const paramsNoCharLiterals = params.replace(/'(?:[^'\\]|\\.)*'/g, '_');
+                if (!/^[\w\s()\[\]:,_'"]+$/.test(paramsNoCharLiterals)) {
                     throw new Error(`Invalid parameters on line ${lineNumber}: "${originalLine}". Parameters cannot contain operators.`);
                 }
                 
@@ -2477,13 +2481,30 @@ class HaskishInterpreter {
             const simplePattern = clause.match(/^(\w+)\s*<-\s*(.+)$/);
             
             if (tuplePattern) {
-                // Parse tuple pattern variables
-                const vars = tuplePattern[1].split(',').map(v => v.trim());
-                generators.push({
-                    variables: vars,
-                    list: tuplePattern[2],
-                    isTuple: true
-                });
+                const innerPat = tuplePattern[1];
+                // Check if this is a cons pattern like (h:_) rather than a tuple (a,b)
+                let pd = 0, hasTopComma = false;
+                for (let i = 0; i < innerPat.length; i++) {
+                    if (innerPat[i] === '(' || innerPat[i] === '[') pd++;
+                    if (innerPat[i] === ')' || innerPat[i] === ']') pd--;
+                    if (innerPat[i] === ',' && pd === 0) { hasTopComma = true; break; }
+                }
+                if (!hasTopComma) {
+                    // It's a cons/wildcard pattern like (h:_) — use matchPattern, skip on failure
+                    generators.push({
+                        consPattern: '(' + innerPat + ')',
+                        list: tuplePattern[2],
+                        isCons: true
+                    });
+                } else {
+                    // Parse tuple pattern variables
+                    const vars = tuplePattern[1].split(',').map(v => v.trim());
+                    generators.push({
+                        variables: vars,
+                        list: tuplePattern[2],
+                        isTuple: true
+                    });
+                }
             } else if (simplePattern) {
                 generators.push({
                     variable: simplePattern[1],
@@ -2578,7 +2599,12 @@ class HaskishInterpreter {
         for (const item of sourceList) {
             let newBindings = { ...bindings };
             
-            if (generator.isTuple) {
+            if (generator.isCons) {
+                // Cons/pattern generator: skip items that don't match (Haskell semantics)
+                const match = this.matchPattern(generator.consPattern, item);
+                if (match === null) continue;
+                Object.assign(newBindings, match);
+            } else if (generator.isTuple) {
                 // Destructure tuple pattern
                 if (!item || !item._isTuple) {
                     throw new Error(`Pattern match failure: expected tuple but got ${item && item._isInfiniteRange ? item.toString() : String(item)}`);
@@ -2586,10 +2612,14 @@ class HaskishInterpreter {
                 if (item.elements.length !== generator.variables.length) {
                     throw new Error(`Pattern match failure: tuple has ${item.elements.length} elements but pattern expects ${generator.variables.length}`);
                 }
-                // Bind each variable from the tuple
-                generator.variables.forEach((varName, i) => {
-                    newBindings[varName] = item.elements[i];
-                });
+                // Match each element pattern (handles sub-patterns like h:_ inside a tuple)
+                let tupleMatched = true;
+                for (let ti = 0; ti < generator.variables.length; ti++) {
+                    const elemMatch = this.matchPattern(generator.variables[ti], item.elements[ti]);
+                    if (elemMatch === null) { tupleMatched = false; break; }
+                    Object.assign(newBindings, elemMatch);
+                }
+                if (!tupleMatched) continue;
             } else {
                 // Simple pattern: bind single variable
                 newBindings[generator.variable] = item;
@@ -2610,19 +2640,31 @@ class HaskishInterpreter {
         if (pattern.startsWith('(') && pattern.endsWith(')')) {
             const inner = pattern.slice(1, -1);
             
-            // Find the cons operator (:) at depth 0
+            // First check if there's a comma at depth 0 — that means it's a tuple
+            // pattern like (x:_, y:_), not a cons pattern.
             let depth = 0;
-            let consIndex = -1;
+            let hasTopComma = false;
             for (let i = 0; i < inner.length; i++) {
                 if (inner[i] === '(' || inner[i] === '[') depth++;
                 if (inner[i] === ')' || inner[i] === ']') depth--;
-                if (inner[i] === ':' && depth === 0) {
-                    consIndex = i;
-                    break;
+                if (inner[i] === ',' && depth === 0) { hasTopComma = true; break; }
+            }
+
+            // Find the cons operator (:) at depth 0 — only when there's no top-level comma
+            depth = 0;
+            let consIndex = -1;
+            if (!hasTopComma) {
+                for (let i = 0; i < inner.length; i++) {
+                    if (inner[i] === '(' || inner[i] === '[') depth++;
+                    if (inner[i] === ')' || inner[i] === ']') depth--;
+                    if (inner[i] === ':' && depth === 0) {
+                        consIndex = i;
+                        break;
+                    }
                 }
             }
             
-            // If we found a cons operator, this is a list pattern
+            // If we found a cons operator (and no top-level comma), this is a list pattern
             if (consIndex !== -1) {
                 // Convert string to array for pattern matching
                 const listValue = typeof value === 'string' ? value.split('') : value;
@@ -2760,6 +2802,20 @@ class HaskishInterpreter {
         // Simple variable binding
         if (/^[a-zA-Z_]\w*'*$/.test(pattern)) {
             return { [pattern]: value };
+        }
+
+        // Bare cons pattern without outer parens, e.g. x:xs or x:_ as a tuple element.
+        // Wrap in parens and delegate to the parenthesized cons handler above.
+        {
+            let d = 0, bareConsIdx = -1;
+            for (let i = 0; i < pattern.length; i++) {
+                if (pattern[i] === '(' || pattern[i] === '[') d++;
+                if (pattern[i] === ')' || pattern[i] === ']') d--;
+                if (pattern[i] === ':' && d === 0) { bareConsIdx = i; break; }
+            }
+            if (bareConsIdx !== -1) {
+                return this.matchPattern('(' + pattern + ')', value);
+            }
         }
 
         // Literal match (for numbers, strings, etc.)
