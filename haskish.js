@@ -1092,6 +1092,18 @@ class HaskishInterpreter {
             const lhs = str.slice(0, eqIdx).trim();
             const rhs = str.slice(eqIdx + 1).trim();
 
+            // Pattern destructuring in where: (a,b) = expr  or  [x,y] = expr
+            if ((lhs.startsWith('(') && lhs.endsWith(')')) || (lhs.startsWith('[') && lhs.endsWith(']'))) {
+                const capturedScope = Object.assign({}, scope, result);
+                const value = this.evaluateWithBindings(rhs, capturedScope);
+                const matches = this.matchPattern(lhs, value);
+                if (matches !== null) {
+                    Object.assign(result, matches);
+                    Object.assign(scope, matches);
+                }
+                continue;
+            }
+
             const spaceIdx = lhs.indexOf(' ');
             if (spaceIdx === -1) {
                 // Simple variable binding: name = expr
