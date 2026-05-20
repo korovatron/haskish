@@ -3486,6 +3486,39 @@ class HaskishInterpreter {
             }
         }
 
+        // Backtick infix: a `f` b  desugars to  f a b  (curried, left-associative)
+        // Checked after all binary ops so arithmetic/comparison splits happen first.
+        const backtickParts = this.splitByBacktickInfix(expr);
+        if (backtickParts !== null) {
+            const { parts: btParts, fns: btFns } = backtickParts;
+            let btResult = this.evaluate(btParts[0]);
+            for (let i = 0; i < btFns.length; i++) {
+                const btFn  = this.evaluate(btFns[i]);
+                const btArg = this.evaluate(btParts[i + 1]);
+                // Apply btFn to (btResult, btArg) — honouring Lambda and PartialFunction
+                let btPartial;
+                if (btFn instanceof Lambda) {
+                    btPartial = btFn.apply(btResult);
+                } else if (btFn instanceof PartialFunction) {
+                    btPartial = btFn.apply([btResult]);
+                } else if (btFn && btFn._isOperatorFunction) {
+                    btPartial = btFn.apply([btResult]);
+                } else {
+                    throw new Error(`Backtick infix: '${btFns[i]}' is not a function`);
+                }
+                if (btPartial instanceof Lambda) {
+                    btResult = btPartial.apply(btArg);
+                } else if (btPartial instanceof PartialFunction) {
+                    btResult = btPartial.apply([btArg]);
+                } else if (btPartial && btPartial._isOperatorFunction) {
+                    btResult = btPartial.apply([btArg]);
+                } else {
+                    btResult = btPartial; // already fully applied (e.g. 1-arg fn used as infix)
+                }
+            }
+            return btResult;
+        }
+
         // List literal (check AFTER binary operations to handle [1,2]++[3,4])
         if (expr.startsWith('[') && expr.endsWith(']')) {
             return this.parseList(expr);
@@ -3918,6 +3951,59 @@ class HaskishInterpreter {
         }
 
         return parts.length > 1 ? parts : [expr];
+    }
+
+    // Split an expression on backtick infix operators: a `f` b `g` c
+    // Returns { parts: string[], fns: string[] } or null if none found.
+    // Respects paren/bracket depth and string literals.
+    splitByBacktickInfix(expr) {
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+        const parts = [];
+        const fns = [];
+        let lastSplit = 0;
+        let found = false;
+
+        for (let i = 0; i < expr.length; i++) {
+            const ch = expr[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(expr[i - 1]);
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || expr[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+            }
+            if (inString) continue;
+
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+
+            if (depth === 0 && ch === '`') {
+                const closeIdx = expr.indexOf('`', i + 1);
+                if (closeIdx > i + 1) {
+                    const fnName = expr.slice(i + 1, closeIdx);
+                    if (/^[a-zA-Z_][\w]*'*$/.test(fnName)) {
+                        const lhs = expr.slice(lastSplit, i).trim();
+                        if (!lhs) return null; // backtick at start — invalid
+                        found = true;
+                        parts.push(lhs);
+                        fns.push(fnName);
+                        lastSplit = closeIdx + 1;
+                        i = closeIdx;
+                    }
+                }
+            }
+        }
+
+        if (!found) return null;
+        const last = expr.slice(lastSplit).trim();
+        if (!last) return null; // backtick at end — invalid
+        parts.push(last);
+        return { parts, fns };
     }
 
     // Create operator section function
