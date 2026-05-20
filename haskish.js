@@ -543,6 +543,77 @@ class LazyFunctionCall {
     }
 }
 
+// Lazy thunk for the tail of a self-referential variable definition.
+// Used when evaluating e.g. fib = 0 : 1 : zip (+) fib (tail fib) to defer
+// evaluation of "zip (+) fib (tail fib)" until fib is already bound.
+class LazyExprThunk {
+    constructor(expr, interpreter) {
+        this._isInfiniteRange = true;
+        this._expr = expr;
+        // Store evaluate as a function (not a property object) so JSON.stringify
+        // skips it and never follows the path back to interpreter.variables.
+        this._evalFn = (e) => interpreter.evaluate(e);
+        this._resolvedValue = undefined;
+    }
+
+    _resolve() {
+        if (this._resolvedValue === undefined) {
+            this._resolvedValue = this._evalFn(this._expr);
+        }
+        return this._resolvedValue;
+    }
+
+    head() {
+        const r = this._resolve();
+        if (r && r.head) return r.head();
+        if (Array.isArray(r)) return r[0];
+        throw new Error('head: empty list');
+    }
+
+    tail() {
+        const r = this._resolve();
+        if (r && r.tail) return r.tail();
+        if (Array.isArray(r)) return r.slice(1);
+        return [];
+    }
+
+    take(n) {
+        if (n <= 0) return [];
+        const r = this._resolve();
+        if (r && r.take) return r.take(n);
+        if (Array.isArray(r)) return r.slice(0, n);
+        return [];
+    }
+
+    at(index) {
+        const r = this._resolve();
+        if (r && r.at) return r.at(index);
+        if (Array.isArray(r)) return r[index];
+        throw new Error('Index out of bounds in lazy expression thunk');
+    }
+
+    drop(n) {
+        if (n <= 0) return this;
+        const r = this._resolve();
+        if (r && r.drop) return r.drop(n);
+        if (Array.isArray(r)) return r.slice(n);
+        return [];
+    }
+
+    *[Symbol.iterator]() {
+        yield* this._resolve();
+    }
+
+    toString() {
+        const preview = this.take(20);
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) return '(' + v.elements.map(String).join(',') + ')';
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
+    }
+}
+
 class HaskishInterpreter {
     constructor() {
         this.functions = {};
@@ -552,6 +623,7 @@ class HaskishInterpreter {
         this.maxExecutionTime = 5000; // 5 seconds max execution
         this.functionCallDepth = {}; // tracks recursion depth per function for lazy infinite evaluation
         this.lazyStreamFunctions = new Set(); // functions that are unconditionally self-recursive (no base case)
+        this._selfRefConsMode = null; // set to varName while evaluating a self-referential variable RHS
         this.initializeBuiltins();
     }
 
@@ -1300,7 +1372,15 @@ class HaskishInterpreter {
                 // Update lazy-stream detection before evaluating, in case the RHS
                 // calls a function that was just defined above on this same Run Code click.
                 this.detectLazyStreamFunctions();
-                this.variables[name] = this.evaluate(value.trim());
+                // If the RHS references the variable itself (e.g. fib = 0 : 1 : zip (+) fib (tail fib)),
+                // enter self-ref cons mode so the trailing cons operand is deferred as a LazyExprThunk.
+                const isSelfRef = new RegExp('\\b' + name + '\\b').test(value);
+                if (isSelfRef) this._selfRefConsMode = name;
+                try {
+                    this.variables[name] = this.evaluate(value.trim());
+                } finally {
+                    this._selfRefConsMode = null;
+                }
                 continue;
             }
 
@@ -2069,7 +2149,7 @@ class HaskishInterpreter {
             if (generator.isTuple) {
                 // Destructure tuple pattern
                 if (!item || !item._isTuple) {
-                    throw new Error(`Pattern match failure: expected tuple but got ${JSON.stringify(item)}`);
+                    throw new Error(`Pattern match failure: expected tuple but got ${item && item._isInfiniteRange ? item.toString() : String(item)}`);
                 }
                 if (item.elements.length !== generator.variables.length) {
                     throw new Error(`Pattern match failure: tuple has ${item.elements.length} elements but pattern expects ${generator.variables.length}`);
@@ -2353,13 +2433,14 @@ class HaskishInterpreter {
             }
         }
 
-        // Format args for error message without JSON.stringify to avoid circular reference
+        // Format args for error message – use formatOutput so infinite ranges and
+        // other non-serialisable values are rendered safely (no JSON.stringify).
         const argsStr = args.map(arg => {
             if (arg instanceof Lambda) return arg.toString();
             if (arg instanceof PartialFunction) return arg.toString();
             if (arg && arg._isOperatorFunction) return '<operator function>';
             if (arg && arg._isComposedFunction) return '<composed function>';
-            return JSON.stringify(arg);
+            try { return this.formatOutput(arg); } catch (_) { return String(arg); }
         }).join(', ');
         
         // Check for common mistake: negative number without parentheses
@@ -2921,10 +3002,14 @@ class HaskishInterpreter {
             }},
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
-                    // Type check: element must match range type (numbers)
-                    const elementType = this.getTypeCategory(a);
-                    if (elementType !== 'number') {
-                        throw new Error(`Type error: (:) cannot cons ${elementType} onto number range`);
+                    // For a LazyExprThunk the resolved element type is not yet known,
+                    // so skip the number-only guard and let resolution enforce types.
+                    if (!(b instanceof LazyExprThunk)) {
+                        // Type check: element must match range type (numbers)
+                        const elementType = this.getTypeCategory(a);
+                        if (elementType !== 'number') {
+                            throw new Error(`Type error: (:) cannot cons ${elementType} onto number range`);
+                        }
                     }
                     // Create a new ConsedInfiniteRange
                     return new ConsedInfiniteRange(a, b);
@@ -2950,8 +3035,13 @@ class HaskishInterpreter {
                 // Cons (:) is right-associative: 1:2:3:[] means 1:(2:(3:[]))
                 // All other operators are left-associative
                 if (op === ':') {
-                    // Evaluate right-to-left for cons
-                    let result = this.evaluate(parts[parts.length - 1]);
+                    // Evaluate right-to-left for cons.
+                    // When inside a self-referential variable definition (e.g. fib = 0:1:zip (+) fib (tail fib)),
+                    // defer the rightmost operand as a LazyExprThunk so that the variable can be
+                    // bound before the recursive reference inside it is evaluated.
+                    let result = this._selfRefConsMode
+                        ? new LazyExprThunk(parts[parts.length - 1], this)
+                        : this.evaluate(parts[parts.length - 1]);
                     for (let i = parts.length - 2; i >= 0; i--) {
                         const left = this.evaluate(parts[i]);
                         result = fn(left, result);
@@ -3952,7 +4042,14 @@ class HaskishInterpreter {
                     return { success: false, error: `Cannot reassign '${varName}' - variables are immutable in functional programming!` };
                 }
                 
-                const evaluated = this.evaluate(value.trim());
+                const isSelfRef = new RegExp('\\b' + varName + '\\b').test(value);
+                if (isSelfRef) this._selfRefConsMode = varName;
+                let evaluated;
+                try {
+                    evaluated = this.evaluate(value.trim());
+                } finally {
+                    this._selfRefConsMode = null;
+                }
                 this.variables[varName] = evaluated;
                 return { success: true, result: `${varName} = ${this.formatOutput(evaluated)}` };
             }
