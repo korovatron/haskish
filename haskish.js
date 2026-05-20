@@ -902,6 +902,398 @@ class HaskishInterpreter {
         };
     }
 
+    // Find the position of the 'where' keyword as a standalone word (not inside a string/comment)
+    // Returns -1 if not found
+    findWhereKeyword(str) {
+        let inString = false;
+        let stringChar = null;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) { inString = true; stringChar = ch; }
+                else if (ch === stringChar) { inString = false; stringChar = null; }
+                continue;
+            }
+            if (inString) continue;
+            if (str.slice(i, i + 5) === 'where') {
+                const before = i > 0 ? str[i - 1] : ' ';
+                const after = i + 5 < str.length ? str[i + 5] : ' ';
+                if (!/\w/.test(before) && !/\w/.test(after)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    // Pre-processing pass: detect 'where' blocks and merge their binding lines
+    // into the LAST non-empty line that precedes the 'where' keyword using a
+    // special marker, so the bracket-depth pass sees them as one logical line.
+    //
+    // Output format:  "<last func/guard line> __HASKISH_WHERE__ <b1> __HASKISH_WSEP__ <b2> ..."
+    //
+    // Guard continuation lines belonging to a where-local-function are merged
+    // back onto their header, e.g.:
+    //   helper y       →  "helper y | y > 0 = y | otherwise = negate y"
+    //   | y > 0 = y
+    //   | otherwise = negate y
+    preprocessWhereBlocks(rawLines) {
+        const out = [];
+
+        // Group lines into "blocks": each block starts with a non-indented,
+        // non-empty, non-comment line and includes all following indented/empty lines.
+        const blocks = [];
+        let currentBlock = [];
+        for (const line of rawLines) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('--') && !/^\s/.test(line)) {
+                if (currentBlock.length > 0) blocks.push(currentBlock);
+                currentBlock = [line];
+            } else {
+                currentBlock.push(line);
+            }
+        }
+        if (currentBlock.length > 0) blocks.push(currentBlock);
+
+        for (const block of blocks) {
+            // Find the index of the first line containing 'where' as a keyword
+            let whereLineIdx = -1;
+            for (let i = 0; i < block.length; i++) {
+                const trimmed = block[i].trim();
+                if (!trimmed || trimmed.startsWith('--')) continue;
+                if (this.findWhereKeyword(this.stripComments(trimmed)) !== -1) {
+                    whereLineIdx = i;
+                    break;
+                }
+            }
+
+            if (whereLineIdx === -1) {
+                // No 'where' in this block – output unchanged
+                for (const line of block) out.push(line);
+                continue;
+            }
+
+            // Lines before the 'where' line are the function/guard lines
+            const funcLines = block.slice(0, whereLineIdx);
+
+            // Parse the 'where' line itself
+            const firstWhereLine = block[whereLineIdx].trim();
+            const stripped0 = this.stripComments(firstWhereLine);
+            const wPos = this.findWhereKeyword(stripped0);
+            // Content on the same line before 'where' (e.g. "f x = body where ...")
+            const beforeWherePart = stripped0.slice(0, wPos).trimEnd();
+            if (beforeWherePart) funcLines.push(beforeWherePart);
+            // Content on the same line after 'where'
+            const afterWhere = stripped0.slice(wPos + 5).trim();
+
+            // Collect all binding lines (after the 'where' keyword)
+            const bindingLines = [];
+            if (afterWhere) bindingLines.push(afterWhere);
+            for (let i = whereLineIdx + 1; i < block.length; i++) {
+                const t = block[i].trim();
+                if (!t || t.startsWith('--')) continue;
+                bindingLines.push(t);
+            }
+
+            // Merge guard-continuation '|' lines back onto the preceding binding
+            const mergedBindings = [];
+            for (const bl of bindingLines) {
+                if (bl.startsWith('|') && mergedBindings.length > 0) {
+                    mergedBindings[mergedBindings.length - 1] += ' ' + bl;
+                } else {
+                    mergedBindings.push(bl);
+                }
+            }
+
+            if (mergedBindings.length === 0) {
+                for (const line of funcLines) out.push(line);
+                continue;
+            }
+
+            const whereMarker = ' __HASKISH_WHERE__ ' + mergedBindings.join(' __HASKISH_WSEP__ ');
+
+            // Append the marker to the LAST non-empty func line
+            let lastFuncLineIdx = -1;
+            for (let i = funcLines.length - 1; i >= 0; i--) {
+                if (funcLines[i].trim()) { lastFuncLineIdx = i; break; }
+            }
+
+            if (lastFuncLineIdx === -1) {
+                // No func lines – output marker standalone (edge case)
+                out.push(whereMarker.trim());
+            } else {
+                for (let i = 0; i < funcLines.length; i++) {
+                    out.push(i === lastFuncLineIdx
+                        ? funcLines[i].trimEnd() + whereMarker
+                        : funcLines[i]);
+                }
+            }
+        }
+
+        return out;
+    }
+
+    // Extract __HASKISH_WHERE__ marker from an expression string.
+    // Returns { expr, whereRaw } where whereRaw is [] if no marker present.
+    extractWhere(exprStr) {
+        const MARKER = ' __HASKISH_WHERE__ ';
+        const markerIdx = exprStr.indexOf(MARKER);
+        if (markerIdx === -1) return { expr: exprStr, whereRaw: [] };
+        const expr = exprStr.slice(0, markerIdx).trim();
+        const whereStr = exprStr.slice(markerIdx + MARKER.length);
+        const whereRaw = whereStr.split(' __HASKISH_WSEP__ ').map(s => s.trim()).filter(Boolean);
+        return { expr, whereRaw };
+    }
+
+    // Given the raw where-binding strings stored on a case object and the current
+    // parameter bindings, evaluate each binding in sequence and return an object
+    // of name → value that can be merged into the local scope.
+    //
+    // Supports:
+    //   name = expr                   (simple variable)
+    //   name p1 p2 = expr             (local function, single case)
+    //   name p1 | cond = e | ...      (local function with guards)
+    evaluateWhereBindings(whereRaw, outerBindings) {
+        const scope = Object.assign({}, outerBindings); // accumulated scope
+        const result = {};
+
+        for (const raw of whereRaw) {
+            const str = raw.trim();
+            if (!str || str.startsWith('--')) continue;
+
+            // Check whether there are guards (| after optional header)
+            // Split into "header" part and guard parts
+            const guardParts = this.splitWhereGuards(str);
+
+            if (guardParts.guards.length > 0) {
+                // Local function with guards: "name p1 p2 | cond = body | ..."
+                const header = guardParts.header.trim(); // "name p1 p2"
+                const spaceIdx = header.indexOf(' ');
+                const name = spaceIdx === -1 ? header : header.slice(0, spaceIdx);
+                const params = spaceIdx === -1 ? '' : header.slice(spaceIdx + 1).trim();
+                const guards = guardParts.guards; // [{condition, body}]
+
+                const capturedScope = Object.assign({}, scope, result);
+                const fn = this.makeWhereLocalFunction(params, null, guards, capturedScope);
+                result[name] = fn;
+                scope[name] = fn;
+                continue;
+            }
+
+            // Find the assignment = (not ==, /=, <=, >=)
+            const eqIdx = this.findWhereAssignmentEquals(str);
+            if (eqIdx === -1) {
+                // Could be a function header without = (guards were not merged properly)
+                // Skip gracefully
+                continue;
+            }
+
+            const lhs = str.slice(0, eqIdx).trim();
+            const rhs = str.slice(eqIdx + 1).trim();
+
+            const spaceIdx = lhs.indexOf(' ');
+            if (spaceIdx === -1) {
+                // Simple variable binding: name = expr
+                const name = lhs;
+                const capturedScope = Object.assign({}, scope, result);
+                const value = this.evaluateWithBindings(rhs, capturedScope);
+                result[name] = value;
+                scope[name] = value;
+            } else {
+                // Local function: name p1 p2 = expr
+                const name = lhs.slice(0, spaceIdx);
+                const params = lhs.slice(spaceIdx + 1).trim();
+                const capturedScope = Object.assign({}, scope, result);
+                const fn = this.makeWhereLocalFunction(params, rhs, [], capturedScope);
+                result[name] = fn;
+                scope[name] = fn;
+            }
+        }
+
+        return result;
+    }
+
+    // Split a where-binding string that may contain inline guards.
+    // e.g. "helper y | y > 0 = y | otherwise = negate y"
+    // Returns { header: "helper y", guards: [{condition, body}, ...] }
+    // If no guards, returns { header: str, guards: [] }
+    splitWhereGuards(str) {
+        // Find first | at depth 0 (not inside parens/brackets/strings)
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            // Apostrophe after a word char or prime is a trailing identifier prime, not a string opener
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) { inString = true; stringChar = ch; }
+                else if (ch === stringChar) { inString = false; stringChar = null; }
+                continue;
+            }
+            if (inString) continue;
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (depth === 0 && ch === '|' && (i === 0 || str[i - 1] !== '|') && (i + 1 >= str.length || str[i + 1] !== '|')) {
+                // Found first guard separator – parse all guards from here
+                const header = str.slice(0, i).trim();
+                const guardStr = str.slice(i); // "| cond = body | cond = body"
+                const guards = this.parseWhereGuardString(guardStr);
+                return { header, guards };
+            }
+        }
+        return { header: str, guards: [] };
+    }
+
+    // Parse a string of guards like "| cond = body | cond = body" into [{condition, body}, ...]
+    parseWhereGuardString(str) {
+        const guards = [];
+        // Split on | at depth 0
+        const parts = [];
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+        let current = '';
+
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            // Apostrophe after a word char or prime is a trailing identifier prime, not a string opener
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) { inString = true; stringChar = ch; }
+                else if (ch === stringChar) { inString = false; stringChar = null; }
+                current += ch;
+                continue;
+            }
+            if (inString) { current += ch; continue; }
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (depth === 0 && ch === '|' && (i === 0 || str[i - 1] !== '|') && (i + 1 >= str.length || str[i + 1] !== '|')) {
+                if (current.trim()) parts.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+        if (current.trim()) parts.push(current.trim());
+
+        for (const part of parts) {
+            const eqIdx = this.findWhereAssignmentEquals(part);
+            if (eqIdx !== -1) {
+                guards.push({
+                    condition: part.slice(0, eqIdx).trim(),
+                    body: part.slice(eqIdx + 1).trim()
+                });
+            }
+        }
+        return guards;
+    }
+
+    // Find the position of the assignment = in a where-binding LHS string,
+    // skipping ==, /=, <=, >=
+    findWhereAssignmentEquals(str) {
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            // Apostrophe after a word char or prime is a trailing identifier prime (e.g. fst', not'), not a string opener
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) { inString = true; stringChar = ch; }
+                else if (ch === stringChar) { inString = false; stringChar = null; }
+                continue;
+            }
+            if (inString) continue;
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (depth === 0 && ch === '=') {
+                const prev = i > 0 ? str[i - 1] : ' ';
+                const next = i + 1 < str.length ? str[i + 1] : ' ';
+                if (prev !== '=' && prev !== '<' && prev !== '>' && prev !== '/' && prev !== '!' &&
+                    next !== '=') {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    // Build a Lambda (or nested Lambdas) for a where-local function definition.
+    // params: space-separated parameter names (may include tuple patterns)
+    // body:   expression string, or null if guards are used
+    // guards: [{condition, body}, ...] – used when body is null
+    // closure: the bindings to capture
+    makeWhereLocalFunction(params, body, guards, closure) {
+        if (!params || params.trim() === '') {
+            // No parameters – evaluate immediately as a value
+            if (guards.length > 0) {
+                throw new Error('where: guard-only binding without parameter');
+            }
+            return this.evaluateWithBindings(body, closure);
+        }
+
+        // Split params (space-delimited, parens-aware)
+        const paramList = [];
+        let current = '';
+        let depth = 0;
+        for (const ch of params) {
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (ch === ' ' && depth === 0 && current.trim()) {
+                paramList.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+        if (current.trim()) paramList.push(current.trim());
+
+        if (paramList.length === 0) {
+            if (guards.length > 0) throw new Error('where: guard-only binding without parameter');
+            return this.evaluateWithBindings(body, closure);
+        }
+
+        // Determine the innermost body string
+        let innerBody;
+        if (guards.length > 0) {
+            innerBody = this.guardsToIfChain(guards);
+        } else {
+            innerBody = body;
+        }
+
+        // Build nested lambda using string representation: \p1 -> \p2 -> ... body
+        // The outermost Lambda carries the captured closure.
+        let bodyStr = innerBody;
+        for (let i = paramList.length - 1; i > 0; i--) {
+            bodyStr = `\\${paramList[i]} -> ${bodyStr}`;
+        }
+        return new Lambda(paramList[0], bodyStr, this, closure);
+    }
+
+    // Convert an array of {condition, body} guards to a nested if/then/else string
+    guardsToIfChain(guards) {
+        // Build from last to first: if cN then bN else <error>
+        // Guards should have 'otherwise' as the last fallback
+        let chain = `error "Non-exhaustive guards in where"`;
+        for (let i = guards.length - 1; i >= 0; i--) {
+            const { condition, body } = guards[i];
+            if (condition === 'otherwise' || condition === 'True') {
+                chain = body;
+                // Everything after 'otherwise' is unreachable; stop
+                for (let j = i - 1; j >= 0; j--) {
+                    chain = `if ${guards[j].condition} then ${guards[j].body} else ${chain}`;
+                }
+                return chain;
+            }
+            chain = `if ${condition} then ${body} else ${chain}`;
+        }
+        return chain;
+    }
+
     // Helper function to remove multiline comments from code (supports nesting)
     removeMultilineComments(code) {
         let result = '';
@@ -922,7 +1314,8 @@ class HaskishInterpreter {
             }
             
             // Track string boundaries (only when not in comment)
-            if (commentDepth === 0 && (char === '"' || char === "'")) {
+            const isPrime = char === "'" && !inString && i > 0 && /[\w']/.test(code[i - 1]);
+            if (commentDepth === 0 && (char === '"' || (char === "'" && !isPrime))) {
                 if (!inString) {
                     inString = true;
                     stringChar = char;
@@ -982,7 +1375,8 @@ class HaskishInterpreter {
             }
             
             // Track string boundaries
-            if (char === '"' || char === "'") {
+            const isPrime = char === "'" && !inString && i > 0 && /[\w']/.test(text[i - 1]);
+            if (char === '"' || (char === "'" && !isPrime)) {
                 if (!inString) {
                     inString = true;
                     stringChar = char;
@@ -1016,9 +1410,12 @@ class HaskishInterpreter {
         
         // Preprocess: Remove all multiline comments first
         code = this.removeMultilineComments(code);
-        
+
+        // Preprocess: merge 'where' blocks into their preceding function lines
+        const preprocessedLines = this.preprocessWhereBlocks(code.split('\n'));
+
         // First pass: combine lines with unclosed brackets
-        const rawLines = code.split('\n');
+        const rawLines = preprocessedLines;
         const combinedLines = [];
         const lineNumberMap = []; // Track which original line each combined line starts at
         let buffer = '';
@@ -1121,6 +1518,7 @@ class HaskishInterpreter {
         let currentParams = null;
         let currentParamsLineNumber = null;
         let currentGuards = [];
+        let currentWhereRaw = null; // where bindings for the current guard-style case
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
@@ -1160,8 +1558,11 @@ class HaskishInterpreter {
                 
                 if (eqIndex !== -1) {
                     const condition = guardLine.slice(0, eqIndex).trim();
-                    const body = guardLine.slice(eqIndex + 1).trim();
-                    currentGuards.push({ condition, body });
+                    const rawBody = guardLine.slice(eqIndex + 1).trim();
+                    // Extract any where bindings embedded in the last guard body
+                    const { expr: cleanBody, whereRaw } = this.extractWhere(rawBody);
+                    if (whereRaw.length > 0) currentWhereRaw = whereRaw;
+                    currentGuards.push({ condition, body: cleanBody });
                     continue;
                 } else {
                     throw new Error(`Invalid guard syntax on line ${lineNumber}: "${originalLine}"`);
@@ -1188,14 +1589,15 @@ class HaskishInterpreter {
                 
                 // Save previous guards if any
                 if (currentGuards.length > 0) {
-                    currentCases.push({ params: currentParams, guards: currentGuards });
+                    currentCases.push({ params: currentParams, guards: currentGuards, whereRaw: currentWhereRaw || [] });
                     currentGuards = [];
+                    currentWhereRaw = null;
                     currentParams = null;
                     currentParamsLineNumber = null;
                 }
 
                 // It's a function definition
-                const [, funcName, params, body] = funcMatch;
+                const [, funcName, params, rawBody] = funcMatch;
                 
                 // Validate parameters - should only contain valid pattern syntax
                 // Allow: words, numbers, spaces, parentheses, brackets, colons, commas, underscores
@@ -1214,9 +1616,12 @@ class HaskishInterpreter {
                     throw new Error(`Cannot redefine '${funcName}': it is a built-in function`);
                 }
                 
+                // Extract where bindings from the body if present
+                const { expr: cleanBody, whereRaw } = this.extractWhere(rawBody.trim());
+                
                 currentFunction = funcName;
                 currentParams = params.trim();
-                currentCases.push({ params: currentParams, body: body.trim() });
+                currentCases.push({ params: currentParams, body: cleanBody, whereRaw });
                 currentParams = null; // Reset since this is a complete definition
                 currentParamsLineNumber = null;
                 continue;
@@ -1233,8 +1638,9 @@ class HaskishInterpreter {
                 
                 // Save previous guards if any
                 if (currentGuards.length > 0) {
-                    currentCases.push({ params: currentParams, guards: currentGuards });
+                    currentCases.push({ params: currentParams, guards: currentGuards, whereRaw: currentWhereRaw || [] });
                     currentGuards = [];
+                    currentWhereRaw = null;
                     currentParams = null;
                     currentParamsLineNumber = null;
                 }
@@ -1372,12 +1778,19 @@ class HaskishInterpreter {
                 // Update lazy-stream detection before evaluating, in case the RHS
                 // calls a function that was just defined above on this same Run Code click.
                 this.detectLazyStreamFunctions();
+                // Extract any where bindings from the value expression
+                const { expr: cleanVarExpr, whereRaw: varWhereRaw } = this.extractWhere(value.trim());
                 // If the RHS references the variable itself (e.g. fib = 0 : 1 : zip (+) fib (tail fib)),
                 // enter self-ref cons mode so the trailing cons operand is deferred as a LazyExprThunk.
-                const isSelfRef = new RegExp('\\b' + name + '\\b').test(value);
+                const isSelfRef = new RegExp('\\b' + name + '\\b').test(cleanVarExpr);
                 if (isSelfRef) this._selfRefConsMode = name;
                 try {
-                    this.variables[name] = this.evaluate(value.trim());
+                    if (varWhereRaw.length > 0) {
+                        const whereBindings = this.evaluateWhereBindings(varWhereRaw, {});
+                        this.variables[name] = this.evaluateWithBindings(cleanVarExpr, whereBindings);
+                    } else {
+                        this.variables[name] = this.evaluate(cleanVarExpr);
+                    }
                 } finally {
                     this._selfRefConsMode = null;
                 }
@@ -1390,7 +1803,8 @@ class HaskishInterpreter {
 
         // Save any pending guards
         if (currentGuards.length > 0) {
-            currentCases.push({ params: currentParams, guards: currentGuards });
+            currentCases.push({ params: currentParams, guards: currentGuards, whereRaw: currentWhereRaw || [] });
+            currentWhereRaw = null;
             currentParams = null; // Reset after saving guards
             currentParamsLineNumber = null;
         }
@@ -1560,7 +1974,8 @@ class HaskishInterpreter {
                     if (expr[j] === '"' && !inChar) {
                         inString = !inString;
                     }
-                    if (expr[j] === "'" && !inString) {
+                    const isListPrime = expr[j] === "'" && !inString && j > 0 && /[\w']/.test(expr[j - 1]);
+                    if (expr[j] === "'" && !inString && !isListPrime) {
                         inChar = !inChar;
                     }
                     if (!inString && !inChar) {
@@ -1597,7 +2012,8 @@ class HaskishInterpreter {
                     if (expr[j] === '"' && !inChar) {
                         inString = !inString;
                     }
-                    if (expr[j] === "'" && !inString) {
+                    const isParenPrime = expr[j] === "'" && !inString && j > 0 && /[\w']/.test(expr[j - 1]);
+                    if (expr[j] === "'" && !inString && !isParenPrime) {
                         inChar = !inChar;
                     }
                     if (!inString && !inChar) {
@@ -1919,7 +2335,9 @@ class HaskishInterpreter {
             const char = listStr[i];
             
             // Track string/char literal boundaries
-            if ((char === '"' || char === "'") && (i === 0 || listStr[i - 1] !== '\\')) {
+            // Apostrophe after a word char or prime is a trailing identifier prime, not a string opener
+            const isPrime = char === "'" && !inString && i > 0 && /[\w']/.test(listStr[i - 1]);
+            if ((char === '"' || (char === "'" && !isPrime)) && (i === 0 || listStr[i - 1] !== '\\')) {
                 if (!inString) {
                     inString = true;
                     stringChar = char;
@@ -1976,7 +2394,9 @@ class HaskishInterpreter {
             const char = tupleStr[i];
             
             // Track string boundaries
-            if ((char === '"' || char === "'") && (i === 0 || tupleStr[i - 1] !== '\\')) {
+            // Apostrophe after a word char or prime is a trailing identifier prime, not a string opener
+            const isPrime = char === "'" && !inString && i > 0 && /[\w']/.test(tupleStr[i - 1]);
+            if ((char === '"' || (char === "'" && !isPrime)) && (i === 0 || tupleStr[i - 1] !== '\\')) {
                 if (!inString) {
                     inString = true;
                     stringChar = char;
@@ -2415,6 +2835,11 @@ class HaskishInterpreter {
             }
 
             if (matched) {
+                // Evaluate and inject 'where' bindings (if any) into local scope
+                if (caseObj.whereRaw && caseObj.whereRaw.length > 0) {
+                    const whereScope = this.evaluateWhereBindings(caseObj.whereRaw, bindings);
+                    Object.assign(bindings, whereScope);
+                }
                 // Check if this case has guards
                 if (caseObj.guards) {
                     // Evaluate guards in order
@@ -2582,7 +3007,9 @@ class HaskishInterpreter {
                     continue;
                 }
                 
-                const varRegex = new RegExp(`\\b${varName}\\b`, 'g');
+                // Use lookahead/lookbehind instead of \b so names ending with ' (e.g. fst', even') match correctly
+                const escapedVarName = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const varRegex = new RegExp(`(?<![a-zA-Z0-9_'])${escapedVarName}(?![a-zA-Z0-9_'])`, 'g');
                 let replacement;
                 if (typeof value === 'number' && value < 0) {
                     // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
@@ -3427,7 +3854,9 @@ class HaskishInterpreter {
 
         for (let i = 0; i < expr.length; i++) {
             // Track string literals (both double and single quotes)
-            if ((expr[i] === '"' || expr[i] === "'") && (i === 0 || expr[i-1] !== '\\')) {
+            // Apostrophe after a word char or prime is a trailing identifier prime, not a string opener
+            const isPrime = expr[i] === "'" && !inString && i > 0 && /[\w']/.test(expr[i-1]);
+            if ((expr[i] === '"' || (expr[i] === "'" && !isPrime)) && (i === 0 || expr[i-1] !== '\\')) {
                 if (!inString) {
                     inString = true;
                     stringChar = expr[i];
@@ -3890,7 +4319,9 @@ class HaskishInterpreter {
                 const ch = expr[i];
                 
                 // Track string boundaries
-                if ((ch === '"' || ch === "'") && (i === 0 || expr[i - 1] !== '\\')) {
+                // isPrime: ' is a trailing identifier prime (e.g. g', fst''), not a char literal opener
+                const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(expr[i - 1]);
+                if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || expr[i - 1] !== '\\')) {
                     if (!inString) {
                         inString = true;
                         stringChar = ch;
