@@ -183,7 +183,7 @@
                 <ul>
                     <li>Interactive REPL with syntax highlighting and helpful commands (:help, :functions, :vars, :show, :info)</li>
                     <li>Guided lessons and examples</li>
-                    <li>Pattern matching, recursion, guards, and if/then/else expressions</li>
+                    <li>Pattern matching, recursion, guards, if/then/else expressions, and where clauses</li>
                     <li>List comprehensions with mathematical set notation</li>
                     <li>Full list operations (cons :, concatenation ++, indexing !!, ranges, infinite lists)</li>
                     <li>Higher-order functions (map, filter, fold, foldr)</li>
@@ -254,6 +254,12 @@
                 <ul>
                     <li><code>if condition then expr1 else expr2</code> - Conditional expression (both branches required)<br>
                         Example: <code>if x > 0 then "positive" else "non-positive"</code></li>
+                </ul>
+
+                <h3>Where Clauses</h3>
+                <ul>
+                    <li><code>where</code> - Define local variables and functions scoped to the enclosing function<br>
+                        Each binding on its own indented line; supports plain variables, local functions, and guarded local functions — see the <em>Where Clauses</em> example</li>
                 </ul>
                 
                 <h3>List Functions</h3>

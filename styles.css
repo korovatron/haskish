@@ -537,6 +537,18 @@ header h1 {
     line-height: 1.6;
 }
 
+.builtins-pre {
+    background: var(--code-bg);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85em;
+    color: var(--primary-color);
+    margin: 0.4em 0 0 0;
+    white-space: pre;
+    overflow-x: auto;
+}
+
 /* Main container for content between header and footer */
 .main-container {
     flex: 1;
