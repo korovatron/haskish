@@ -326,37 +326,12 @@ class FilteredInfiniteRange {
 
     // Drop first n elements that pass the filter, return new FilteredInfiniteRange
     drop(n) {
-        // We need to scan through and find where to start the new range
-        // This is tricky - we'll create a wrapper that skips the first n matches
-        let skipped = 0;
-        const interpreter = this.interpreter;
-        const predicate = this.predicate;
-        const sourceIter = this.sourceRange[Symbol.iterator]();
-        
-        // Create a new source that starts after skipping n matches
-        const droppedSource = {
-            _isInfiniteRange: true,
-            *[Symbol.iterator]() {
-                let skipCount = 0;
-                for (const value of sourceIter) {
-                    const passes = predicate instanceof Lambda ? predicate.apply(value) :
-                                   predicate instanceof PartialFunction ? predicate.apply([value]) :
-                                   predicate && predicate._isOperatorFunction ? predicate.apply([value]) :
-                                   interpreter.applyFunction(predicate, [value]);
-                    if (passes) {
-                        if (skipCount >= n) {
-                            yield value;
-                        } else {
-                            skipCount++;
-                        }
-                    } else if (skipCount >= n) {
-                        yield value;
-                    }
-                }
-            }
-        };
-        
-        return new FilteredInfiniteRange(droppedSource, predicate, interpreter);
+        if (n <= 0) return this;
+        let result = this;
+        for (let i = 0; i < n; i++) {
+            result = result.tail();
+        }
+        return result;
     }
 
     // Get first element that passes filter
@@ -379,7 +354,32 @@ class FilteredInfiniteRange {
 
     // Get tail (all but first element that passes filter)
     tail() {
-        return this.drop(1);
+        const self = this;
+        // Create a source that, on each iteration, rescans self.sourceRange and
+        // skips everything up to and including the first element that passes self.predicate,
+        // then yields the remainder. Closing over `self` (not a shared iterator) means
+        // each call to [Symbol.iterator]() starts fresh.
+        const newSource = {
+            _isInfiniteRange: true,
+            *[Symbol.iterator]() {
+                let foundFirst = false;
+                for (const value of self.sourceRange) {
+                    if (!foundFirst) {
+                        const pred = self.predicate;
+                        const passes = pred instanceof Lambda ? pred.apply(value) :
+                                       pred instanceof PartialFunction ? pred.apply([value]) :
+                                       pred && pred._isOperatorFunction ? pred.apply([value]) :
+                                       self.interpreter.applyFunction(pred, [value]);
+                        if (passes) {
+                            foundFirst = true; // skip head, yield everything after
+                        }
+                    } else {
+                        yield value;
+                    }
+                }
+            }
+        };
+        return new FilteredInfiniteRange(newSource, self.predicate, self.interpreter);
     }
 
     toString() {
@@ -473,6 +473,76 @@ class ConsedInfiniteRange {
     }
 }
 
+// Lazy thunk for a recursive user-function call on an infinite range.
+// When a user function like sieve recurses on an infinite range, returning this
+// defers evaluation until elements are actually demanded (lazy cons semantics).
+class LazyFunctionCall {
+    constructor(funcName, args, interpreter) {
+        this.funcName = funcName;
+        this.args = args;
+        this.interpreter = interpreter;
+        this._isInfiniteRange = true;
+        this._resolved = null;
+    }
+
+    _resolve() {
+        if (this._resolved === null) {
+            this._resolved = this.interpreter.applyFunction(this.funcName, this.args);
+        }
+        return this._resolved;
+    }
+
+    head() {
+        const r = this._resolve();
+        if (r && r.head) return r.head();
+        if (Array.isArray(r)) return r[0];
+        throw new Error('LazyFunctionCall: empty result');
+    }
+
+    tail() {
+        const r = this._resolve();
+        if (r && r.tail) return r.tail();
+        if (Array.isArray(r)) return r.slice(1);
+        return [];
+    }
+
+    take(n) {
+        if (n <= 0) return [];
+        const r = this._resolve();
+        if (r && r.take) return r.take(n);
+        if (Array.isArray(r)) return r.slice(0, n);
+        return [];
+    }
+
+    at(index) {
+        const r = this._resolve();
+        if (r && r.at) return r.at(index);
+        if (Array.isArray(r)) return r[index];
+        throw new Error('Index out of bounds in lazy function call');
+    }
+
+    drop(n) {
+        if (n <= 0) return this;
+        const r = this._resolve();
+        if (r && r.drop) return r.drop(n);
+        if (Array.isArray(r)) return r.slice(n);
+        return [];
+    }
+
+    *[Symbol.iterator]() {
+        yield* this._resolve();
+    }
+
+    toString() {
+        const preview = this.take(20);
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) return '(' + v.elements.map(String).join(',') + ')';
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
+    }
+}
+
 class HaskishInterpreter {
     constructor() {
         this.functions = {};
@@ -480,6 +550,7 @@ class HaskishInterpreter {
         this.warnings = [];
         this.executionStartTime = 0;
         this.maxExecutionTime = 5000; // 5 seconds max execution
+        this.functionCallDepth = {}; // tracks recursion depth per function for lazy infinite evaluation
         this.initializeBuiltins();
     }
 
@@ -1999,7 +2070,25 @@ class HaskishInterpreter {
             if (consIndex !== -1) {
                 // Convert string to array for pattern matching
                 const listValue = typeof value === 'string' ? value.split('') : value;
-                
+
+                // Handle infinite ranges (e.g. sieve (p:xs) applied to [2..])
+                if (listValue && listValue._isInfiniteRange) {
+                    const headPat = inner.slice(0, consIndex).trim();
+                    const tailPat = inner.slice(consIndex + 1).trim();
+
+                    const headMatch = this.matchPattern(headPat, listValue.head());
+                    if (headMatch === null) return null;
+
+                    const tailValue = listValue.tail();
+                    if (tailPat.includes(':')) {
+                        const tailMatch = this.matchPattern('(' + tailPat + ')', tailValue);
+                        if (tailMatch === null) return null;
+                        return { ...headMatch, ...tailMatch };
+                    } else {
+                        return { ...headMatch, [tailPat]: tailValue };
+                    }
+                }
+
                 if (!Array.isArray(listValue) || listValue.length === 0) return null;
                 
                 const headPat = inner.slice(0, consIndex).trim();
@@ -2157,6 +2246,21 @@ class HaskishInterpreter {
             throw new Error(`Undefined function: ${funcName}`);
         }
 
+        // Lazy evaluation: when recursively calling a user function with an infinite-range
+        // argument, return a deferred computation instead of recursing eagerly.
+        // This implements the lazy cons semantics needed for infinite recursive functions
+        // like the Sieve of Eratosthenes: sieve (p:xs) = p : sieve [x | x <- xs, ...]
+        const currentDepth = this.functionCallDepth[funcName] || 0;
+        if (currentDepth >= 1 && args.some(a => a && a._isInfiniteRange)) {
+            return new LazyFunctionCall(funcName, args, this);
+        }
+
+        // Increment depth before evaluating body; decrement in finally so it's correct
+        // even if the body throws.
+        this.functionCallDepth[funcName] = currentDepth + 1;
+
+        try {
+
         const cases = this.functions[funcName];
         
         // Try each pattern case
@@ -2216,6 +2320,9 @@ class HaskishInterpreter {
         }
         
         throw new Error(`No pattern matched for function ${funcName} with arguments: ${argsStr}`);
+        } finally {
+            this.functionCallDepth[funcName] = currentDepth;
+        }
     }
 
     // Parse parameter patterns
@@ -2317,6 +2424,10 @@ class HaskishInterpreter {
                 (value && value._isComposedFunction) ||
                 value instanceof PartialFunction) {
                 // Store directly in variables table under the binding name
+                tempVars[varName] = value;
+            }
+            // Store infinite ranges directly — their toString() includes '...' which is invalid syntax
+            else if (value && value._isInfiniteRange) {
                 tempVars[varName] = value;
             }
             // Also store single-char strings (Chars) to preserve them during evaluation
@@ -3801,6 +3912,10 @@ class HaskishInterpreter {
             return { success: true, result: this.formatOutput(result) };
         } catch (error) {
             return { success: false, error: error.message };
+        } finally {
+            // Always clear the timer so stale timestamps don't cause instant timeouts
+            // on subsequent parseFunctionDefinitions calls (e.g. clicking Run Code again)
+            this.executionStartTime = 0;
         }
     }
 }
