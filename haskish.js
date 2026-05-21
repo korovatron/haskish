@@ -10,6 +10,15 @@ class Lambda {
     }
 
     apply(arg) {
+        // Check execution timeout (catches infinite/exponential lambda recursion, e.g. Z combinator misuse)
+        if (this.interpreter && this.interpreter.executionStartTime > 0) {
+            const elapsed = Date.now() - this.interpreter.executionStartTime;
+            if (elapsed > this.interpreter.maxExecutionTime) {
+                this.interpreter.executionStartTime = 0;
+                throw new Error(`Execution timeout (${this.interpreter.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion.`);
+            }
+        }
+
         // Use matchPattern for any parenthesised pattern: tuples (x,y), cons sub-patterns
         // (x:xs, y:ys), nested tuples ((a,b),(c,d)), wildcards, etc.
         // Also use matchPattern for list patterns: [], [x,y], etc.
@@ -3190,6 +3199,26 @@ class HaskishInterpreter {
 
     // Format value for substitution back into expressions
     // Different from formatOutput which is for display to users
+    // Capture free variables from this.variables (temp bindings) into a Lambda's closure.
+    // This is needed when a Lambda is created as an argument inside evaluateWithBindings,
+    // because it may escape the scope where its free variables are live.
+    captureCurrentScope(lambda) {
+        if (!(lambda instanceof Lambda)) return lambda;
+        if (Object.keys(lambda.closure).length > 0) return lambda; // already has closure
+        // Find identifiers in the body that exist in this.variables (temp bindings only)
+        const candidates = new Set(lambda.body.match(/\b[a-zA-Z_][a-zA-Z0-9_']*\b/g) || []);
+        const captured = {};
+        for (const id of candidates) {
+            if (id === lambda.param) continue;            // don't capture own param
+            if (this.builtins[id] || this.functions[id]) continue; // skip builtins/user fns
+            if (this.variables[id] !== undefined) {
+                captured[id] = this.variables[id];
+            }
+        }
+        if (Object.keys(captured).length === 0) return lambda;
+        return new Lambda(lambda.param, lambda.body, this, captured);
+    }
+
     formatForSubstitution(value) {
         if (value instanceof Lambda) {
             return value.toString();
@@ -3320,11 +3349,35 @@ class HaskishInterpreter {
             if (evalResult instanceof DispatchLambda) return evalResult;
 
             // If the result is a Lambda, capture the current bindings as its closure
-            // BUT: if the lambda already has a closure from a nested computation, preserve it
-            // and only add bindings for free variables in the body
             if (evalResult instanceof Lambda && Object.keys(bindings).length > 0) {
-                // If lambda already has a closure, it came from a nested evaluation - don't override it
+                // Collect only the Lambda/function-type bindings (safe to patch with)
+                const lambdaBindings = {};
+                for (const [k, v] of Object.entries(bindings)) {
+                    if (v instanceof Lambda || (v && v._isOperatorFunction) ||
+                        (v && v._isComposedFunction) || v instanceof PartialFunction) {
+                        lambdaBindings[k] = v;
+                    }
+                }
+
                 if (Object.keys(evalResult.closure).length > 0) {
+                    // Result already has a closure (from a nested evaluation).
+                    // Patch any Lambda values inside that closure which have empty closures:
+                    // they were likely created as arguments and never captured outer bindings.
+                    if (Object.keys(lambdaBindings).length > 0) {
+                        const patchedClosure = {};
+                        let changed = false;
+                        for (const [k, v] of Object.entries(evalResult.closure)) {
+                            if (v instanceof Lambda && Object.keys(v.closure).length === 0) {
+                                patchedClosure[k] = new Lambda(v.param, v.body, this, lambdaBindings);
+                                changed = true;
+                            } else {
+                                patchedClosure[k] = v;
+                            }
+                        }
+                        if (changed) {
+                            return new Lambda(evalResult.param, evalResult.body, this, patchedClosure);
+                        }
+                    }
                     return evalResult;
                 }
                 // Otherwise, create a new Lambda with captured bindings
@@ -4106,6 +4159,11 @@ class HaskishInterpreter {
                     // Single-quoted literals are Chars, double-quoted are Strings
                     return token.isChar ? str : str.split('');
                 }
+                if (token.type === 'lambda') {
+                    // Parse lambda token into a Lambda object (handles (\x -> e) as argument)
+                    // Capture free vars from current scope so the lambda works outside this context
+                    return this.captureCurrentScope(this.evaluate('(' + token.value + ')'));
+                }
                 if (token.type === 'paren') {
                     // Handle unit () as null
                     return token.value.trim() === '' ? null : this.evaluate(token.value);
@@ -4237,8 +4295,8 @@ class HaskishInterpreter {
                         for (let i = params.length - 1; i > 0; i--) {
                             bodyStr = `\\${params[i]} -> ${bodyStr}`;
                         }
-                        // Note: No closure here - lambdas as direct arguments don't need to capture outer scope
-                        return new Lambda(params[0], bodyStr, this);
+                        // Capture free vars from current scope so the lambda works outside this context
+                        return this.captureCurrentScope(new Lambda(params[0], bodyStr, this));
                     }
                     throw new Error(`Invalid lambda syntax: ${token.value}`);
                 }

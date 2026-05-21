@@ -366,6 +366,31 @@ snd = \p -> p (\a -> \b -> b)
 -- fst (pair 10 20)         → 10
 -- snd (pair 10 20)         → 20
 
+=== Z Combinator ===
+-- The Z combinator enables anonymous recursion using only lambdas —
+-- no named recursive functions required.
+-- Unlike the Y combinator, Z works in strict (eager) languages by
+-- eta-expanding the recursive call: (\v -> x x v) defers self-application
+-- until an argument is provided, breaking the infinite regress.
+
+z = \f -> (\x -> f (\v -> x x v)) (\x -> f (\v -> x x v))
+
+-- Anonymous factorial: no named recursion, just lambdas
+factorial = z (\f -> \n -> if n == 0 then 1 else n * f (n - 1))
+
+-- Anonymous fibonacci
+fibonacci = z (\f -> \n -> if n <= 1 then n else f (n-1) + f (n-2))
+
+-- Anonymous list length
+myLength = z (\f -> \xs -> if null xs then 0 else 1 + f (tail xs))
+
+-- Tests:
+-- factorial 10                  → 3628800
+-- map factorial [0..7]          → [1,1,2,6,24,120,720,5040]
+-- fibonacci 10                  → 55
+-- map fibonacci [0..10]         → [0,1,1,2,3,5,8,13,21,34,55]
+-- myLength [1,2,3,4,5]          → 5
+
 === Tuples ===
 -- Tuple creation
 point = (3, 5)
