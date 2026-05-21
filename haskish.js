@@ -680,6 +680,9 @@ class HaskishInterpreter {
                     if (fn && fn._isOperatorFunction) {
                         return fn.apply([item]);
                     }
+                    if (fn && fn._isComposedFunction) {
+                        return fn.apply([item]);
+                    }
                     return this.applyFunction(fn, [item]);
                 });
             },
@@ -699,6 +702,9 @@ class HaskishInterpreter {
                         return predicate.apply([item]);
                     }
                     if (predicate && predicate._isOperatorFunction) {
+                        return predicate.apply([item]);
+                    }
+                    if (predicate && predicate._isComposedFunction) {
                         return predicate.apply([item]);
                     }
                     return this.applyFunction(predicate, [item]);
@@ -725,6 +731,12 @@ class HaskishInterpreter {
                     }
                     if (fn && fn._isOperatorFunction) {
                         return fn.apply([accumulator, item]);
+                    }
+                    if (fn && fn._isComposedFunction) {
+                        const step1 = fn.apply([accumulator]);
+                        if (step1 instanceof Lambda) return step1.apply(item);
+                        if (step1 && step1._isOperatorFunction) return step1.apply([item]);
+                        return step1;
                     }
                     return this.applyFunction(fn, [accumulator, item]);
                 }, acc);
@@ -753,6 +765,12 @@ class HaskishInterpreter {
                     }
                     if (fn && fn._isOperatorFunction) {
                         return fn.apply([item, accumulator]);
+                    }
+                    if (fn && fn._isComposedFunction) {
+                        const step1 = fn.apply([item]);
+                        if (step1 instanceof Lambda) return step1.apply(accumulator);
+                        if (step1 && step1._isOperatorFunction) return step1.apply([accumulator]);
+                        return step1;
                     }
                     return this.applyFunction(fn, [item, accumulator]);
                 }, acc);
@@ -2868,6 +2886,22 @@ class HaskishInterpreter {
 
     // Apply a function with arguments
     applyFunction(funcName, args) {
+        // If called with an actual function value rather than a name string, dispatch it.
+        if (typeof funcName !== 'string') {
+            if (funcName instanceof Lambda) {
+                let result = funcName;
+                for (const arg of args) {
+                    if (result instanceof Lambda) result = result.apply(arg);
+                    else throw new Error('Too many arguments for lambda');
+                }
+                return result;
+            }
+            if (funcName instanceof PartialFunction) return funcName.apply(args);
+            if (funcName && funcName._isOperatorFunction) return funcName.apply(args);
+            if (funcName && funcName._isComposedFunction) return funcName.apply(args);
+            throw new Error(`Cannot apply non-function value: ${String(funcName)}`);
+        }
+
         // Check built-ins first
         if (this.builtins[funcName]) {
             // For built-ins, check if we have enough arguments
@@ -3664,7 +3698,7 @@ class HaskishInterpreter {
         //   (a `f`)   desugars to  \x -> f a x
         //   (`f` a)   desugars to  \x -> f x a
         // Keep this before full backtick infix handling.
-        const backtickLeftSection = expr.match(/^(.+?)\s+`([a-zA-Z_]\w*'*)`\s*$/);
+        const backtickLeftSection = expr.match(/^(.+?)\s+`([a-zA-Z_]\w*'*|[+\-*\/<>=!.&|^$%:]+)`\s*$/);
         if (backtickLeftSection) {
             const [, leftExpr, fnName] = backtickLeftSection;
             const leftValue = this.evaluate(leftExpr.trim());
@@ -3696,7 +3730,7 @@ class HaskishInterpreter {
             };
         }
 
-        const backtickRightSection = expr.match(/^`([a-zA-Z_]\w*'*)`\s+(.+)$/);
+        const backtickRightSection = expr.match(/^`([a-zA-Z_]\w*'*|[+\-*\/<>=!.&|^$%:]+)`\s+(.+)$/);
         if (backtickRightSection) {
             const [, fnName, rightExpr] = backtickRightSection;
             const rightValue = this.evaluate(rightExpr.trim());
@@ -4143,6 +4177,16 @@ class HaskishInterpreter {
             
             // Don't process operators inside strings
             if (inString) continue;
+
+            // Skip backtick-quoted sections entirely (e.g. `div`, `***`)
+            // so that `*` inside `***` doesn't split the expression.
+            if (expr[i] === '`') {
+                const closeIdx = expr.indexOf('`', i + 1);
+                if (closeIdx > i) {
+                    i = closeIdx; // jump to closing backtick; loop will increment past it
+                    continue;
+                }
+            }
             
             if (expr[i] === '(' || expr[i] === '[') depth++;
             if (expr[i] === ')' || expr[i] === ']') depth--;
@@ -4228,7 +4272,7 @@ class HaskishInterpreter {
                 const closeIdx = expr.indexOf('`', i + 1);
                 if (closeIdx > i + 1) {
                     const fnName = expr.slice(i + 1, closeIdx);
-                    if (/^[a-zA-Z_][\w]*'*$/.test(fnName)) {
+                    if (/^[a-zA-Z_][\w]*'*$/.test(fnName) || /^[+\-*\/<>=!.&|^$%:]+$/.test(fnName)) {
                         const lhs = expr.slice(lastSplit, i).trim();
                         if (!lhs) return null; // backtick at start — invalid
                         found = true;
