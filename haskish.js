@@ -1590,6 +1590,48 @@ class HaskishInterpreter {
             const isSimpleVar = /^(\w+'*)\s*=\s/.test(line);
             
             if (!isSimpleVar) {
+                // Try infix operator definition: a *** b = ...
+                const infixFuncMatch = line.match(/^(.+?)\s+([+\-*\/:<>=!.&|^$%]+)\s+(.+?)\s*=\s*(.+)$/);
+                if (infixFuncMatch) {
+                    // Check for incomplete function from previous lines
+                    if (currentParams !== null && currentGuards.length === 0) {
+                        throw new Error(`Incomplete function definition for '${currentFunction}' on line ${currentParamsLineNumber}: expected guards (|) or assignment (=) after parameters.`);
+                    }
+
+                    // Save previous guards if any
+                    if (currentGuards.length > 0) {
+                        currentCases.push({ params: currentParams, guards: currentGuards, whereRaw: currentWhereRaw || [] });
+                        currentGuards = [];
+                        currentWhereRaw = null;
+                        currentParams = null;
+                        currentParamsLineNumber = null;
+                    }
+
+                    const [, leftParam, opName, rightParam, rawBody] = infixFuncMatch;
+                    const params = `${leftParam.trim()} ${rightParam.trim()}`;
+
+                    // Validate infix parameters (patterns only)
+                    const paramsNoCharLiterals = params.replace(/'(?:[^'\\]|\\.)*'/g, '_');
+                    if (!/^[\w\s()\[\]:,_'"-]+$/.test(paramsNoCharLiterals)) {
+                        throw new Error(`Invalid parameters on line ${lineNumber}: "${originalLine}". Parameters cannot contain operators.`);
+                    }
+
+                    if (currentFunction && currentFunction !== opName) {
+                        this.functions[currentFunction] = currentCases;
+                        currentCases = [];
+                    }
+
+                    // Extract where bindings from the body if present
+                    const { expr: cleanBody, whereRaw } = this.extractWhere(rawBody.trim());
+
+                    currentFunction = opName;
+                    currentParams = params;
+                    currentCases.push({ params: currentParams, body: cleanBody, whereRaw });
+                    currentParams = null;
+                    currentParamsLineNumber = null;
+                    continue;
+                }
+
                 // Try to match function definition (has parameters before =)
                 const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*=\s*(.+)$/);
                 
@@ -1858,7 +1900,8 @@ class HaskishInterpreter {
             if (cases.length === 0) continue;
             // Skip any function that has guard cases — guards can provide non-recursive branches
             if (cases.some(c => c.guards)) continue;
-            const namePattern = new RegExp('\\b' + funcName + '\\b');
+            const escapedFuncName = funcName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const namePattern = new RegExp('\\b' + escapedFuncName + '\\b');
             const allCasesUnconditionallyRecursive = cases.every(caseObj => {
                 if (!caseObj.body) return false;
                 const body = caseObj.body;
@@ -3280,6 +3323,36 @@ class HaskishInterpreter {
             return this.createOperatorSection(expr);
         }
 
+        // Custom symbolic operators (e.g., ***, <+>)
+        // Evaluate these before built-ins so 10 *** 3 doesn't get parsed as 10 * * * 3.
+        const builtinOps = new Set(['!!', '++', '&&', '||', '<=', '>=', '==', '/=', '.', ':', '^', '*', '/', '+', '-', '<', '>']);
+        const customOps = Object.keys(this.functions)
+            .filter(name => /^[+\-*\/:<>=!.&|^$%]+$/.test(name) && !builtinOps.has(name))
+            .sort((a, b) => b.length - a.length);
+        for (const op of customOps) {
+            const parts = this.splitByOperator(expr, op);
+            if (parts.length > 1) {
+                let result = this.evaluate(parts[0]);
+                for (let i = 1; i < parts.length; i++) {
+                    const right = this.evaluate(parts[i]);
+                    result = this.applyFunction(op, [result, right]);
+                }
+                return result;
+            }
+        }
+
+        // If a symbolic operator token appears but is neither built-in nor user-defined,
+        // report it explicitly instead of accidentally interpreting it as repeated built-ins.
+        const unknownOperatorToken = this.tokenize(expr).find(token =>
+            token.type === 'operator' &&
+            token.value !== '->' &&
+            !builtinOps.has(token.value) &&
+            !customOps.includes(token.value)
+        );
+        if (unknownOperatorToken) {
+            throw new Error(`Undefined operator: ${unknownOperatorToken.value}`);
+        }
+
         // Binary operations (check BEFORE list literals to handle [1,2]++[3,4])
         const binaryOps = [
             { op: '.', fn: (g, f) => {
@@ -4241,11 +4314,30 @@ class HaskishInterpreter {
             }
         };
         
-        if (!opMap[op]) {
-            throw new Error(`Unknown operator: ${op}`);
-        }
-        
         const interpreter = this;
+
+        if (!opMap[op]) {
+            // Support user-defined symbolic operators as first-class values.
+            if (!this.functions[op]) {
+                throw new Error(`Unknown operator: ${op}`);
+            }
+            return {
+                _isOperatorFunction: true,
+                op: op,
+                apply: function(args) {
+                    if (args.length < 1) {
+                        throw new Error(`Operator ${op} requires at least 1 argument`);
+                    }
+                    if (args.length === 1) {
+                        return interpreter.createPartialOperatorFunction(op, args[0], null);
+                    }
+                    return interpreter.applyFunction(op, [args[0], args[1]]);
+                },
+                toString: function() {
+                    return `<operator ${op}>`;
+                }
+            };
+        }
 
         // Create a pseudo function that can be applied
         return {
@@ -4308,7 +4400,29 @@ class HaskishInterpreter {
         };
         
         if (!opMap[op]) {
-            throw new Error(`Unknown operator: ${op}`);
+            if (!this.functions[op]) {
+                throw new Error(`Unknown operator: ${op}`);
+            }
+            const interpreter = this;
+            return {
+                _isOperatorFunction: true,
+                op: op,
+                leftVal: leftVal,
+                rightVal: rightVal,
+                apply: function(args) {
+                    if (args.length < 1) {
+                        throw new Error(`Partial operator requires 1 argument`);
+                    }
+                    if (leftVal !== null) {
+                        return interpreter.applyFunction(op, [leftVal, args[0]]);
+                    }
+                    return interpreter.applyFunction(op, [args[0], rightVal]);
+                },
+                toString: function() {
+                    if (leftVal !== null) return `<operator ${leftVal}${op}>`;
+                    return `<operator ${op}${rightVal}>`;
+                }
+            };
         }
         
         return {
@@ -4580,10 +4694,21 @@ class HaskishInterpreter {
             if (assignmentPos > 0) {
                 const beforeEq = expr.slice(0, assignmentPos).trim();
                 const afterEq = expr.slice(assignmentPos + 1).trim();
+
+                // Infix operator definition in REPL: a *** b = ...
+                const infixReplMatch = beforeEq.match(/^(.+?)\s+([+\-*\/:<>=!.&|^$%]+)\s+(.+)$/);
+                if (infixReplMatch) {
+                    const [, leftParam, opName, rightParam] = infixReplMatch;
+                    const params = `${leftParam.trim()} ${rightParam.trim()}`;
+                    const paramsNoCharLiterals = params.replace(/'(?:[^'\\]|\\.)*'/g, '_');
+                    if (/^[\w\s()\[\]:,_'"-]+$/.test(paramsNoCharLiterals)) {
+                        funcMatch = [expr, opName, params, afterEq];
+                    }
+                }
                 
                 // Check if there's a space in beforeEq - indicates parameters
                 const spaceIndex = beforeEq.indexOf(' ');
-                if (spaceIndex > 0) {
+                if (!funcMatch && spaceIndex > 0) {
                     // Could be a function definition
                     const funcName = beforeEq.slice(0, spaceIndex);
                     const params = beforeEq.slice(spaceIndex + 1).trim();
