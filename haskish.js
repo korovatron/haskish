@@ -2951,19 +2951,38 @@ class HaskishInterpreter {
             return null;
         }
 
-        // Specific list pattern like [a, b]
+        // Specific list pattern like [a, b] or [((a,b),[c]),(_, d)]
         const listPatMatch = pattern.match(/^\[(.+)\]$/);
         if (listPatMatch) {
             // Convert string to array for pattern matching
             const listValue = typeof value === 'string' ? value.split('') : value;
             if (!Array.isArray(listValue)) return null;
-            const params = listPatMatch[1].split(',').map(p => p.trim());
+
+            // Depth-aware comma split — handles nested patterns like [((a,b),[c]),(x,y)]
+            const params = [];
+            let current = '';
+            let depth = 0;
+            for (const char of listPatMatch[1]) {
+                if (char === '(' || char === '[') depth++;
+                if (char === ')' || char === ']') depth--;
+                if (char === ',' && depth === 0) {
+                    params.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            if (current.trim()) params.push(current.trim());
+
             if (params.length !== listValue.length) return null;
-            
+
+            // Recursively match each element pattern (handles nested tuples, lists, wildcards)
             const bindings = {};
-            params.forEach((param, i) => {
-                bindings[param] = listValue[i];
-            });
+            for (let i = 0; i < params.length; i++) {
+                const elemMatch = this.matchPattern(params[i], listValue[i]);
+                if (elemMatch === null) return null;
+                Object.assign(bindings, elemMatch);
+            }
             return bindings;
         }
 
