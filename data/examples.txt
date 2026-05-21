@@ -384,12 +384,23 @@ fibonacci = z (\f -> \n -> if n <= 1 then n else f (n-1) + f (n-2))
 -- Anonymous list length
 myLength = z (\f -> \xs -> if null xs then 0 else 1 + f (tail xs))
 
+-- Anonymous quicksort
+quickSort = z (\qs -> \xs ->
+    if null xs
+    then []
+    else
+        qs (filter (\x -> x < head xs) (tail xs))
+        ++ [head xs]
+        ++ qs (filter (\x -> not (x < head xs)) (tail xs))
+    )
+
 -- Tests:
--- factorial 10                  → 3628800
--- map factorial [0..7]          → [1,1,2,6,24,120,720,5040]
--- fibonacci 10                  → 55
--- map fibonacci [0..10]         → [0,1,1,2,3,5,8,13,21,34,55]
--- myLength [1,2,3,4,5]          → 5
+-- factorial 10                      → 3628800
+-- map factorial [0..7]              → [1,1,2,6,24,120,720,5040]
+-- fibonacci 10                      → 55
+-- map fibonacci [0..10]             → [0,1,1,2,3,5,8,13,21,34,55]
+-- myLength [1,2,3,4,5]              → 5
+-- quickSort [5,3,8,1,4,7,2,6]       → [1,2,3,4,5,6,7,8]
 
 === Tuples ===
 -- Tuple creation
