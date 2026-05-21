@@ -3275,7 +3275,7 @@ class HaskishInterpreter {
 
         // Operator sections like (<10) or (+) or (+(-1)) or (== "cat") but not negative numbers
         const opSectionMatch = expr.match(/^\(([+*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/) || 
-                               expr.match(/^\((\d+|\(.+\)|["'][^"']*["'])\s*([+*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)\)$/);
+                       expr.match(/^\((\d+|\(.+\)|["'][^"']*["'])\s*([+\-*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)\s*\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
         }
@@ -3554,6 +3554,74 @@ class HaskishInterpreter {
             }
         }
 
+        // Backtick sections:
+        //   (a `f`)   desugars to  \x -> f a x
+        //   (`f` a)   desugars to  \x -> f x a
+        // Keep this before full backtick infix handling.
+        const backtickLeftSection = expr.match(/^(.+?)\s+`([a-zA-Z_]\w*'*)`\s*$/);
+        if (backtickLeftSection) {
+            const [, leftExpr, fnName] = backtickLeftSection;
+            const leftValue = this.evaluate(leftExpr.trim());
+            const fnValue = this.evaluate(fnName);
+            const interpreter = this;
+            return {
+                _isOperatorFunction: true,
+                op: '`' + fnName + '`',
+                apply: function(args) {
+                    if (args.length < 1) {
+                        throw new Error(`Partial operator requires 1 argument`);
+                    }
+                    const rightValue = args[0];
+                    if (fnValue instanceof Lambda) {
+                        const step = fnValue.apply(leftValue);
+                        return step instanceof Lambda ? step.apply(rightValue) : step;
+                    }
+                    if (fnValue instanceof PartialFunction) {
+                        return fnValue.apply([leftValue, rightValue]);
+                    }
+                    if (fnValue && fnValue._isOperatorFunction) {
+                        return fnValue.apply([leftValue, rightValue]);
+                    }
+                    return interpreter.applyFunction(fnName, [leftValue, rightValue]);
+                },
+                toString: function() {
+                    return `<operator ${leftExpr.trim()} ${'`' + fnName + '`'}>`;
+                }
+            };
+        }
+
+        const backtickRightSection = expr.match(/^`([a-zA-Z_]\w*'*)`\s+(.+)$/);
+        if (backtickRightSection) {
+            const [, fnName, rightExpr] = backtickRightSection;
+            const rightValue = this.evaluate(rightExpr.trim());
+            const fnValue = this.evaluate(fnName);
+            const interpreter = this;
+            return {
+                _isOperatorFunction: true,
+                op: '`' + fnName + '`',
+                apply: function(args) {
+                    if (args.length < 1) {
+                        throw new Error(`Partial operator requires 1 argument`);
+                    }
+                    const leftValue = args[0];
+                    if (fnValue instanceof Lambda) {
+                        const step = fnValue.apply(leftValue);
+                        return step instanceof Lambda ? step.apply(rightValue) : step;
+                    }
+                    if (fnValue instanceof PartialFunction) {
+                        return fnValue.apply([leftValue, rightValue]);
+                    }
+                    if (fnValue && fnValue._isOperatorFunction) {
+                        return fnValue.apply([leftValue, rightValue]);
+                    }
+                    return interpreter.applyFunction(fnName, [leftValue, rightValue]);
+                },
+                toString: function() {
+                    return `<operator ${'`' + fnName + '`'} ${rightExpr.trim()}>`;
+                }
+            };
+        }
+
         // Backtick infix: a `f` b  desugars to  f a b  (curried, left-associative)
         // Checked after all binary ops so arithmetic/comparison splits happen first.
         const backtickParts = this.splitByBacktickInfix(expr);
@@ -3778,7 +3846,7 @@ class HaskishInterpreter {
             // Check if the paren is an operator section like (+10) or (*2)
             const fullParen = '(' + tokens[0].value + ')';
             let funcExpr;
-            if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
+            if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+\-*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\s*\)$/.test(fullParen)) {
                 funcExpr = this.createOperatorSection(fullParen);
             } else {
                 funcExpr = this.evaluate(tokens[0].value);
@@ -3895,7 +3963,7 @@ class HaskishInterpreter {
                     // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
                     const fullParen = '(' + token.value + ')';
                     // Match operator sections: operators only, operators with number, string, or parenthesized expr
-                    if (/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/.test(fullParen)) {
+                    if (/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+\-*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\s*\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -4108,7 +4176,7 @@ class HaskishInterpreter {
         }
         
         // Right section with string literal like ("cat" ==) or ('cat' ==)
-        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
+        const rightStringMatch = section.match(/^\((["'][^"']*["'])\s*([+\-*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
         if (rightStringMatch) {
             const [, str, op] = rightStringMatch;
             const stringValue = this.evaluate(str);
@@ -4116,14 +4184,14 @@ class HaskishInterpreter {
         }
         
         // Right section like (10+), (5*) but not (-10)
-        const rightMatch = section.match(/^\((\d+)\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);  // Removed -
+        const rightMatch = section.match(/^\((\d+)\s*([+\-*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
         if (rightMatch) {
             const [, num, op] = rightMatch;
             return this.createPartialOperatorFunction(op, parseFloat(num), null);
         }
         
         // Right section with parenthesized expression like ((..)+)
-        const rightParenMatch = section.match(/^\((\(.+\))\s*([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
+        const rightParenMatch = section.match(/^\((\(.+\))\s*([+\-*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);
         if (rightParenMatch) {
             const [, parenExpr, op] = rightParenMatch;
             const evaluatedValue = this.evaluate(parenExpr);
@@ -4177,14 +4245,20 @@ class HaskishInterpreter {
             throw new Error(`Unknown operator: ${op}`);
         }
         
+        const interpreter = this;
+
         // Create a pseudo function that can be applied
         return {
             _isOperatorFunction: true,
             op: op,
             fn: opMap[op],
             apply: function(args) {
-                if (args.length < 2) {
-                    throw new Error(`Operator ${op} requires 2 arguments`);
+                if (args.length < 1) {
+                    throw new Error(`Operator ${op} requires at least 1 argument`);
+                }
+                if (args.length === 1) {
+                    // Curry bare operators so ((-) 10) works like Haskell sections.
+                    return interpreter.createPartialOperatorFunction(op, args[0], null);
                 }
                 return this.fn(args[0], args[1]);
             },
