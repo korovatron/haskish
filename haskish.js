@@ -2381,17 +2381,6 @@ class HaskishInterpreter {
             elements.push(this.evaluate(current.trim()));
         }
 
-        // Type check: ensure all elements are of the same type (homogeneous list)
-        if (elements.length > 0) {
-            const firstType = this.getTypeCategory(elements[0]);
-            for (let i = 1; i < elements.length; i++) {
-                const currentType = this.getTypeCategory(elements[i]);
-                if (currentType !== firstType) {
-                    throw new Error(`Type error: list elements must all be the same type (expected ${firstType}, but got ${currentType})`);
-                }
-            }
-        }
-
         return elements;
     }
 
@@ -2604,13 +2593,9 @@ class HaskishInterpreter {
                 if (match === null) continue;
                 Object.assign(newBindings, match);
             } else if (generator.isTuple) {
-                // Destructure tuple pattern
-                if (!item || !item._isTuple) {
-                    throw new Error(`Pattern match failure: expected tuple but got ${item && item._isInfiniteRange ? item.toString() : String(item)}`);
-                }
-                if (item.elements.length !== generator.variables.length) {
-                    throw new Error(`Pattern match failure: tuple has ${item.elements.length} elements but pattern expects ${generator.variables.length}`);
-                }
+                // Destructure tuple pattern; skip items that don't match (Haskell semantics)
+                if (!item || !item._isTuple) continue;
+                if (item.elements.length !== generator.variables.length) continue;
                 // Match each element pattern (handles sub-patterns like h:_ inside a tuple)
                 let tupleMatched = true;
                 for (let ti = 0; ti < generator.variables.length; ti++) {
