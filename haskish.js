@@ -10,78 +10,16 @@ class Lambda {
     }
 
     apply(arg) {
-        // Check if parameter is a tuple pattern like (x,y) or ((a,b),(c,d))
+        // Use matchPattern for any parenthesised pattern: tuples (x,y), cons sub-patterns
+        // (x:xs, y:ys), nested tuples ((a,b),(c,d)), wildcards, etc.
         if (this.param.startsWith('(') && this.param.endsWith(')')) {
-            // Extract variable names from tuple pattern, handling nested patterns
-            const tuplePattern = this.param.slice(1, -1); // Remove outer parens
-            
-            // Parse tuple pattern to extract variable names (including nested)
-            const parsePattern = (pattern) => {
-                const varNames = [];
-                let current = '';
-                let depth = 0;
-                
-                for (let i = 0; i < pattern.length; i++) {
-                    const ch = pattern[i];
-                    if (ch === '(') depth++;
-                    if (ch === ')') depth--;
-                    
-                    if (ch === ',' && depth === 0) {
-                        varNames.push(current.trim());
-                        current = '';
-                    } else {
-                        current += ch;
-                    }
-                }
-                if (current.trim()) {
-                    varNames.push(current.trim());
-                }
-                return varNames;
-            };
-            
-            const varPatterns = parsePattern(tuplePattern);
-            
-            // Check if arg is a tuple
-            if (arg && arg._isTuple && arg.elements) {
-                if (arg.elements.length !== varPatterns.length) {
-                    throw new Error(`Tuple pattern ${this.param} expects ${varPatterns.length} elements but got ${arg.elements.length}`);
-                }
-                // Create bindings for each variable in the pattern
-                const bindings = { ...this.closure };
-                
-                for (let i = 0; i < varPatterns.length; i++) {
-                    const pattern = varPatterns[i];
-                    const value = arg.elements[i];
-                    
-                    // Check if this pattern is itself a nested tuple pattern
-                    if (pattern.startsWith('(') && pattern.endsWith(')')) {
-                        // Nested tuple pattern - recursively destructure
-                        const nestedPattern = pattern.slice(1, -1);
-                        const nestedVarPatterns = parsePattern(nestedPattern);
-                        
-                        if (!value || !value._isTuple || !value.elements) {
-                            throw new Error(`Expected tuple for nested pattern ${pattern}`);
-                        }
-                        if (value.elements.length !== nestedVarPatterns.length) {
-                            throw new Error(`Nested tuple pattern ${pattern} expects ${nestedVarPatterns.length} elements but got ${value.elements.length}`);
-                        }
-                        
-                        // Bind nested variables
-                        for (let j = 0; j < nestedVarPatterns.length; j++) {
-                            bindings[nestedVarPatterns[j]] = value.elements[j];
-                        }
-                    } else {
-                        // Simple variable binding
-                        bindings[pattern] = value;
-                    }
-                }
-                
-                return this.interpreter.evaluateWithBindings(this.body, bindings);
-            } else {
-                throw new Error(`Expected tuple for pattern ${this.param} but got ${typeof arg}`);
+            const bindings = this.interpreter.matchPattern(this.param, arg);
+            if (bindings === null) {
+                throw new Error(`Pattern match failure: ${this.param} does not match value`);
             }
+            return this.interpreter.evaluateWithBindings(this.body, { ...this.closure, ...bindings });
         }
-        
+
         // Regular single parameter binding
         const bindings = { ...this.closure, [this.param]: arg };
         return this.interpreter.evaluateWithBindings(this.body, bindings);
