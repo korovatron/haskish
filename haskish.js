@@ -1014,6 +1014,33 @@ class HaskishInterpreter {
         const scope = Object.assign({}, outerBindings); // accumulated scope
         const result = {};
 
+        // Pending simple-variable bindings deferred because a name they reference
+        // wasn't yet in scope (e.g. `topArea = pi * r * r` before `pi = 3.14159`).
+        // We retry until stable so that where bindings are order-independent, as in Haskell.
+        const pending = []; // { lhs, rhs, isPattern }
+
+        const trySimple = (lhs, rhs, isPattern, defer) => {
+            const capturedScope = Object.assign({}, scope, result);
+            try {
+                const value = this.evaluateWithBindings(rhs, capturedScope);
+                if (isPattern) {
+                    const matches = this.matchPattern(lhs, value);
+                    if (matches !== null) {
+                        Object.assign(result, matches);
+                        Object.assign(scope, matches);
+                    }
+                } else {
+                    result[lhs] = value;
+                    scope[lhs] = value;
+                }
+                return true;
+            } catch (e) {
+                if (defer) { pending.push({ lhs, rhs, isPattern }); }
+                else { throw e; }
+                return false;
+            }
+        };
+
         for (const raw of whereRaw) {
             const str = raw.trim();
             if (!str || str.startsWith('--')) continue;
@@ -1049,25 +1076,16 @@ class HaskishInterpreter {
             const rhs = str.slice(eqIdx + 1).trim();
 
             // Pattern destructuring in where: (a,b) = expr  or  [x,y] = expr
-            if ((lhs.startsWith('(') && lhs.endsWith(')')) || (lhs.startsWith('[') && lhs.endsWith(']'))) {
-                const capturedScope = Object.assign({}, scope, result);
-                const value = this.evaluateWithBindings(rhs, capturedScope);
-                const matches = this.matchPattern(lhs, value);
-                if (matches !== null) {
-                    Object.assign(result, matches);
-                    Object.assign(scope, matches);
-                }
+            const isPattern = (lhs.startsWith('(') && lhs.endsWith(')')) || (lhs.startsWith('[') && lhs.endsWith(']'));
+            if (isPattern) {
+                trySimple(lhs, rhs, true, true);
                 continue;
             }
 
             const spaceIdx = lhs.indexOf(' ');
             if (spaceIdx === -1) {
-                // Simple variable binding: name = expr
-                const name = lhs;
-                const capturedScope = Object.assign({}, scope, result);
-                const value = this.evaluateWithBindings(rhs, capturedScope);
-                result[name] = value;
-                scope[name] = value;
+                // Simple variable binding: try now, defer on failure
+                trySimple(lhs, rhs, false, true);
             } else {
                 // Local function: name p1 p2 = expr
                 const name = lhs.slice(0, spaceIdx);
@@ -1077,6 +1095,22 @@ class HaskishInterpreter {
                 result[name] = fn;
                 scope[name] = fn;
             }
+        }
+
+        // Retry deferred bindings until all resolve or no progress is made
+        let progress = true;
+        while (pending.length > 0 && progress) {
+            progress = false;
+            const retry = pending.splice(0);
+            for (const { lhs, rhs, isPattern } of retry) {
+                if (trySimple(lhs, rhs, isPattern, true)) {
+                    progress = true;
+                }
+            }
+        }
+        // Any still-pending bindings have genuine unresolvable references — throw the real error
+        for (const { lhs, rhs, isPattern } of pending) {
+            trySimple(lhs, rhs, isPattern, false);
         }
 
         return result;
