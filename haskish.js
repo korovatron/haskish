@@ -3336,7 +3336,8 @@ class HaskishInterpreter {
 
         // Check for unary negation patterns
         // Pattern 1: (-5) or (-x) or (-(...)) - parenthesized negation
-        if (/^\(-/.test(expr) && expr.endsWith(')')) {
+        // Requires no space between ( and - and the value: (-10) yes, (- 10) no (that's a right section)
+        if (/^\(-[^\s]/.test(expr) && expr.endsWith(')')) {
             const inner = expr.slice(2, -1).trim();
             // Check if it's (-number) or (-identifier) or (-(...))
             if (/^\d/.test(inner) || /^[a-zA-Z_]/.test(inner) || /^\(/.test(inner)) {
@@ -3351,7 +3352,8 @@ class HaskishInterpreter {
         }
 
         // Operator sections like (<10) or (+) or (+(-1)) or (== "cat") but not negative numbers
-        const opSectionMatch = expr.match(/^\(([+*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/) || 
+        const opSectionMatch = expr.match(/^\(([+*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/) ||
+                       expr.match(/^\(-\s+(.+)\)$/) ||
                        expr.match(/^\((\d+|\(.+\)|["'][^"']*["'])\s*([+\-*\/<>=&|:]+|\+\+|!!|&&|\|\||\/=)\s*\)$/);
         if (opSectionMatch) {
             return this.createOperatorSection(expr);
@@ -3986,7 +3988,7 @@ class HaskishInterpreter {
             // Check if the paren is an operator section like (+10) or (*2)
             const fullParen = '(' + tokens[0].value + ')';
             let funcExpr;
-            if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+\-*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\s*\)$/.test(fullParen)) {
+            if (/^\(([+*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\(-\s+.+\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+\-*\/\^<>=]+|\+\+|!!|&&|\|\||\/=)\s*\)$/.test(fullParen)) {
                 funcExpr = this.createOperatorSection(fullParen);
             } else {
                 funcExpr = this.evaluate(tokens[0].value);
@@ -4034,6 +4036,8 @@ class HaskishInterpreter {
             if (typeof funcExpr === 'string' || funcExpr instanceof String) {
                 return this.applyFunction(funcExpr, args);
             }
+            // Fallthrough: funcExpr is not a known function type (e.g. a number literal)
+            return this.applyFunction(funcExpr, args);
         }
         
         if (tokens.length > 1 && tokens[0].type === 'identifier') {
@@ -4100,10 +4104,10 @@ class HaskishInterpreter {
                     if (token.value.trim() === '') {
                         return null;
                     }
-                    // Check if it's an operator section like (*) or (<10) or (+(-1)) or (=="cat") or (&&) but NOT (- ...) which is unary negation
+                    // Check if it's an operator section like (*) or (<10) or (+(-1)) or (- val) or (=="cat") or (&&) but NOT (-val) which is unary negation
                     const fullParen = '(' + token.value + ')';
                     // Match operator sections: operators only, operators with number, string, or parenthesized expr
-                    if (/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+\-*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\s*\)$/.test(fullParen)) {
+                    if (/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)(\s*\d+|\s*\(.+\)|\s*["'][^"']*["'])?\)$/.test(fullParen) || /^\(-\s+.+\)$/.test(fullParen) || /^\((\d+|\(.+\)|["'][^"']*["']){1}\s*([+\-*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\s*\)$/.test(fullParen)) {
                         return this.createOperatorSection(fullParen);
                     }
                     return this.evaluate(token.value);
@@ -4294,6 +4298,13 @@ class HaskishInterpreter {
 
     // Create operator section function
     createOperatorSection(section) {
+        // Right subtraction section: (- val) with a space distinguishes it from (-val) negative literal
+        const subtractRightMatch = section.match(/^\(-\s+(.+)\)$/);
+        if (subtractRightMatch) {
+            const rightVal = this.evaluate(subtractRightMatch[1].trim());
+            return this.createPartialOperatorFunction('-', null, rightVal);
+        }
+
         // Match patterns like (*), (+), (<10), (10+), (&&), (||), (:), etc.
         // But NOT negative numbers like (-5) which could be (0 - 5) evaluated
         const opOnlyMatch = section.match(/^\(([+*\/\^<>=:]+|\+\+|!!|&&|\|\||\/=)\)$/);  // Removed - from here
