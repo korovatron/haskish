@@ -1647,13 +1647,19 @@ class HaskishInterpreter {
                 
                 currentFunction = funcName;
                 if (inlineGuardCondition) {
-                    // Single-line guarded definition: push as a guard case
-                    currentCases.push({ params: actualParams, guards: [{ condition: inlineGuardCondition, body: cleanBody }], whereRaw });
+                    // Inline guard: "f params | condition = body"
+                    // Leave currentParams set so that subsequent | lines on the next lines
+                    // are recognised as guard continuations (style: first guard inline,
+                    // remaining guards indented below).  The case is finalised lazily when
+                    // the next function / EOF is reached, exactly like a header-only line.
+                    currentParams = actualParams;
+                    currentGuards.push({ condition: inlineGuardCondition, body: cleanBody });
+                    if (whereRaw && whereRaw.length > 0) currentWhereRaw = whereRaw;
                 } else {
                     currentCases.push({ params: actualParams, body: cleanBody, whereRaw });
+                    currentParams = null; // Reset since this is a complete definition
+                    currentParamsLineNumber = null;
                 }
-                currentParams = null; // Reset since this is a complete definition
-                currentParamsLineNumber = null;
                 continue;
                 }
             }
