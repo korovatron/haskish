@@ -3354,6 +3354,58 @@ class HaskishInterpreter {
         }
 
         // Binary operations (check BEFORE list literals to handle [1,2]++[3,4])
+        const isFunctionValue = (value) => (
+            value instanceof Lambda ||
+            value instanceof PartialFunction ||
+            (value && value._isOperatorFunction) ||
+            (value && value._isComposedFunction)
+        );
+
+        const applyFunctionValue = (fnValue, arg) => {
+            if (fnValue instanceof Lambda) {
+                return fnValue.apply(arg);
+            }
+            if (fnValue instanceof PartialFunction) {
+                return fnValue.apply([arg]);
+            }
+            if (fnValue && fnValue._isOperatorFunction) {
+                return fnValue.apply([arg]);
+            }
+            if (fnValue && fnValue._isComposedFunction) {
+                return fnValue.apply([arg]);
+            }
+            throw new Error('Expected a function value');
+        };
+
+        const numericBinaryOp = (opSymbol, opFn, a, b) => {
+            if (!isFunctionValue(a) && !isFunctionValue(b)) {
+                if (typeof a !== 'number' || typeof b !== 'number') {
+                    throw new Error(`Type error: (${opSymbol}) requires numbers, got ${typeof a} and ${typeof b}`);
+                }
+                return opFn(a, b);
+            }
+
+            return {
+                _isOperatorFunction: true,
+                op: opSymbol,
+                apply: function(args) {
+                    if (args.length < 1) {
+                        throw new Error(`Partial operator requires 1 argument`);
+                    }
+                    const x = args[0];
+                    const left = isFunctionValue(a) ? applyFunctionValue(a, x) : a;
+                    const right = isFunctionValue(b) ? applyFunctionValue(b, x) : b;
+                    if (typeof left !== 'number' || typeof right !== 'number') {
+                        throw new Error(`Type error: (${opSymbol}) requires numbers, got ${typeof left} and ${typeof right}`);
+                    }
+                    return opFn(left, right);
+                },
+                toString: function() {
+                    return `<operator ${opSymbol}>`;
+                }
+            };
+        };
+
         const binaryOps = [
             { op: '.', fn: (g, f) => {
                 // Function composition operator
@@ -3535,38 +3587,19 @@ class HaskishInterpreter {
                 return a > b;
             }},
             { op: '+', fn: (a, b) => {
-                if (typeof a !== 'number' || typeof b !== 'number') {
-                    throw new Error(`Type error: (+) requires numbers, got ${typeof a} and ${typeof b}`);
-                }
-                return a + b;
+                return numericBinaryOp('+', (x, y) => x + y, a, b);
             }},
             { op: '-', fn: (a, b) => {
-                // Check if trying to subtract from a partially applied function
-                if (a instanceof PartialFunction) {
-                    throw new Error(`Cannot apply operator '-' to a partially applied function.\nDid you mean to pass a negative number? Use parentheses, e.g., add 4 (-5)`);
-                }
-                if (typeof a !== 'number' || typeof b !== 'number') {
-                    throw new Error(`Type error: (-) requires numbers, got ${typeof a} and ${typeof b}`);
-                }
-                return a - b;
+                return numericBinaryOp('-', (x, y) => x - y, a, b);
             }},
             { op: '^', fn: (a, b) => {
-                if (typeof a !== 'number' || typeof b !== 'number') {
-                    throw new Error(`Type error: (^) requires numbers, got ${typeof a} and ${typeof b}`);
-                }
-                return Math.pow(a, b);
+                return numericBinaryOp('^', (x, y) => Math.pow(x, y), a, b);
             }},
             { op: '*', fn: (a, b) => {
-                if (typeof a !== 'number' || typeof b !== 'number') {
-                    throw new Error(`Type error: (*) requires numbers, got ${typeof a} and ${typeof b}`);
-                }
-                return a * b;
+                return numericBinaryOp('*', (x, y) => x * y, a, b);
             }},
             { op: '/', fn: (a, b) => {
-                if (typeof a !== 'number' || typeof b !== 'number') {
-                    throw new Error(`Type error: (/) requires numbers, got ${typeof a} and ${typeof b}`);
-                }
-                return a / b;
+                return numericBinaryOp('/', (x, y) => x / y, a, b);
             }},
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
