@@ -1549,8 +1549,9 @@ class HaskishInterpreter {
                 // Try infix operator definition: a *** b = ...
                 // Left and right params are constrained to valid pattern syntax [\w\s()\[\]:,_'"] so
                 // operator chars in the function BODY (like &&, ==, -1) cannot be mistaken for the
-                // infix operator being defined.  '=' is also excluded from the operator class.
-                const infixFuncMatch = line.match(/^([\w\s()\[\]:,_'"]+?)\s+([+\-*\/:<>!.&|^$%]+)\s+([\w\s()\[\]:,_'"]+?)\s*=\s*(.+)$/);
+                // infix operator being defined.  '=' and '|' are also excluded from the operator
+                // class: '=' is the definition symbol, and '|' is the guard separator.
+                const infixFuncMatch = line.match(/^([\w\s()\[\]:,_'"]+?)\s+([+\-*\/:<>!.&^$%]+)\s+([\w\s()\[\]:,_'"]+?)\s*=\s*(.+)$/);
                 if (infixFuncMatch) {
                     // Check for incomplete function from previous lines
                     if (currentParams !== null && currentGuards.length === 0) {
@@ -1611,12 +1612,22 @@ class HaskishInterpreter {
 
                 // It's a function definition
                 const [, funcName, params, rawBody] = funcMatch;
-                
+
+                // Detect inline guard: "f params | condition = body" — funcMatch's non-greedy
+                // grab stops at the first =, so the guard ends up inside params.  Split it off.
+                let actualParams = params.trim();
+                let inlineGuardCondition = null;
+                const inlinePipeMatch = actualParams.match(/^(.*?)\s*\|\s*(.+)$/);
+                if (inlinePipeMatch) {
+                    actualParams = inlinePipeMatch[1].trim();
+                    inlineGuardCondition = inlinePipeMatch[2].trim();
+                }
+
                 // Validate parameters - should only contain valid pattern syntax
                 // Strip char literals first (e.g. '?', ' ', '\n') so their contents aren't flagged
                 // Allow: words, numbers, spaces, parentheses, brackets, colons, commas, underscores, quotes
                 // Disallow: operators like +, -, *, /, etc. in parameters
-                const paramsNoCharLiterals = params.replace(/'(?:[^'\\]|\\.)*'/g, '_');
+                const paramsNoCharLiterals = actualParams.replace(/'(?:[^'\\]|\\.)*'/g, '_');
                 if (!/^[\w\s()\[\]:,_'"]+$/.test(paramsNoCharLiterals)) {
                     throw new Error(`Invalid parameters on line ${lineNumber}: "${originalLine}". Parameters cannot contain operators.`);
                 }
@@ -1635,8 +1646,12 @@ class HaskishInterpreter {
                 const { expr: cleanBody, whereRaw } = this.extractWhere(rawBody.trim());
                 
                 currentFunction = funcName;
-                currentParams = params.trim();
-                currentCases.push({ params: currentParams, body: cleanBody, whereRaw });
+                if (inlineGuardCondition) {
+                    // Single-line guarded definition: push as a guard case
+                    currentCases.push({ params: actualParams, guards: [{ condition: inlineGuardCondition, body: cleanBody }], whereRaw });
+                } else {
+                    currentCases.push({ params: actualParams, body: cleanBody, whereRaw });
+                }
                 currentParams = null; // Reset since this is a complete definition
                 currentParamsLineNumber = null;
                 continue;
