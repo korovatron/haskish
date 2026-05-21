@@ -1547,7 +1547,10 @@ class HaskishInterpreter {
             
             if (!isSimpleVar) {
                 // Try infix operator definition: a *** b = ...
-                const infixFuncMatch = line.match(/^(.+?)\s+([+\-*\/:<>=!.&|^$%]+)\s+(.+?)\s*=\s*(.+)$/);
+                // Left and right params are constrained to valid pattern syntax [\w\s()\[\]:,_'"] so
+                // operator chars in the function BODY (like &&, ==, -1) cannot be mistaken for the
+                // infix operator being defined.  '=' is also excluded from the operator class.
+                const infixFuncMatch = line.match(/^([\w\s()\[\]:,_'"]+?)\s+([+\-*\/:<>!.&|^$%]+)\s+([\w\s()\[\]:,_'"]+?)\s*=\s*(.+)$/);
                 if (infixFuncMatch) {
                     // Check for incomplete function from previous lines
                     if (currentParams !== null && currentGuards.length === 0) {
