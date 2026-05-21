@@ -12,7 +12,9 @@ class Lambda {
     apply(arg) {
         // Use matchPattern for any parenthesised pattern: tuples (x,y), cons sub-patterns
         // (x:xs, y:ys), nested tuples ((a,b),(c,d)), wildcards, etc.
-        if (this.param.startsWith('(') && this.param.endsWith(')')) {
+        // Also use matchPattern for list patterns: [], [x,y], etc.
+        if ((this.param.startsWith('(') && this.param.endsWith(')')) ||
+            (this.param.startsWith('[') && this.param.endsWith(']'))) {
             const bindings = this.interpreter.matchPattern(this.param, arg);
             if (bindings === null) {
                 throw new Error(`Pattern match failure: ${this.param} does not match value`);
@@ -27,6 +29,116 @@ class Lambda {
 
     toString() {
         return `<lambda \\${this.param} -> ${this.body}>`;
+    }
+}
+
+// Class to represent a multi-case where-local function that tries each equation in order
+class DispatchLambda extends Lambda {
+    constructor(cases, interpreter) {
+        super('__dispatch__', '', interpreter, {});
+        this.cases = cases; // array of Lambda objects, tried in order
+        this._callDepth = 0; // for lazy evaluation of infinite-range recursion
+    }
+
+    apply(arg) {
+        // When recursively called with an InfiniteRange, defer via a lazy thunk
+        // to avoid unbounded eager recursion (same principle as applyFunction's lazy guard).
+        if (this._callDepth >= 1 && arg && arg._isInfiniteRange) {
+            return new LazyDispatchCall(this, arg);
+        }
+        this._callDepth++;
+        try {
+            return this._applyEager(arg);
+        } finally {
+            this._callDepth--;
+        }
+    }
+
+    _applyEager(arg) {
+        for (const caseLambda of this.cases) {
+            try {
+                return caseLambda.apply(arg);
+            } catch (e) {
+                if (e.message && e.message.startsWith('Pattern match failure')) {
+                    continue; // try next case
+                }
+                throw e;
+            }
+        }
+        throw new Error('Pattern match failure: no case matched in where-local function');
+    }
+
+    toString() {
+        return '<multi-case lambda>';
+    }
+}
+
+// Lazy thunk for a recursive WHERE-local DispatchLambda call on an infinite range.
+// When a where-local multi-case function recurses with an InfiniteRange argument,
+// returning this defers evaluation until elements are actually demanded (lazy cons semantics).
+class LazyDispatchCall {
+    constructor(dispatchFn, arg) {
+        this.dispatchFn = dispatchFn;
+        this.arg = arg;
+        this._isInfiniteRange = true;
+        this._resolved = null;
+    }
+
+    _resolve() {
+        if (this._resolved === null) {
+            this._resolved = this.dispatchFn._applyEager(this.arg);
+        }
+        return this._resolved;
+    }
+
+    head() {
+        const r = this._resolve();
+        if (r && r.head) return r.head();
+        if (Array.isArray(r)) return r[0];
+        throw new Error('LazyDispatchCall: empty result');
+    }
+
+    tail() {
+        const r = this._resolve();
+        if (r && r.tail) return r.tail();
+        if (Array.isArray(r)) return r.slice(1);
+        return [];
+    }
+
+    take(n) {
+        if (n <= 0) return [];
+        const r = this._resolve();
+        if (r && r.take) return r.take(n);
+        if (Array.isArray(r)) return r.slice(0, n);
+        return [];
+    }
+
+    at(index) {
+        const r = this._resolve();
+        if (r && r.at) return r.at(index);
+        if (Array.isArray(r)) return r[index];
+        throw new Error('Index out of bounds in lazy dispatch call');
+    }
+
+    drop(n) {
+        if (n <= 0) return this;
+        const r = this._resolve();
+        if (r && r.drop) return r.drop(n);
+        if (Array.isArray(r)) return r.slice(n);
+        return [];
+    }
+
+    *[Symbol.iterator]() {
+        yield* this._resolve();
+    }
+
+    toString() {
+        const preview = this.take(20);
+        const formatted = preview.map(v => {
+            if (v && v._isTuple) return '(' + v.elements.map(String).join(',') + ')';
+            return String(v);
+        });
+        return `[${formatted.join(',')}...]`;
     }
 }
 
@@ -715,7 +827,7 @@ class HaskishInterpreter {
             },
             'length': (list) => {
                 if (list && list._isInfiniteRange) {
-                    throw new Error('length: cannot get length of infinite range');
+                    return Infinity; // Infinite ranges have infinite length
                 }
                 if (!Array.isArray(list)) {
                     throw new Error('length: argument must be a list');
@@ -1014,6 +1126,12 @@ class HaskishInterpreter {
         const scope = Object.assign({}, outerBindings); // accumulated scope
         const result = {};
 
+        // Shared mutable closures for multi-case local functions.
+        // Each function name maps to one closure object that is reused across all
+        // equations for that name, so later equations see earlier ones and the
+        // dispatch function can be patched in for self-recursion.
+        const sharedClosures = {};
+
         // Pending simple-variable bindings deferred because a name they reference
         // wasn't yet in scope (e.g. `topArea = pi * r * r` before `pi = 3.14159`).
         // We retry until stable so that where bindings are order-independent, as in Haskell.
@@ -1057,10 +1175,17 @@ class HaskishInterpreter {
                 const params = spaceIdx === -1 ? '' : header.slice(spaceIdx + 1).trim();
                 const guards = guardParts.guards; // [{condition, body}]
 
-                const capturedScope = Object.assign({}, scope, result);
-                const fn = this.makeWhereLocalFunction(params, null, guards, capturedScope);
-                result[name] = fn;
-                scope[name] = fn;
+                if (!sharedClosures[name]) sharedClosures[name] = Object.assign({}, scope, result);
+                const fn = this.makeWhereLocalFunction(params, null, guards, sharedClosures[name]);
+                if (result[name] instanceof DispatchLambda) {
+                    result[name].cases.push(fn);
+                } else if (result[name] !== undefined) {
+                    result[name] = new DispatchLambda([result[name], fn], this);
+                } else {
+                    result[name] = fn;
+                }
+                sharedClosures[name][name] = result[name];
+                scope[name] = result[name];
                 continue;
             }
 
@@ -1090,10 +1215,17 @@ class HaskishInterpreter {
                 // Local function: name p1 p2 = expr
                 const name = lhs.slice(0, spaceIdx);
                 const params = lhs.slice(spaceIdx + 1).trim();
-                const capturedScope = Object.assign({}, scope, result);
-                const fn = this.makeWhereLocalFunction(params, rhs, [], capturedScope);
-                result[name] = fn;
-                scope[name] = fn;
+                if (!sharedClosures[name]) sharedClosures[name] = Object.assign({}, scope, result);
+                const fn = this.makeWhereLocalFunction(params, rhs, [], sharedClosures[name]);
+                if (result[name] instanceof DispatchLambda) {
+                    result[name].cases.push(fn);
+                } else if (result[name] !== undefined) {
+                    result[name] = new DispatchLambda([result[name], fn], this);
+                } else {
+                    result[name] = fn;
+                }
+                sharedClosures[name][name] = result[name];
+                scope[name] = result[name];
             }
         }
 
@@ -3165,6 +3297,9 @@ class HaskishInterpreter {
             
             const evalResult = this.evaluate(result);
             
+            // Never re-wrap a DispatchLambda — it already carries its own closures per-case
+            if (evalResult instanceof DispatchLambda) return evalResult;
+
             // If the result is a Lambda, capture the current bindings as its closure
             // BUT: if the lambda already has a closure from a nested computation, preserve it
             // and only add bindings for free variables in the body
@@ -3627,9 +3762,10 @@ class HaskishInterpreter {
             }},
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
-                    // For a LazyExprThunk the resolved element type is not yet known,
-                    // so skip the number-only guard and let resolution enforce types.
-                    if (!(b instanceof LazyExprThunk)) {
+                    // For a LazyExprThunk or LazyDispatchCall the resolved element type is
+                    // not yet known, so skip the number-only guard.
+                    // Also allow InfiniteRange elements (list-of-lists scenario).
+                    if (!(b instanceof LazyExprThunk) && !(a && a._isInfiniteRange)) {
                         // Type check: element must match range type (numbers)
                         const elementType = this.getTypeCategory(a);
                         if (elementType !== 'number') {
