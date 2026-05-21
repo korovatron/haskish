@@ -2281,63 +2281,69 @@ class HaskishInterpreter {
             return this.parseListComprehension(listStr, pipeIndex);
         }
 
-        // Check for invalid range syntax: [..n] (missing start)
+        // Check for invalid range syntax: [..n] (missing start) — only at depth 0
         if (/^\s*\.\./.test(listStr)) {
             throw new Error('Invalid range syntax: range must have a starting value (e.g., [1..10] not [..10])');
         }
 
-        // Check for infinite range syntax: [start..] or [start,next..]
-        // Allow expressions, not just literal numbers
-        const infiniteRangeMatch = listStr.match(/^(.+?)\s*(?:,\s*(.+?)\s*)?\.\.\s*$/);
-        if (infiniteRangeMatch) {
-            const start = this.evaluate(infiniteRangeMatch[1].trim());
-            const next = infiniteRangeMatch[2] ? this.evaluate(infiniteRangeMatch[2].trim()) : null;
-            
-            // Validate that they are numbers
-            if (typeof start === 'number' && (next === null || typeof next === 'number')) {
-                const step = next !== null ? (next - start) : 1;
-                
-                if (step === 0) {
-                    throw new Error('Range step cannot be zero');
-                }
-                
-                return new InfiniteRange(start, step);
+        // Depth-aware scan for '..' at bracket depth 0.
+        // Regex-based detection would match '..' inside nested lists like [[1..],[2..]].
+        let dotsIndex = -1;
+        {
+            let _d = 0;
+            for (let i = 0; i < listStr.length - 1; i++) {
+                const c = listStr[i];
+                if (c === '[' || c === '(') _d++;
+                if (c === ']' || c === ')') _d--;
+                if (c === '.' && listStr[i + 1] === '.' && _d === 0) { dotsIndex = i; break; }
             }
-            // Not a valid range, fall through to regular list parsing
         }
 
-        // Check for finite range syntax: [start..end] or [start,next..end]
-        // Allow expressions, not just literal numbers (e.g., [1..n-1])
-        const rangeMatch = listStr.match(/^(.+?)\s*(?:,\s*(.+?)\s*)?\.\.\s*(.+?)\s*$/);
-        if (rangeMatch) {
-            const start = this.evaluate(rangeMatch[1].trim());
-            const end = this.evaluate(rangeMatch[3].trim());
-            const next = rangeMatch[2] ? this.evaluate(rangeMatch[2].trim()) : null;
-            
-            // Validate that they are numbers
-            if (typeof start === 'number' && typeof end === 'number' && (next === null || typeof next === 'number')) {
-                // Calculate step (defaults to 1 if not explicitly specified)
-                const step = next !== null ? (next - start) : 1;
-                
-                if (step === 0) {
-                    throw new Error('Range step cannot be zero');
+        if (dotsIndex !== -1) {
+            const before = listStr.slice(0, dotsIndex).trim();
+            const after  = listStr.slice(dotsIndex + 2).trim();
+
+            // Find comma in 'before' at depth 0 (for [start,next..] syntax)
+            let commaIdx = -1;
+            {
+                let _d = 0;
+                for (let i = 0; i < before.length; i++) {
+                    const c = before[i];
+                    if (c === '[' || c === '(') _d++;
+                    if (c === ']' || c === ')') _d--;
+                    if (c === ',' && _d === 0) { commaIdx = i; break; }
                 }
-                
-                // Generate range (only if direction is valid)
-                const result = [];
-                if (step > 0 && start <= end) {
-                    for (let i = start; i <= end; i += step) {
-                        result.push(i);
-                    }
-                } else if (step < 0 && start >= end) {
-                    for (let i = start; i >= end; i += step) {
-                        result.push(i);
-                    }
-                }
-                // Otherwise return empty list (e.g., [1..0] or [5..10] with negative step)
-                return result;
             }
-            // Not a valid range, fall through to regular list parsing
+
+            const startStr = commaIdx === -1 ? before : before.slice(0, commaIdx).trim();
+            const nextStr  = commaIdx === -1 ? null   : before.slice(commaIdx + 1).trim();
+            const start = this.evaluate(startStr);
+            const next  = nextStr ? this.evaluate(nextStr) : null;
+
+            if (after === '') {
+                // Infinite range: [start..] or [start,next..]
+                if (typeof start === 'number' && (next === null || typeof next === 'number')) {
+                    const step = next !== null ? (next - start) : 1;
+                    if (step === 0) throw new Error('Range step cannot be zero');
+                    return new InfiniteRange(start, step);
+                }
+                // Not a valid range, fall through to regular list parsing
+            } else {
+                // Finite range: [start..end] or [start,next..end]
+                const end = this.evaluate(after);
+                if (typeof start === 'number' && typeof end === 'number' && (next === null || typeof next === 'number')) {
+                    const step = next !== null ? (next - start) : 1;
+                    if (step === 0) throw new Error('Range step cannot be zero');
+                    const result = [];
+                    if (step > 0 && start <= end) {
+                        for (let i = start; i <= end; i += step) result.push(i);
+                    } else if (step < 0 && start >= end) {
+                        for (let i = start; i >= end; i += step) result.push(i);
+                    }
+                    return result;
+                }
+                // Not a valid range, fall through to regular list parsing
+            }
         }
 
         const elements = [];
