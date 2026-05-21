@@ -1593,7 +1593,8 @@ class HaskishInterpreter {
                 }
 
                 // Try to match function definition (has parameters before =)
-                const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*=\s*(.+)$/);
+                // The lookbehind (?<![<>!=\/]) prevents matching the = inside <=, >=, !=, ==, /=
+                const funcMatch = line.match(/^(\w+'*)\s+(.+?)\s*(?<![<>!=\/])=(?!=)\s*(.+)$/);
                 
                 if (funcMatch) {
                 // Check for incomplete function from previous lines
