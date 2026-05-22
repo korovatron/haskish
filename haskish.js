@@ -3200,6 +3200,25 @@ class HaskishInterpreter {
     // Format value for substitution back into expressions
     // Different from formatOutput which is for display to users
     // Capture free variables from this.variables (temp bindings) into a Lambda's closure.
+    // Deep structural equality — handles character arrays (Haskish strings), nested lists, tuples.
+    deepEquals(a, b) {
+        if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (!this.deepEquals(a[i], b[i])) return false;
+            }
+            return true;
+        }
+        if (a && a._isTuple && b && b._isTuple) {
+            if (a.elements.length !== b.elements.length) return false;
+            for (let i = 0; i < a.elements.length; i++) {
+                if (!this.deepEquals(a.elements[i], b.elements[i])) return false;
+            }
+            return true;
+        }
+        return a === b;
+    }
+
     // This is needed when a Lambda is created as an argument inside evaluateWithBindings,
     // because it may escape the scope where its free variables are live.
     captureCurrentScope(lambda) {
@@ -3429,7 +3448,7 @@ class HaskishInterpreter {
             });
         }
 
-        // Boolean literals (only capitalised versions - proper Haskell)
+        // Boolean literals (only capitalized versions - proper Haskell)
         if (expr === 'True') {
             return true;
         }
@@ -3439,10 +3458,10 @@ class HaskishInterpreter {
         
         // Helpful error messages for lowercase boolean literals
         if (expr === 'true') {
-            throw new Error("Unknown identifier 'true'. Did you mean 'True'? In Haskell, boolean constructors must be capitalised.");
+            throw new Error("Unknown identifier 'true'. Did you mean 'True'? In Haskell, boolean constructors must be capitalized.");
         }
         if (expr === 'false') {
-            throw new Error("Unknown identifier 'false'. Did you mean 'False'? In Haskell, boolean constructors must be capitalised.");
+            throw new Error("Unknown identifier 'false'. Did you mean 'False'? In Haskell, boolean constructors must be capitalized.");
         }
 
         // Special handling for 'otherwise' keyword
@@ -4575,8 +4594,8 @@ class HaskishInterpreter {
             '>': (a, b) => a > b,
             '<=': (a, b) => a <= b,
             '>=': (a, b) => a >= b,
-            '==': (a, b) => a == b,
-            '/=': (a, b) => a != b,
+            '==': (a, b) => this.deepEquals(a, b),
+            '/=': (a, b) => !this.deepEquals(a, b),
             '&&': (a, b) => a && b,
             '||': (a, b) => a || b,
             '++': (a, b) => {
@@ -4661,8 +4680,8 @@ class HaskishInterpreter {
             '>': (a, b) => a > b,
             '<=': (a, b) => a <= b,
             '>=': (a, b) => a >= b,
-            '==': (a, b) => a == b,
-            '/=': (a, b) => a != b,
+            '==': (a, b) => this.deepEquals(a, b),
+            '/=': (a, b) => !this.deepEquals(a, b),
             '&&': (a, b) => a && b,
             '||': (a, b) => a || b,
             '++': (a, b) => {
