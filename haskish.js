@@ -1644,6 +1644,11 @@ class HaskishInterpreter {
                 if (/(?<![=<>!\/])=$/.test(strippedSoFar)) {
                     continue; // keep accumulating
                 }
+                // Don't flush if the buffer ends with a bare 'then' or 'else' —
+                // the branch body is on the next indented line
+                if (/\b(then|else)\s*$/.test(strippedSoFar)) {
+                    continue; // keep accumulating
+                }
                 // Don't flush if there's an incomplete if/then/else
                 // (more 'if' keywords than 'else' at this point means the else branch is still coming)
                 // Strip string literals first so keywords inside strings don't affect the count
@@ -1652,6 +1657,18 @@ class HaskishInterpreter {
                 const elseCount = (noStrings.match(/\belse\b/g) || []).length;
                 if (ifCount > elseCount) {
                     continue; // keep accumulating
+                }
+                // Don't flush if the next non-empty line starts with a binary infix operator —
+                // it's a continuation of the current expression (e.g. "other" \n ++ "!!!").
+                // Binary operators can never legally start a new top-level definition.
+                // Excludes '-' (ambiguous with unary negation) and '|' (guard lines).
+                let nextNonEmptyTrimmed = '';
+                for (let j = i + 1; j < rawLines.length; j++) {
+                    const nt = rawLines[j].trim();
+                    if (nt && !nt.startsWith('--')) { nextNonEmptyTrimmed = nt; break; }
+                }
+                if (/^(\+\+|&&|\|\||[+*^]|:[^:]|\/(?![\/=]))/.test(nextNonEmptyTrimmed)) {
+                    continue; // keep accumulating — next line is a binary operator continuation
                 }
                 // Replace internal newlines with spaces for parsing, and strip comments
                 const normalizedBuffer = buffer.split('\n').map(l => {
@@ -3371,6 +3388,16 @@ class HaskishInterpreter {
         try {
             // Replace non-function variables in expression
             let result = expr;
+
+            // Protect string literals before substitution so that a parameter like `n`
+            // never corrupts escape sequences inside strings (e.g. "\n", "\t").
+            const stringLiterals = [];
+            result = result.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, (m) => {
+                const idx = stringLiterals.length;
+                stringLiterals.push(m);
+                return `\x00STR${idx}\x00`;
+            });
+
             for (let [varName, value] of Object.entries(bindings)) {
                 // Skip function objects - they're already in variables table
                 if (tempVars.hasOwnProperty(varName)) {
@@ -3398,6 +3425,11 @@ class HaskishInterpreter {
                     replacement = this.formatForSubstitution(value);
                 }
                 result = result.replace(varRegex, replacement);
+            }
+
+            // Restore string literals now that all variable substitutions are done
+            if (stringLiterals.length > 0) {
+                result = result.replace(/\x00STR(\d+)\x00/g, (_, i) => stringLiterals[+i]);
             }
             
             const evalResult = this.evaluate(result);
@@ -3514,6 +3546,7 @@ class HaskishInterpreter {
             let ifIndex = -1;
             let thenIndex = -1;
             let elseIndex = -1;
+            let ifNesting = 0; // tracks inner if/else pairs after the outermost 'then'
             
             for (let i = 0; i < expr.length; i++) {
                 if (expr[i] === '(' || expr[i] === '[') depth++;
@@ -3529,10 +3562,17 @@ class HaskishInterpreter {
                              expr.substr(i, 5) === 'then ' && /\s/.test(expr[i-1])) {
                         thenIndex = i;
                     }
-                    // Match 'else' as a word boundary
-                    else if (thenIndex !== -1 && elseIndex === -1 && 
-                             expr.substr(i, 5) === 'else ' && /\s/.test(expr[i-1])) {
-                        elseIndex = i;
+                    // After 'then', track nested if/else to find the matching 'else' for the outermost 'if'
+                    else if (thenIndex !== -1 && elseIndex === -1) {
+                        if (expr.substr(i, 3) === 'if ' && (i === 0 || /\s/.test(expr[i-1]))) {
+                            ifNesting++;
+                        } else if (expr.substr(i, 5) === 'else ' && /\s/.test(expr[i-1])) {
+                            if (ifNesting === 0) {
+                                elseIndex = i;
+                            } else {
+                                ifNesting--;
+                            }
+                        }
                     }
                 }
             }
