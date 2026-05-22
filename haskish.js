@@ -938,6 +938,14 @@ class HaskishInterpreter {
                 // Convert JavaScript string to Haskell string (array of characters)
                 return Array.from(str);
             },
+            'putStr': (value) => {
+                if (!Array.isArray(value)) throw new Error('putStr: expected a String (list of Char)');
+                return { _isRawOutput: true, value: value.join('') };
+            },
+            'putStrLn': (value) => {
+                if (!Array.isArray(value)) throw new Error('putStrLn: expected a String (list of Char)');
+                return { _isRawOutput: true, value: value.join('') + '\n' };
+            },
             'compose': (g, f) => {
                 // Function composition: (g . f) x = g(f(x))
                 const interpreter = this;
@@ -4040,14 +4048,14 @@ class HaskishInterpreter {
 
         // String literal (double quotes) - convert to list of characters (true Haskell behavior: String = [Char])
         if (expr.startsWith('"') && expr.endsWith('"')) {
-            const content = expr.slice(1, -1);
+            const content = this.processStringEscapes(expr.slice(1, -1));
             // Split into array of single-character strings
             return content.split('');
         }
         
         // String literal with single quotes - single character (Char type)
         if (expr.startsWith("'") && expr.endsWith("'")) {
-            return expr.slice(1, -1);
+            return this.processStringEscapes(expr.slice(1, -1));
         }
 
         // Function application
@@ -4195,7 +4203,7 @@ class HaskishInterpreter {
                 if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') {
-                    const str = token.value.slice(1, -1);
+                    const str = this.processStringEscapes(token.value.slice(1, -1));
                     // Single-quoted literals are Chars, double-quoted are Strings
                     return token.isChar ? str : str.split('');
                 }
@@ -4238,7 +4246,7 @@ class HaskishInterpreter {
                 if (token.type === 'list') return this.parseList(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') {
-                    const str = token.value.slice(1, -1);
+                    const str = this.processStringEscapes(token.value.slice(1, -1));
                     // Single-quoted literals are Chars (single-char strings)
                     // Double-quoted literals are Strings (arrays)
                     return token.isChar ? str : str.split('');
@@ -4288,7 +4296,7 @@ class HaskishInterpreter {
                 if (token.type === 'tuple') return this.parseTuple(token.value);
                 if (token.type === 'number') return token.value;
                 if (token.type === 'string') {
-                    const str = token.value.slice(1, -1);
+                    const str = this.processStringEscapes(token.value.slice(1, -1));
                     // Single-quoted literals are Chars (single-char strings)
                     // Double-quoted literals are Strings (arrays)
                     return token.isChar ? str : str.split('');
@@ -4776,6 +4784,27 @@ class HaskishInterpreter {
         };
     }
 
+    // Process escape sequences in string literals (\n, \t, \\, \", \')
+    processStringEscapes(str) {
+        let result = '';
+        let i = 0;
+        while (i < str.length) {
+            if (str[i] === '\\' && i + 1 < str.length) {
+                switch (str[i + 1]) {
+                    case 'n':  result += '\n'; i += 2; break;
+                    case 't':  result += '\t'; i += 2; break;
+                    case '\\': result += '\\'; i += 2; break;
+                    case '"':  result += '"';  i += 2; break;
+                    case "'":  result += "'";  i += 2; break;
+                    default:   result += str[i]; i++; break;
+                }
+            } else {
+                result += str[i++];
+            }
+        }
+        return result;
+    }
+
     // Format output for display
     formatOutput(value) {
         if (value instanceof Lambda) {
@@ -4793,6 +4822,9 @@ class HaskishInterpreter {
         if (value && value._isInfiniteRange) {
             return value.toString();
         }
+        if (value && value._isRawOutput) {
+            return value.value;
+        }
         if (value && value._isTuple) {
             return '(' + value.elements.map(v => this.formatOutput(v)).join(',') + ')';
         }
@@ -4800,14 +4832,20 @@ class HaskishInterpreter {
             // Check if this is a character array (String = [Char] in Haskell)
             // Display as "string" if all elements are single-character strings
             if (value.length > 0 && value.every(item => typeof item === 'string' && item.length === 1)) {
-                return '"' + value.join('') + '"';
+                const escaped = value.join('')
+                    .replace(/\\/g, '\\\\')
+                    .replace(/"/g, '\\"')
+                    .replace(/\n/g, '\\n')
+                    .replace(/\t/g, '\\t');
+                return '"' + escaped + '"';
             }
             return '[' + value.map(v => this.formatOutput(v)).join(',') + ']';
         }
         if (typeof value === 'string') {
             // Single character (Char type) - display with single quotes
             if (value.length === 1) {
-                return "'" + value + "'";
+                const esc = value === '\\' ? '\\\\' : value === "'" ? "\\'" : value === '\n' ? '\\n' : value === '\t' ? '\\t' : value;
+                return "'" + esc + "'";
             }
             // Shouldn't happen with new implementation, but handle gracefully
             return '"' + value + '"';
@@ -5168,6 +5206,9 @@ class HaskishInterpreter {
             }
             
             const result = this.evaluate(expr);
+            if (result && result._isRawOutput) {
+                return { success: true, result: result.value, plainText: true };
+            }
             return { success: true, result: this.formatOutput(result) };
         } catch (error) {
             return { success: false, error: error.message };

@@ -306,7 +306,12 @@
                     <li><code>chr code</code> - Convert Unicode code point to character</li>
                     <li><code>show value</code> - Convert any value to a string<br>
                         Example: <code>show 42</code> → <code>"42"</code>, <code>show True</code> → <code>"True"</code></li>
+                    <li><code>putStr string</code> - Print a string to the REPL without quotes<br>
+                        Example: <code>putStr "hello\nworld"</code> → renders on two lines</li>
+                    <li><code>putStrLn string</code> - Print a string followed by a newline<br>
+                        Example: <code>putStrLn "done"</code> → <code>done</code> with trailing newline</li>
                 </ul>
+                <p><strong>String escape sequences:</strong> <code>\n</code> (newline), <code>\t</code> (tab), <code>\\</code> (backslash), <code>\"</code> (double quote) are supported in string literals.</p>
                 
                 <h3>Logic Functions</h3>
                 <ul>
