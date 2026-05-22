@@ -5095,7 +5095,52 @@ class HaskishInterpreter {
             
             // Strip optional 'let' keyword at the start
             expr = expr.replace(/^let\s+/, '');
-            
+
+            // Multi-line REPL input: route through parseFunctionDefinitions so that
+            // guards, where clauses, operator-continuation lines, and multi-line
+            // if/then/else are all handled correctly (same as the function panel).
+            if (expr.includes('\n')) {
+                const savedFunctions = Object.assign({}, this.functions);
+                const savedVariables = Object.assign({}, this.variables);
+                try {
+                    this.parseFunctionDefinitions(expr);
+                    const newFunctions = Object.assign({}, this.functions);
+                    const newVariables = Object.assign({}, this.variables);
+                    // Restore existing state, then merge in what was just defined
+                    this.functions = savedFunctions;
+                    this.variables = savedVariables;
+                    const defined = [];
+                    const redefined = [];
+                    for (const [name, cases] of Object.entries(newFunctions)) {
+                        if (this.functions[name]) redefined.push(name);
+                        else defined.push(name);
+                        this.functions[name] = cases;
+                    }
+                    for (const [name, val] of Object.entries(newVariables)) {
+                        this.variables[name] = val;
+                    }
+                    if (defined.length > 0 || redefined.length > 0 || Object.keys(newVariables).length > 0) {
+                        this.detectLazyStreamFunctions();
+                        const msgs = [
+                            ...defined.map(n => `Defined function: ${n}`),
+                            ...redefined.map(n => `Redefined function: ${n}`)
+                        ];
+                        const varMsgs = Object.entries(newVariables)
+                            .map(([n, v]) => `${n} = ${this.formatOutput(v)}`);
+                        return {
+                            success: true,
+                            result: [...msgs, ...varMsgs].join('\n'),
+                            isWarning: redefined.length > 0
+                        };
+                    }
+                    // Nothing defined - fall through to expression evaluation
+                } catch (e) {
+                    // Restore state and fall through to expression evaluation
+                    this.functions = savedFunctions;
+                    this.variables = savedVariables;
+                }
+            }
+
             // Find the assignment = more carefully, skipping over string literals
             // This prevents "fold (\x -> x ++ "=" ++ y)" from being treated as a function definition
             let assignmentPos = -1;
