@@ -5132,7 +5132,7 @@ class HaskishInterpreter {
             // Check if it's a simple variable assignment (no parameters before =)
             // Variable name must start with a letter and only have a single =
             // Use negative lookahead to avoid matching ==, /=, <=, >=
-            const assignMatch = expr.match(/^([a-zA-Z_]\w*'*)\s*(?<![=/<>])=(?![=])\s*(.+)$/);
+            const assignMatch = expr.match(/^([a-zA-Z_]\w*'*)\s*(?<![=/<>])=(?![=])\s*(.+)$/s);
             if (assignMatch) {
                 const [, varName, value] = assignMatch;
                 
