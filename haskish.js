@@ -5152,9 +5152,18 @@ class HaskishInterpreter {
                     // Check if function already exists
                     const isRedefinition = this.functions[funcName] !== undefined;
                     
+                    // Normalize multi-line bodies: strip comments and join lines with spaces,
+                    // matching what parseFunctionDefinitions does. Without this, the if/then/else
+                    // evaluator scanner fails because it looks for 'then ' (space) but gets 'then\n'.
+                    const normalizedBody = body.split('\n')
+                        .map(l => this.stripComments(l.trim()))
+                        .filter(l => l)
+                        .join(' ')
+                        .trim();
+
                     // In REPL, replace function entirely (like GHCi behavior)
                     // Pattern matching cases should only be added via the definition panel
-                    this.functions[funcName] = [{ params: params.trim(), body: body.trim() }];
+                    this.functions[funcName] = [{ params: params.trim(), body: normalizedBody }];
                     this.detectLazyStreamFunctions();
                     
                     if (isRedefinition) {
