@@ -1627,6 +1627,15 @@ class HaskishInterpreter {
             
             // If brackets are balanced and line isn't a comment, flush buffer
             if (bracketDepth === 0 && trimmed && !trimmed.startsWith('--')) {
+                // Don't flush if the buffer ends with a bare '=' — the function body
+                // is on the next (indented) line, e.g.:
+                //   lookup key ((k,v):xs) =
+                //       if key == k then v else lookup key xs
+                const strippedSoFar = buffer.split('\n')
+                    .map(l => this.stripComments(l.trim())).join(' ').trimEnd();
+                if (/(?<![=<>!\/])=$/.test(strippedSoFar)) {
+                    continue; // keep accumulating
+                }
                 // Replace internal newlines with spaces for parsing, and strip comments
                 const normalizedBuffer = buffer.split('\n').map(l => {
                     return this.stripComments(l.trim());

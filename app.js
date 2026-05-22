@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.49';
+const HASKISH_VERSION = '1.0.50';
 
 const interpreter = new HaskishInterpreter();
 
@@ -157,6 +157,23 @@ builtinsButton.addEventListener('click', function() {
 
 closeBuiltins.addEventListener('click', function() {
     builtinsOverlay.classList.remove('visible');
+});
+
+// Prelude.hs link in built-ins modal — fetch and load into editor
+document.getElementById('preludeLink').addEventListener('click', async function(e) {
+    e.preventDefault();
+    try {
+        const response = await fetch('data/Prelude.hs');
+        if (!response.ok) throw new Error('Could not load Prelude.hs');
+        const code = await response.text();
+        codeEditor.setValue(code);
+        codeEditor.setCursor({ line: 0, ch: 0 });
+        builtinsOverlay.classList.remove('visible');
+        addSystemMessage('✓ Prelude.hs loaded! Click "Run Code" to make the functions available.', 'result');
+        saveUniversalState();
+    } catch (err) {
+        addSystemMessage('Error loading Prelude.hs: ' + err.message, 'error');
+    }
 });
 
 // Welcome modal
