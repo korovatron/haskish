@@ -2540,7 +2540,7 @@ class HaskishInterpreter {
             }
 
             // Operators and symbols (including . for composition, && and ||)
-            if (/[+\-*\/:<>=!.&|]/.test(expr[i])) {
+            if (/[+\-*\/:<>=!.&|%]/.test(expr[i])) {
                 // Skip . if it's part of a decimal number (preceded by digit or followed by digit)
                 if (expr[i] === '.' && (
                     (i > 0 && /\d/.test(expr[i - 1])) ||
@@ -2557,7 +2557,7 @@ class HaskishInterpreter {
                     i++;
                     continue;
                 }
-                while (j < expr.length && /[+\-*\/:<>=!.&|]/.test(expr[j])) {
+                while (j < expr.length && /[+\-*\/:<>=!.&|%]/.test(expr[j])) {
                     // Stop at .. to avoid capturing range operator
                     if (expr[j] === '.' && j + 1 < expr.length && expr[j + 1] === '.') break;
                     // Stop if . is part of a decimal number
@@ -3745,7 +3745,7 @@ class HaskishInterpreter {
 
         // Custom symbolic operators (e.g., ***, <+>)
         // Evaluate these before built-ins so 10 *** 3 doesn't get parsed as 10 * * * 3.
-        const builtinOps = new Set(['!!', '++', '&&', '||', '<=', '>=', '==', '/=', '.', ':', '^', '*', '/', '+', '-', '<', '>']);
+        const builtinOps = new Set(['!!', '++', '&&', '||', '<=', '>=', '==', '/=', '.', ':', '^', '*', '/', '%', '+', '-', '<', '>']);
         const customOps = Object.keys(this.functions)
             .filter(name => /^[+\-*\/:<>=!.&|^$%]+$/.test(name) && !builtinOps.has(name))
             .sort((a, b) => b.length - a.length);
@@ -4020,6 +4020,9 @@ class HaskishInterpreter {
             }},
             { op: '/', fn: (a, b) => {
                 return numericBinaryOp('/', (x, y) => x / y, a, b);
+            }},
+            { op: '%', fn: (a, b) => {
+                return numericBinaryOp('%', (x, y) => x % y, a, b);
             }},
             { op: ':', fn: (a, b) => {
                 if (b && b._isInfiniteRange) {
