@@ -1023,6 +1023,66 @@ class HaskishInterpreter {
     //   helper y       →  "helper y | y > 0 = y | otherwise = negate y"
     //   | y > 0 = y
     //   | otherwise = negate y
+
+    // Merge an array of { trimmed, indent } binding-line objects into a flat array of
+    // merged binding strings.  Uses indentation as the primary signal: a line at the
+    // base indent level starts a new binding; a line deeper than base continues the
+    // current binding.  A lone 'where' keyword triggers recursive inner-where handling:
+    // its sub-lines are merged recursively and embedded as a __HASKISH_WHERE__ marker
+    // inside the current binding string.
+    mergeWhereBindingLines(rawLines) {
+        if (rawLines.length === 0) return [];
+
+        // Determine base indentation from the first line with a real indent value.
+        let baseIndent = -1;
+        for (const { indent } of rawLines) {
+            if (indent !== -1) { baseIndent = indent; break; }
+        }
+        if (baseIndent === -1) baseIndent = 0;
+
+        // Assign base indent to any lines whose indent was unknown (same-line-as-where content).
+        for (const entry of rawLines) {
+            if (entry.indent === -1) entry.indent = baseIndent;
+        }
+
+        const merged = [];
+        let i = 0;
+        while (i < rawLines.length) {
+            const { trimmed, indent } = rawLines[i];
+
+            // A line at the base indent level starts a new binding, unless it is a
+            // guard continuation (starts with |).
+            const isNewBinding = merged.length === 0
+                || (indent === baseIndent && !trimmed.startsWith('|'));
+
+            if (isNewBinding) {
+                merged.push(trimmed);
+                i++;
+            } else if (trimmed === 'where') {
+                // Inner 'where' block: collect all following lines that are deeper than
+                // the outer base indent, merge them recursively, and embed the result as
+                // a __HASKISH_WHERE__ marker appended to the current binding.
+                i++;
+                const innerLines = [];
+                while (i < rawLines.length && rawLines[i].indent > baseIndent) {
+                    innerLines.push(rawLines[i]);
+                    i++;
+                }
+                const innerMerged = this.mergeWhereBindingLines(innerLines);
+                if (innerMerged.length > 0) {
+                    const marker = ' __HASKISH_WHERE__ ' + innerMerged.join(' __HASKISH_WSEP__ ');
+                    if (merged.length === 0) merged.push(marker.trim());
+                    else merged[merged.length - 1] += marker;
+                }
+            } else {
+                // Deeper indent: continuation (guard, multi-line body, binary op, etc.)
+                merged[merged.length - 1] += ' ' + trimmed;
+                i++;
+            }
+        }
+        return merged;
+    }
+
     preprocessWhereBlocks(rawLines) {
         const out = [];
 
@@ -1072,54 +1132,19 @@ class HaskishInterpreter {
             // Content on the same line after 'where'
             const afterWhere = stripped0.slice(wPos + 5).trim();
 
-            // Collect all binding lines (after the 'where' keyword)
-            const bindingLines = [];
-            if (afterWhere) bindingLines.push(afterWhere);
+            // Collect all binding lines with their original indentation preserved.
+            // indent=-1 marks content that was on the same line as 'where'.
+            const rawBindingLines = [];
+            if (afterWhere) rawBindingLines.push({ trimmed: afterWhere, indent: -1 });
             for (let i = whereLineIdx + 1; i < block.length; i++) {
-                const t = block[i].trim();
+                const raw = block[i];
+                const t = raw.trim();
                 if (!t || t.startsWith('--')) continue;
-                bindingLines.push(t);
+                rawBindingLines.push({ trimmed: t, indent: raw.match(/^(\s*)/)[1].length });
             }
 
-            // Merge binding lines fully: handles | guard continuations, binary-operator
-            // continuations (++, &&, etc.), bare = or bare then/else (body on next line),
-            // unclosed brackets spanning lines, and open if/then/else chains.
-            const mergedBindings = [];
-            let wBracketDepth = 0;
-            for (const bl of bindingLines) {
-                const depthBefore = wBracketDepth;
-                // Update running bracket depth for this line (ignore brackets inside strings)
-                let inStr = false, esc = false;
-                for (const ch of bl) {
-                    if (esc) { esc = false; continue; }
-                    if (ch === '\\' && inStr) { esc = true; continue; }
-                    if (ch === '"') { inStr = !inStr; continue; }
-                    if (!inStr) {
-                        if (ch === '(' || ch === '[') wBracketDepth++;
-                        if (ch === ')' || ch === ']') wBracketDepth--;
-                    }
-                }
-
-                if (mergedBindings.length === 0) { mergedBindings.push(bl); continue; }
-
-                const last = mergedBindings[mergedBindings.length - 1];
-                const stripped = this.stripComments(last).trimEnd();
-                const noStrings = stripped.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
-                const ifCount = (noStrings.match(/\bif\b/g) || []).length;
-                const elseCount = (noStrings.match(/\belse\b/g) || []).length;
-                const shouldContinue =
-                    depthBefore > 0                                           // unclosed brackets
-                    || bl.startsWith('|')                                     // guard continuation
-                    || /^(\+\+|&&|\|\||[+*^]|:[^:]|\/(?![\/=]))/.test(bl)   // binary op continuation
-                    || /(?<![=<>!\/])=$/.test(stripped)                      // bare = (body on next line)
-                    || /\b(then|else)\s*$/.test(stripped)                    // bare then/else
-                    || ifCount > elseCount;                                   // open if/then/else chain
-                if (shouldContinue) {
-                    mergedBindings[mergedBindings.length - 1] += ' ' + bl;
-                } else {
-                    mergedBindings.push(bl);
-                }
-            }
+            // Merge using indentation-aware logic (also handles nested 'where' blocks)
+            const mergedBindings = this.mergeWhereBindingLines(rawBindingLines);
 
             if (mergedBindings.length === 0) {
                 for (const line of funcLines) out.push(line);
@@ -1292,6 +1317,12 @@ class HaskishInterpreter {
             trySimple(lhs, rhs, isPattern, false);
         }
 
+        // Patch all function closures with the complete set of where bindings so that
+        // functions are mutually visible regardless of definition order (as in Haskell).
+        for (const closure of Object.values(sharedClosures)) {
+            Object.assign(closure, result);
+        }
+
         return result;
     }
 
@@ -1300,6 +1331,16 @@ class HaskishInterpreter {
     // Returns { header: "helper y", guards: [{condition, body}, ...] }
     // If no guards, returns { header: str, guards: [] }
     splitWhereGuards(str) {
+        // Detach any embedded __HASKISH_WHERE__ marker before scanning for guard '|'
+        // separators, so its contents (which may contain '|' in nested guards) are not
+        // mis-parsed as additional guard conditions.
+        let innerWhereMarker = '';
+        const whIdx = str.indexOf(' __HASKISH_WHERE__ ');
+        if (whIdx !== -1) {
+            innerWhereMarker = str.slice(whIdx);
+            str = str.slice(0, whIdx);
+        }
+
         // Find first | at depth 0 (not inside parens/brackets/strings)
         let depth = 0;
         let inString = false;
@@ -1322,10 +1363,15 @@ class HaskishInterpreter {
                 const header = str.slice(0, i).trim();
                 const guardStr = str.slice(i); // "| cond = body | cond = body"
                 const guards = this.parseWhereGuardString(guardStr);
+                // Re-attach inner where marker to the last guard's body
+                if (innerWhereMarker && guards.length > 0) {
+                    guards[guards.length - 1].body += innerWhereMarker;
+                }
                 return { header, guards };
             }
         }
-        return { header: str, guards: [] };
+        // No guards found – return the full string (with marker re-attached) as header
+        return { header: str + innerWhereMarker, guards: [] };
     }
 
     // Parse a string of guards like "| cond = body | cond = body" into [{condition, body}, ...]
@@ -3366,6 +3412,18 @@ class HaskishInterpreter {
 
     // Evaluate expression with variable bindings
     evaluateWithBindings(expr, bindings) {
+        // Handle inner where clause embedded in expression by a nested 'where' block.
+        // Must be checked before any other transformation to avoid marker corruption.
+        const INNER_WHERE = ' __HASKISH_WHERE__ ';
+        const innerWhereIdx = expr.indexOf(INNER_WHERE);
+        if (innerWhereIdx !== -1) {
+            const actualBody = expr.slice(0, innerWhereIdx).trim();
+            const whereStr = expr.slice(innerWhereIdx + INNER_WHERE.length);
+            const whereRaw = whereStr.split(' __HASKISH_WSEP__ ').map(s => s.trim()).filter(Boolean);
+            const innerScope = this.evaluateWhereBindings(whereRaw, bindings);
+            return this.evaluateWithBindings(actualBody, Object.assign({}, bindings, innerScope));
+        }
+
         // Preprocess: Add implicit multiplication (3x becomes 3*x) BEFORE substitution
         // Skip this if expression contains lambda syntax to avoid corruption
         // Also be careful not to insert * in the middle of identifiers (like multiple3or5)
