@@ -1644,6 +1644,15 @@ class HaskishInterpreter {
                 if (/(?<![=<>!\/])=$/.test(strippedSoFar)) {
                     continue; // keep accumulating
                 }
+                // Don't flush if there's an incomplete if/then/else
+                // (more 'if' keywords than 'else' at this point means the else branch is still coming)
+                // Strip string literals first so keywords inside strings don't affect the count
+                const noStrings = strippedSoFar.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
+                const ifCount = (noStrings.match(/\bif\b/g) || []).length;
+                const elseCount = (noStrings.match(/\belse\b/g) || []).length;
+                if (ifCount > elseCount) {
+                    continue; // keep accumulating
+                }
                 // Replace internal newlines with spaces for parsing, and strip comments
                 const normalizedBuffer = buffer.split('\n').map(l => {
                     return this.stripComments(l.trim());
