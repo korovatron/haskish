@@ -2189,9 +2189,15 @@ class HaskishInterpreter {
                     if (expr[j] === '"' && !inChar) {
                         inString = !inString;
                     }
-                    const isListPrime = expr[j] === "'" && !inString && j > 0 && /[\w']/.test(expr[j - 1]);
-                    if (expr[j] === "'" && !inString && !isListPrime) {
-                        inChar = !inChar;
+                    if (expr[j] === "'" && !inString) {
+                        if (inChar) {
+                            // Closing quote of a char literal — always close regardless of previous char
+                            inChar = false;
+                        } else {
+                            // Opening quote — only if not a prime suffix on an identifier
+                            const isListPrime = j > 0 && /[\w']/.test(expr[j - 1]);
+                            if (!isListPrime) inChar = true;
+                        }
                     }
                     if (!inString && !inChar) {
                         if (expr[j] === '[') depth++;
@@ -2227,9 +2233,15 @@ class HaskishInterpreter {
                     if (expr[j] === '"' && !inChar) {
                         inString = !inString;
                     }
-                    const isParenPrime = expr[j] === "'" && !inString && j > 0 && /[\w']/.test(expr[j - 1]);
-                    if (expr[j] === "'" && !inString && !isParenPrime) {
-                        inChar = !inChar;
+                    if (expr[j] === "'" && !inString) {
+                        if (inChar) {
+                            // Closing quote of a char literal — always close regardless of previous char
+                            inChar = false;
+                        } else {
+                            // Opening quote — only if not a prime suffix on an identifier
+                            const isParenPrime = j > 0 && /[\w']/.test(expr[j - 1]);
+                            if (!isParenPrime) inChar = true;
+                        }
                     }
                     if (!inString && !inChar) {
                         if (expr[j] === '(') depth++;
