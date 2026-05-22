@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.52';
+const HASKISH_VERSION = '1.0.53';
 
 const interpreter = new HaskishInterpreter();
 
@@ -396,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         outputDiv.textContent = result.result;
                         outputDiv.style.whiteSpace = 'pre-wrap';
                         outputDiv.style.fontFamily = 'monospace';
+                        outputDiv.style.fontStyle = 'normal';
                     } else if (result.highlighted) {
                         // Apply syntax highlighting while preserving formatting
                         const outputCode = document.createElement('code');
