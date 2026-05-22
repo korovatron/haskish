@@ -2683,8 +2683,8 @@ class HaskishInterpreter {
         for (const clause of clauses) {
             // Try to match tuple pattern: (a, b, c) <- list
             const tuplePattern = clause.match(/^\(([^)]+)\)\s*<-\s*(.+)$/);
-            // Try to match simple pattern: x <- list
-            const simplePattern = clause.match(/^(\w+)\s*<-\s*(.+)$/);
+            // Try to match simple pattern: x <- list (including primed names like x', c'')
+            const simplePattern = clause.match(/^(\w+'*)\s*<-\s*(.+)$/);
             
             if (tuplePattern) {
                 const innerPat = tuplePattern[1];
@@ -4288,7 +4288,7 @@ class HaskishInterpreter {
                     // Parse lambda expression (with or without leading backslash)
                     // Support multi-parameter lambdas like \x y -> x + y by converting to nested lambdas
                     // Also support tuple patterns like \(x,y) -> x + y and \(a,b) (c,d) -> ...
-                    const lambdaMatch = token.value.match(/^\\?([\w\s().,]+)\s*->\s*(.+)$/);
+                    const lambdaMatch = token.value.match(/^\\?([\w\s().,\']+)\s*->\s*(.+)$/s);
                     if (lambdaMatch) {
                         const [, paramsStr, body] = lambdaMatch;
                         
