@@ -274,6 +274,11 @@ squareMap xs = map (\x -> x * x) xs
 bigNumbers xs = filter (\x -> x > 10) xs
 evensOnly xs = filter (\x -> mod x 2 == 0) xs
 
+-- filter with string operator sections
+onlyCats xs = filter (=="cat") xs
+noCats xs = filter (/="cat") xs
+shortWords xs = filter (<"dog") xs
+
 -- fold examples
 product xs = fold (\acc x -> acc * x) 1 xs
 sumAll xs = fold (\acc x -> acc + x) 0 xs
@@ -282,11 +287,15 @@ sumAll xs = fold (\acc x -> acc + x) 0 xs
 sumOfSquares xs = fold (\acc x -> acc + x) 0 (map (\x -> x * x) xs)
 
 -- Tests:
--- doubleMap [1,2,3]          → [2,4,6]
--- bigNumbers [5,15,3,20,8]   → [15,20]
--- evensOnly [1,2,3,4,5,6]    → [2,4,6]
--- product [1,2,3,4]          → 24
--- sumOfSquares [1,2,3]       → 14
+-- doubleMap [1,2,3]                                    → [2,4,6]
+-- bigNumbers [5,15,3,20,8]                             → [15,20]
+-- evensOnly [1,2,3,4,5,6]                              → [2,4,6]
+-- onlyCats ["dog","cat","bird","cat","fish"]            → ["cat","cat"]
+-- noCats ["dog","cat","bird","cat","fish"]              → ["dog","bird","fish"]
+-- filter (=="cat") ["dog","cat","bird","cat","fish"]    → ["cat","cat"]
+-- filter (/="cat") ["dog","cat","bird","cat","fish"]    → ["dog","bird","fish"]
+-- product [1,2,3,4]                                    → 24
+-- sumOfSquares [1,2,3]                                 → 14
 
 === Lambdas & Composition ===
 -- Lambda with map
