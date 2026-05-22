@@ -1070,7 +1070,10 @@ class HaskishInterpreter {
                 }
                 const innerMerged = this.mergeWhereBindingLines(innerLines);
                 if (innerMerged.length > 0) {
-                    const marker = ' __HASKISH_WHERE__ ' + innerMerged.join(' __HASKISH_WSEP__ ');
+                    // Use __HASKISH_IWSEP__ (inner separator) so that splitting the outer
+                    // where string on __HASKISH_WSEP__ does NOT accidentally split the
+                    // inner-where binding list.
+                    const marker = ' __HASKISH_WHERE__ ' + innerMerged.join(' __HASKISH_IWSEP__ ');
                     if (merged.length === 0) merged.push(marker.trim());
                     else merged[merged.length - 1] += marker;
                 }
@@ -3419,7 +3422,8 @@ class HaskishInterpreter {
         if (innerWhereIdx !== -1) {
             const actualBody = expr.slice(0, innerWhereIdx).trim();
             const whereStr = expr.slice(innerWhereIdx + INNER_WHERE.length);
-            const whereRaw = whereStr.split(' __HASKISH_WSEP__ ').map(s => s.trim()).filter(Boolean);
+            // Inner where uses __HASKISH_IWSEP__ to avoid splitting on outer __HASKISH_WSEP__
+            const whereRaw = whereStr.split(' __HASKISH_IWSEP__ ').map(s => s.trim()).filter(Boolean);
             const innerScope = this.evaluateWhereBindings(whereRaw, bindings);
             return this.evaluateWithBindings(actualBody, Object.assign({}, bindings, innerScope));
         }
