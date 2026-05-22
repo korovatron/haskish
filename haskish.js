@@ -1081,10 +1081,40 @@ class HaskishInterpreter {
                 bindingLines.push(t);
             }
 
-            // Merge guard-continuation '|' lines back onto the preceding binding
+            // Merge binding lines fully: handles | guard continuations, binary-operator
+            // continuations (++, &&, etc.), bare = or bare then/else (body on next line),
+            // unclosed brackets spanning lines, and open if/then/else chains.
             const mergedBindings = [];
+            let wBracketDepth = 0;
             for (const bl of bindingLines) {
-                if (bl.startsWith('|') && mergedBindings.length > 0) {
+                const depthBefore = wBracketDepth;
+                // Update running bracket depth for this line (ignore brackets inside strings)
+                let inStr = false, esc = false;
+                for (const ch of bl) {
+                    if (esc) { esc = false; continue; }
+                    if (ch === '\\' && inStr) { esc = true; continue; }
+                    if (ch === '"') { inStr = !inStr; continue; }
+                    if (!inStr) {
+                        if (ch === '(' || ch === '[') wBracketDepth++;
+                        if (ch === ')' || ch === ']') wBracketDepth--;
+                    }
+                }
+
+                if (mergedBindings.length === 0) { mergedBindings.push(bl); continue; }
+
+                const last = mergedBindings[mergedBindings.length - 1];
+                const stripped = this.stripComments(last).trimEnd();
+                const noStrings = stripped.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, '""');
+                const ifCount = (noStrings.match(/\bif\b/g) || []).length;
+                const elseCount = (noStrings.match(/\belse\b/g) || []).length;
+                const shouldContinue =
+                    depthBefore > 0                                           // unclosed brackets
+                    || bl.startsWith('|')                                     // guard continuation
+                    || /^(\+\+|&&|\|\||[+*^]|:[^:]|\/(?![\/=]))/.test(bl)   // binary op continuation
+                    || /(?<![=<>!\/])=$/.test(stripped)                      // bare = (body on next line)
+                    || /\b(then|else)\s*$/.test(stripped)                    // bare then/else
+                    || ifCount > elseCount;                                   // open if/then/else chain
+                if (shouldContinue) {
                     mergedBindings[mergedBindings.length - 1] += ' ' + bl;
                 } else {
                     mergedBindings.push(bl);
