@@ -29,6 +29,31 @@ function runRegression() {
 
     const cases = [
         {
+            name: 'timeout command shows default value',
+            input: ':timeout',
+            expected: 'Current execution timeout: 5000ms (default: 5000ms)'
+        },
+        {
+            name: 'timeout command updates session value',
+            input: ':timeout 12000',
+            expected: 'Execution timeout set to 12000ms for this session.'
+        },
+        {
+            name: 'timeout command reports updated value',
+            input: ':timeout',
+            expected: 'Current execution timeout: 12000ms (default: 5000ms)'
+        },
+        {
+            name: 'timeout command rejects invalid input',
+            input: ':timeout abc',
+            expectedError: 'Usage: :timeout <milliseconds> (positive integer), :timeout, or :timeout reset'
+        },
+        {
+            name: 'timeout command resets to default',
+            input: ':timeout reset',
+            expected: 'Execution timeout reset to default (5000ms) for this session.'
+        },
+        {
             name: 'mutual recursion: even 10',
             input: `let
   even n = if n == 0 then True else odd (n-1)

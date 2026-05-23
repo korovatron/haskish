@@ -1,6 +1,8 @@
 // Haskish Interpreter - A subset of Haskell for A Level Computer Science
 
 const HASKISH_NEWLINE_MARKER = '__HASKISH_NL__';
+const HASKISH_DEFAULT_EXECUTION_TIMEOUT_MS = 5000;
+const HASKISH_MAX_EXECUTION_TIMEOUT_MS = 60000;
 
 // Class to represent a lambda function
 class Lambda {
@@ -16,7 +18,7 @@ class Lambda {
         if (this.interpreter && this.interpreter.executionStartTime > 0) {
             const elapsed = Date.now() - this.interpreter.executionStartTime;
             if (elapsed > this.interpreter.maxExecutionTime) {
-                throw new Error(`Execution timeout (${this.interpreter.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion.`);
+                throw new Error(`Execution timeout (${this.interpreter.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion. You can increase this limit for the current session with :timeout <milliseconds> (for example, :timeout 15000).`);
             }
         }
 
@@ -680,7 +682,8 @@ class HaskishInterpreter {
         this.variables = {};
         this.warnings = [];
         this.executionStartTime = 0;
-        this.maxExecutionTime = 5000; // 5 seconds max execution
+        this.defaultExecutionTime = HASKISH_DEFAULT_EXECUTION_TIMEOUT_MS;
+        this.maxExecutionTime = this.defaultExecutionTime; // session-local execution timeout
         this.functionCallDepth = {}; // tracks recursion depth per function for lazy infinite evaluation
         this.lazyStreamFunctions = new Set(); // functions that are unconditionally self-recursive (no base case)
         this._selfRefConsMode = null; // set to varName while evaluating a self-referential variable RHS
@@ -3902,7 +3905,7 @@ class HaskishInterpreter {
         if (this.executionStartTime > 0) {
             const elapsed = Date.now() - this.executionStartTime;
             if (elapsed > this.maxExecutionTime) {
-                throw new Error(`Execution timeout (${this.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion.`);
+                throw new Error(`Execution timeout (${this.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion. You can increase this limit for the current session with :timeout <milliseconds> (for example, :timeout 15000).`);
             }
         }
 
@@ -5977,6 +5980,51 @@ class HaskishInterpreter {
                 return { success: false, error: `'${arg}' is not defined` };
             }
 
+            case 'timeout':
+            case 'timeout:': {
+                const timeoutArg = arg.trim().toLowerCase();
+
+                if (!timeoutArg) {
+                    return {
+                        success: true,
+                        result: `Current execution timeout: ${this.maxExecutionTime}ms (default: ${this.defaultExecutionTime}ms)`,
+                        plainText: true
+                    };
+                }
+
+                if (timeoutArg === 'reset') {
+                    this.maxExecutionTime = this.defaultExecutionTime;
+                    return {
+                        success: true,
+                        result: `Execution timeout reset to default (${this.defaultExecutionTime}ms) for this session.`,
+                        plainText: true
+                    };
+                }
+
+                if (!/^\d+$/.test(timeoutArg)) {
+                    return { success: false, error: 'Usage: :timeout <milliseconds> (positive integer), :timeout, or :timeout reset' };
+                }
+
+                const timeoutMs = Number(timeoutArg);
+                if (timeoutMs < 1) {
+                    return { success: false, error: 'Timeout must be at least 1ms.' };
+                }
+
+                if (timeoutMs > HASKISH_MAX_EXECUTION_TIMEOUT_MS) {
+                    return {
+                        success: false,
+                        error: `Timeout cannot exceed ${HASKISH_MAX_EXECUTION_TIMEOUT_MS}ms.`
+                    };
+                }
+
+                this.maxExecutionTime = timeoutMs;
+                return {
+                    success: true,
+                    result: `Execution timeout set to ${timeoutMs}ms for this session.`,
+                    plainText: true
+                };
+            }
+
             case 'help':
             case 'h':
             case '?': {
@@ -5985,6 +6033,7 @@ class HaskishInterpreter {
   :functions          Show only functions
   :variables, :vars   Show only variables
   :info <name>        Show definition of a function or variable
+  :timeout [ms|reset] Show or set execution timeout for this session
   :help, :?           Show this help message`;
                 return { success: true, result: helpText, plainText: true };
             }
