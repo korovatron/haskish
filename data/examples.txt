@@ -1247,4 +1247,104 @@ mandelbrot =
 --- Test
 --- mandelbrot
 
+=== DFS Maze Generator ===
+
+--- Depth First Search (DFS) Maze Generation
+
+--- maze width height seed
+--- choose different seeds to generate a different maze
+--- if width or height are too large you maze get a timeout
+
+--- Try:
+--- maze 4 3 6547
+--- maze 2 3 654
+--- maze 5 5 249
+--- maze 5 3 27
+
+rand seed = (seed * 1103515245 + 12345) `mod` 2147483648
+
+replicate 0 x = []
+replicate n x = x : replicate (n-1) x
+
+concatMap f [] = []
+concatMap f (x:xs) = f x ++ concatMap f xs
+
+unlines [] = ""
+unlines (x:xs) = x ++ "\n" ++ unlines xs
+
+-- Build full wall grid: (2*h+1) × (2*w+1)
+fullWallGrid w h =
+  replicate (2*h+1) (replicate (2*w+1) True)
+
+setInRow 0 val (c:cs) = val : cs
+setInRow n val (c:cs) = c : setInRow (n-1) val cs
+
+setRow 0 x val (row:rows) = setInRow x val row : rows
+setRow n x val (row:rows) = row : setRow (n-1) x val rows
+
+setCell (x,y) val grid = setRow y x val grid
+
+transpose ([]:_) = []
+transpose rows = map head rows : transpose (map tail rows)
+
+nth 0 (x:xs) = x
+nth n (x:xs) = nth (n-1) xs
+
+removeNth 0 (x:xs) = xs
+removeNth n (x:xs) = x : removeNth (n-1) xs
+
+dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+
+shuffle seed xs =
+  if xs == [] then []
+  else nth i xs : shuffle (rand seed) (removeNth i xs)
+  where
+    i = mod seed (length xs)
+
+getCell (x,y) grid =
+  nth y (nth x (transpose grid))
+
+-- DFS carve
+carve w h seed grid x y =
+  carveDirs w h seed1 grid1 x y (shuffle seed dirs)
+  where
+    grid1 = setCell (2*x+1,2*y+1) False grid
+    seed1 = rand seed
+
+carveDirs w h seed grid x y [] = grid
+carveDirs w h seed grid x y ((dx,dy):rest) =
+  carveTry w h seed grid x y dx dy rest
+
+carveTry w h seed grid x y dx dy rest =
+  if nx < 0 || ny < 0 || nx >= w || ny >= h
+    then carveDirs w h seed grid x y rest
+    else carveTry2 w h seed grid x y dx dy rest nx ny
+  where
+    nx = x + dx
+    ny = y + dy
+
+carveTry2 w h seed grid x y dx dy rest nx ny =
+  if getCell (2*nx+1,2*ny+1) grid == False
+    then carveDirs w h seed grid x y rest
+    else carveThrough w h seed grid x y dx dy rest nx ny
+
+carveThrough w h seed grid x y dx dy rest nx ny =
+  carveDirs w h seed2 grid3 x y rest
+  where
+    wx = 2*x+1 + dx
+    wy = 2*y+1 + dy
+    grid2 = setCell (wx,wy) False grid
+    seed2 = rand seed
+    grid3 = carve w h seed2 grid2 nx ny
+
+cellStr True = "██"
+cellStr False = "  "
+
+renderRow row = concatMap cellStr row
+renderMaze grid = unlines (map renderRow grid)
+
+maze w h seed =
+  putStr (renderMaze (carve w h seed (fullWallGrid w h) 0 0))
+
+
 ###

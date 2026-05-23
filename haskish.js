@@ -1711,6 +1711,7 @@ class HaskishInterpreter {
         let buffer = '';
         let bracketDepth = 0;
         let bufferStartLine = 0;
+        let bufferStartIndent = 0;
         
         for (let i = 0; i < rawLines.length; i++) {
             const rawLine = rawLines[i];
@@ -1727,6 +1728,7 @@ class HaskishInterpreter {
             } else {
                 buffer = rawLine;
                 bufferStartLine = i + 1; // 1-indexed
+                bufferStartIndent = rawLine.match(/^(\s*)/)[1].length;
             }
             
             // Strip comments before counting brackets (but keep them in buffer)
@@ -1808,6 +1810,26 @@ class HaskishInterpreter {
                 }
                 if (/^(\+\+|&&|\|\||[+*^]|:[^:]|\/(?![\/=]))/.test(nextNonEmptyTrimmed)) {
                     continue; // keep accumulating — next line is a binary operator continuation
+                }
+
+                // Keep accumulating if the next line starts with an expression token.
+                // This preserves multiline function applications like:
+                //   f a b
+                //   (g x)
+                //   (h y)
+                // which would otherwise be split into invalid standalone lines.
+                let nextNonEmptyIndent = -1;
+                for (let j = i + 1; j < rawLines.length; j++) {
+                    const nt = rawLines[j].trim();
+                    if (nt && !nt.startsWith('--')) {
+                        nextNonEmptyIndent = rawLines[j].match(/^(\s*)/)[1].length;
+                        nextNonEmptyTrimmed = nt;
+                        break;
+                    }
+                }
+                const startsLikeContinuation = /^[(["'\\\d]/.test(nextNonEmptyTrimmed);
+                if (startsLikeContinuation && nextNonEmptyIndent >= bufferStartIndent) {
+                    continue; // keep accumulating — next line is a continuation argument
                 }
                 // Replace internal newlines with spaces for parsing, and strip comments
                 const normalizedBuffer = buffer.split('\n').map(l => {
