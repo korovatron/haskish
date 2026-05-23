@@ -1268,6 +1268,57 @@ drawSquare n =
 -- Tests:
 -- drawSquare 10
 
+=== Sierpinski Triangle ===
+
+--- Test
+--- sierpinski 3
+
+-- repeat element
+rep 0 x = []
+rep n x = x : rep (n-1) x
+
+-- set element at index
+setAt 0 v (_:xs) = v : xs
+setAt i v (x:xs) = x : setAt (i-1) v xs
+
+-- get element (!!) but safe because canvas is sized correctly
+index (x:_)  0 = x
+index (_:xs) n = index xs (n-1)
+
+-- draw a star at (row, col)
+drawStar row col canvas =
+  let line    = index canvas row
+      newLine = setAt col '*' line
+  in setAt row newLine canvas
+
+-- recursive fractal plotter
+plot 0 x y canvas = drawStar y x canvas
+plot n x y canvas =
+  let s  = 2 ^ (n-1)
+      c1 = plot (n-1)  x        y        canvas
+      c2 = plot (n-1) (x - s)  (y + s)   c1
+      c3 = plot (n-1) (x + s)  (y + s)   c2
+  in c3
+
+-- blank canvas
+blank w h = rep h (rep w ' ')
+
+-- join lines
+join []     = ""
+join [x]    = x
+join (x:xs) = x ++ "\n" ++ join xs
+
+-- main
+sierpinski n =
+  let h = 2 ^ n
+      w = 2^(n+1) - 1
+      cx = div w 2
+      cy = 0
+      canvas = blank w h
+      result = plot n cx cy canvas
+  in putStrLn (join result)
+
+
 === Mandelbrot ===
 mandelbrot =
   putStr (render (-30) 10 (-12) 12)
