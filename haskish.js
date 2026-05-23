@@ -684,6 +684,7 @@ class HaskishInterpreter {
         this.functionCallDepth = {}; // tracks recursion depth per function for lazy infinite evaluation
         this.lazyStreamFunctions = new Set(); // functions that are unconditionally self-recursive (no base case)
         this._selfRefConsMode = null; // set to varName while evaluating a self-referential variable RHS
+        this.constructorArities = {}; // known constructor arity from data declarations
         this.initializeBuiltins();
     }
 
@@ -695,10 +696,161 @@ class HaskishInterpreter {
         if (typeof value === 'string') return 'string';
         if (Array.isArray(value)) return 'list';
         if (value && value._isTuple) return 'tuple';
+        if (value && value._isConstructor) return 'constructor';
         if (value && value._isInfiniteRange) return 'infiniteRange';
         if (value instanceof Lambda) return 'lambda';
         if (value instanceof PartialFunction) return 'partialFunction';
         return 'other';
+    }
+
+    isConstructorName(name) {
+        return /^[A-Z][a-zA-Z0-9_']*$/.test(name);
+    }
+
+    makeConstructorValue(name, args = []) {
+        return {
+            _isConstructor: true,
+            name,
+            args
+        };
+    }
+
+    makeConstructorFunction(name, arity, boundArgs = []) {
+        const interpreter = this;
+        return {
+            _isConstructorFunction: true,
+            name,
+            arity,
+            boundArgs,
+            apply(args) {
+                const allArgs = [...boundArgs, ...args];
+                if (allArgs.length < arity) {
+                    return interpreter.makeConstructorFunction(name, arity, allArgs);
+                }
+                if (allArgs.length > arity) {
+                    throw new Error(`Constructor '${name}' expects ${arity} argument${arity === 1 ? '' : 's'}, but got ${allArgs.length}`);
+                }
+                return interpreter.makeConstructorValue(name, allArgs);
+            },
+            toString() {
+                return `<constructor ${name}/${arity} with ${boundArgs.length} bound arg(s)>`;
+            }
+        };
+    }
+
+    // Split a pattern application at top-level whitespace while preserving nested
+    // tuple/list/paren subpatterns and string literals.
+    splitPatternApplication(pattern) {
+        const parts = [];
+        let current = '';
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+
+        for (let i = 0; i < pattern.length; i++) {
+            const ch = pattern[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(pattern[i - 1]);
+
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || pattern[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                current += ch;
+                continue;
+            }
+
+            if (!inString) {
+                if (ch === '(' || ch === '[') depth++;
+                if (ch === ')' || ch === ']') depth--;
+
+                if (/\s/.test(ch) && depth === 0) {
+                    if (current.trim()) {
+                        parts.push(current.trim());
+                        current = '';
+                    }
+                    continue;
+                }
+            }
+
+            current += ch;
+        }
+
+        if (current.trim()) {
+            parts.push(current.trim());
+        }
+
+        return parts;
+    }
+
+    splitTopLevelByPipe(str) {
+        const parts = [];
+        let current = '';
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                current += ch;
+                continue;
+            }
+
+            if (!inString) {
+                if (ch === '(' || ch === '[') depth++;
+                if (ch === ')' || ch === ']') depth--;
+                if (ch === '|' && depth === 0) {
+                    parts.push(current.trim());
+                    current = '';
+                    continue;
+                }
+            }
+
+            current += ch;
+        }
+
+        if (current.trim()) {
+            parts.push(current.trim());
+        }
+
+        return parts;
+    }
+
+    registerDataDeclaration(declarationLine) {
+        const match = declarationLine.trim().match(/^data\s+[A-Z][a-zA-Z0-9_']*(?:\s+[a-z][a-zA-Z0-9_']*)*\s*=\s*(.+)$/);
+        if (!match) return false;
+
+        const rhs = match[1].trim();
+        const constructorDefs = this.splitTopLevelByPipe(rhs);
+
+        for (const ctorDef of constructorDefs) {
+            const parts = this.splitPatternApplication(ctorDef);
+            if (parts.length === 0) continue;
+            const ctorName = parts[0];
+            if (!this.isConstructorName(ctorName)) continue;
+            this.constructorArities[ctorName] = parts.length - 1;
+        }
+
+        return true;
+    }
+
+    registerDataDeclarations(lines) {
+        for (const line of lines) {
+            this.registerDataDeclaration(line);
+        }
     }
 
     initializeBuiltins() {
@@ -2277,6 +2429,13 @@ class HaskishInterpreter {
             // Skip type signature lines like: funcName :: Type -> Type
             if (/^\w+'*\s*::/.test(line)) continue;
 
+            // Accept algebraic data declarations as no-op metadata for now.
+            // Constructors are handled dynamically in expression evaluation.
+            if (/^data\b/.test(line)) {
+                this.registerDataDeclaration(line);
+                continue;
+            }
+
             // Strip optional 'let' keyword at the start
             const originalLine = line;
             line = line.replace(/^let\s+/, '');
@@ -3526,6 +3685,12 @@ class HaskishInterpreter {
                     };
                 }
             }
+
+            // Grouped pattern like (Just x) - recurse into inner pattern.
+            // Tuple patterns are handled by the tuple matcher below.
+            if (!hasTopComma) {
+                return this.matchPattern(inner.trim(), value);
+            }
         }
 
         // Tuple pattern like (x, y) or (a, b, c)
@@ -3622,6 +3787,30 @@ class HaskishInterpreter {
             return value === false ? {} : null;
         }
 
+        // Constructor patterns: Nothing, Just x, Just (a,b), Node l r
+        const constructorParts = this.splitPatternApplication(pattern);
+        if (constructorParts.length > 0 && this.isConstructorName(constructorParts[0]) && constructorParts[0] !== 'True' && constructorParts[0] !== 'False') {
+            const ctorName = constructorParts[0];
+            const argPatterns = constructorParts.slice(1);
+
+            if (!value || !value._isConstructor || value.name !== ctorName) {
+                return null;
+            }
+            const ctorArgs = Array.isArray(value.args) ? value.args : [];
+
+            if (argPatterns.length !== ctorArgs.length) {
+                return null;
+            }
+
+            const bindings = {};
+            for (let i = 0; i < argPatterns.length; i++) {
+                const argMatch = this.matchPattern(argPatterns[i], ctorArgs[i]);
+                if (argMatch === null) return null;
+                Object.assign(bindings, argMatch);
+            }
+            return bindings;
+        }
+
         // Wildcard pattern - matches anything without binding
         if (pattern === '_') {
             return {};
@@ -3664,6 +3853,7 @@ class HaskishInterpreter {
                 return result;
             }
             if (funcName instanceof PartialFunction) return funcName.apply(args);
+            if (funcName && funcName._isConstructorFunction) return funcName.apply(args);
             if (funcName && funcName._isOperatorFunction) return funcName.apply(args);
             if (funcName && funcName._isComposedFunction) return funcName.apply(args);
             throw new Error(`Cannot apply non-function value: ${String(funcName)}`);
@@ -3834,6 +4024,15 @@ class HaskishInterpreter {
             }
             return true;
         }
+        if (a && a._isConstructor && b && b._isConstructor) {
+            if (a.name !== b.name) return false;
+            if (!Array.isArray(a.args) || !Array.isArray(b.args)) return false;
+            if (a.args.length !== b.args.length) return false;
+            for (let i = 0; i < a.args.length; i++) {
+                if (!this.deepEquals(a.args[i], b.args[i])) return false;
+            }
+            return true;
+        }
         return a === b;
     }
 
@@ -3871,6 +4070,22 @@ class HaskishInterpreter {
         }
         if (value && value._isInfiniteRange) {
             return value.toString();
+        }
+        if (value && value._isConstructor) {
+            if (!value.args || value.args.length === 0) {
+                return value.name;
+            }
+            const argsStr = value.args.map(arg => {
+                const rendered = this.formatForSubstitution(arg);
+                const needsParens =
+                    arg instanceof Lambda ||
+                    arg instanceof PartialFunction ||
+                    (arg && arg._isOperatorFunction) ||
+                    (arg && arg._isComposedFunction) ||
+                    (arg && arg._isConstructor && arg.args && arg.args.length > 0);
+                return needsParens ? `(${rendered})` : rendered;
+            }).join(' ');
+            return `${value.name} ${argsStr}`;
         }
         if (value && value._isTuple) {
             return '(' + value.elements.map(v => this.formatForSubstitution(v)).join(',') + ')';
@@ -3940,6 +4155,7 @@ class HaskishInterpreter {
             if (value instanceof Lambda || 
                 (value && value._isOperatorFunction) ||
                 (value && value._isComposedFunction) ||
+                (value && value._isConstructorFunction) ||
                 value instanceof PartialFunction) {
                 // Store directly in variables table under the binding name
                 tempVars[varName] = value;
@@ -4000,6 +4216,9 @@ class HaskishInterpreter {
                 } else {
                     // Use formatForSubstitution to properly handle all types for re-evaluation
                     replacement = this.formatForSubstitution(value);
+                    if (value && value._isConstructor && value.args && value.args.length > 0) {
+                        replacement = `(${replacement})`;
+                    }
                 }
                 result = result.replace(varRegex, replacement);
             }
@@ -4296,6 +4515,19 @@ class HaskishInterpreter {
             return this.variables[expr];
         }
 
+        // Constructor identifier/literal.
+        if (this.isConstructorName(expr) && !this.functions[expr] && !this.builtins[expr] && this.variables[expr] === undefined) {
+            if (Object.prototype.hasOwnProperty.call(this.constructorArities, expr)) {
+                const arity = this.constructorArities[expr];
+                if (arity === 0) {
+                    return this.makeConstructorValue(expr, []);
+                }
+                return this.makeConstructorFunction(expr, arity, []);
+            }
+            // Undeclared constructor names default to nullary constructor values.
+            return this.makeConstructorValue(expr, []);
+        }
+
         // Empty list
         if (expr === '[]') return [];
 
@@ -4517,7 +4749,7 @@ class HaskishInterpreter {
                         throw new Error(`Type error: (/=) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
                     }
                 }
-                return a !== b;
+                return !this.deepEquals(a, b);
             }},
             { op: '==', fn: (a, b) => {
                 // Type check first (unless both are lists or tuples which have special handling)
@@ -4561,7 +4793,7 @@ class HaskishInterpreter {
                         throw new Error(`Type error: (==) requires same types, got ${a && a._isTuple ? 'tuple' : typeof a} and ${b && b._isTuple ? 'tuple' : typeof b}`);
                     }
                 }
-                return a === b;
+                return this.deepEquals(a, b);
             }},
             { op: '<=', fn: (a, b) => {
                 if (typeof a !== typeof b) {
@@ -5093,6 +5325,15 @@ class HaskishInterpreter {
                 return token.value;
             });
 
+            // Constructor application (e.g. Just 3, Pair a b)
+            if (this.isConstructorName(funcName) && !this.functions[funcName] && !this.builtins[funcName] && this.variables[funcName] === undefined) {
+                if (Object.prototype.hasOwnProperty.call(this.constructorArities, funcName)) {
+                    const arity = this.constructorArities[funcName];
+                    return this.makeConstructorFunction(funcName, arity, []).apply(args);
+                }
+                return this.makeConstructorValue(funcName, args);
+            }
+
             // Check if funcName refers to a variable holding a special function
             if (this.variables[funcName]) {
                 const varValue = this.variables[funcName];
@@ -5105,6 +5346,9 @@ class HaskishInterpreter {
                     return result;
                 }
                 if (varValue instanceof PartialFunction) {
+                    return varValue.apply(args);
+                }
+                if (varValue && varValue._isConstructorFunction) {
                     return varValue.apply(args);
                 }
                 if (varValue && varValue._isComposedFunction) {
@@ -5550,6 +5794,22 @@ class HaskishInterpreter {
         if (value && value._isRawOutput) {
             return value.value;
         }
+        if (value && value._isConstructor) {
+            if (!value.args || value.args.length === 0) {
+                return value.name;
+            }
+            const argsStr = value.args.map(arg => {
+                const rendered = this.formatOutput(arg);
+                const needsParens =
+                    arg instanceof Lambda ||
+                    arg instanceof PartialFunction ||
+                    (arg && arg._isOperatorFunction) ||
+                    (arg && arg._isComposedFunction) ||
+                    (arg && arg._isConstructor && arg.args && arg.args.length > 0);
+                return needsParens ? `(${rendered})` : rendered;
+            }).join(' ');
+            return `${value.name} ${argsStr}`;
+        }
         if (value && value._isTuple) {
             return '(' + value.elements.map(v => this.formatOutput(v)).join(',') + ')';
         }
@@ -5729,6 +5989,70 @@ class HaskishInterpreter {
         }
     }
 
+    // Strip top-level `data ...` declaration lines from REPL input.
+    // Current interpreter support treats these declarations as metadata-only.
+    stripDataDeclarationsFromReplInput(expr) {
+        const lines = expr.split(/\r?\n/);
+        const remainingLines = [];
+        const declarations = [];
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('--')) {
+                remainingLines.push(line);
+                continue;
+            }
+            if (/^data\b/.test(trimmed)) {
+                declarations.push(trimmed);
+                continue;
+            }
+            remainingLines.push(line);
+        }
+
+        return {
+            expr: remainingLines.join('\n').trim(),
+            declarations
+        };
+    }
+
+    splitReplDefinitionsAndTrailingExpression(expr) {
+        const lines = expr.split(/\r?\n/);
+        const topLevel = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const raw = lines[i];
+            const trimmed = raw.trim();
+            if (!trimmed || trimmed.startsWith('--')) continue;
+            const indent = raw.match(/^(\s*)/)[1].length;
+            if (indent === 0) {
+                topLevel.push({ index: i, trimmed });
+            }
+        }
+
+        if (topLevel.length < 2) return null;
+
+        const isTopLevelDefinitionLine = (line) => {
+            if (/^\w+'*\s*::/.test(line)) return true;
+            if (/^data\b/.test(line)) return true;
+            if (/^[a-zA-Z_]\w*'*\s+/.test(line) && /(?<![=<>!\/])=(?!=)/.test(line)) return true;
+            if (/^[a-zA-Z_]\w*'*\s*=/.test(line)) return true;
+            if (/^[+\-*\/:<>=!.&|^$%]+\s+.+\s*=/.test(line)) return true;
+            return false;
+        };
+
+        const firstExprTop = topLevel.find(entry => !isTopLevelDefinitionLine(entry.trimmed));
+        if (!firstExprTop) return null;
+
+        const hasDefinitionBeforeExpr = topLevel.some(entry => entry.index < firstExprTop.index && isTopLevelDefinitionLine(entry.trimmed));
+        if (!hasDefinitionBeforeExpr) return null;
+
+        const definitions = lines.slice(0, firstExprTop.index).join('\n').trim();
+        const expression = lines.slice(firstExprTop.index).join('\n').trim();
+
+        if (!definitions || !expression) return null;
+        return { definitions, expression };
+    }
+
     // Evaluate a REPL expression
     evaluateRepl(expr) {
         try {
@@ -5736,6 +6060,25 @@ class HaskishInterpreter {
             this.executionStartTime = Date.now();
             
             expr = expr.trim();
+
+            const dataStrip = this.stripDataDeclarationsFromReplInput(expr);
+            this.registerDataDeclarations(dataStrip.declarations);
+            expr = dataStrip.expr;
+
+            if (!expr && dataStrip.declarations.length > 0) {
+                if (dataStrip.declarations.length === 1) {
+                    return {
+                        success: true,
+                        result: `Registered data declaration: ${dataStrip.declarations[0]}`,
+                        plainText: true
+                    };
+                }
+                return {
+                    success: true,
+                    result: `Registered ${dataStrip.declarations.length} data declarations`,
+                    plainText: true
+                };
+            }
 
             // Detect expression-form let/in up front so multiline let blocks are
             // evaluated as expressions (not mis-routed through definition parsing).
@@ -5771,13 +6114,18 @@ class HaskishInterpreter {
             if (expr.includes('\n') && !isSpecialExpression) {
                 const savedFunctions = Object.assign({}, this.functions);
                 const savedVariables = Object.assign({}, this.variables);
+                const mixedBlock = this.splitReplDefinitionsAndTrailingExpression(expr);
                 // If the first non-empty line looks like a definition (name = ... or name params = ...),
                 // any error from parseFunctionDefinitions should be reported to the user rather than
                 // silently falling through to expression evaluation (which would give a misleading error).
                 const firstNonEmpty = expr.split('\n').map(l => l.trim().replace(/^let\s+/, '')).find(l => l && !l.startsWith('--')) || '';
                 const looksLikeDefinition = /^[a-zA-Z_]\w*'*/.test(firstNonEmpty) && /(?<![=<>!\/])=(?!=)/.test(firstNonEmpty);
                 try {
-                    this.parseFunctionDefinitions(expr);
+                    if (mixedBlock) {
+                        this.parseFunctionDefinitions(mixedBlock.definitions);
+                    } else {
+                        this.parseFunctionDefinitions(expr);
+                    }
                     const newFunctions = Object.assign({}, this.functions);
                     const newVariables = Object.assign({}, this.variables);
                     // Restore existing state, then merge in what was just defined
@@ -5792,6 +6140,14 @@ class HaskishInterpreter {
                     }
                     for (const [name, val] of Object.entries(newVariables)) {
                         this.variables[name] = val;
+                    }
+                    if (mixedBlock) {
+                        this.detectLazyStreamFunctions();
+                        const result = this.evaluate(mixedBlock.expression);
+                        if (result && result._isRawOutput) {
+                            return { success: true, result: result.value, plainText: true };
+                        }
+                        return { success: true, result: this.formatOutput(result) };
                     }
                     if (defined.length > 0 || redefined.length > 0 || Object.keys(newVariables).length > 0) {
                         this.detectLazyStreamFunctions();

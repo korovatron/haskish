@@ -161,6 +161,20 @@ in sum [1,2,3,4,5]`,
             expected: '30'
         },
         {
+            name: 'case/of constructor pattern with tuple payload',
+            input: `case (Just (1,2)) of
+  Just (a,b) -> a + b
+  Nothing -> 0`,
+            expected: '3'
+        },
+        {
+            name: 'case/of nullary constructor pattern',
+            input: `case Nothing of
+  Just x -> x
+  Nothing -> 0`,
+            expected: '0'
+        },
+        {
             name: 'case/of layout alternatives',
             input: `case [1,2,3] of
   [] -> 0
@@ -255,6 +269,74 @@ in even 10`,
             name: 'case/of malformed branch uses equals',
             input: 'case 1 of 1 = 10; _ -> 0',
             expectedError: "Malformed case/of expression: invalid alternative '1 = 10'. Use '->' (not '=') in case branches."
+        },
+        {
+            name: 'constructor equality',
+            input: 'Just 5 == Just 5',
+            expected: 'True'
+        },
+        {
+            name: 'constructor inequality by payload',
+            input: 'Just 5 /= Just 6',
+            expected: 'True'
+        },
+        {
+            name: 'constructor inequality by tag',
+            input: 'Just 5 /= Nothing',
+            expected: 'True'
+        },
+        {
+            name: 'constructor function in higher-order call',
+            input: `data Maybe a = Nothing | Just a
+map Just [1,2,3]`,
+            expected: '[Just 1,Just 2,Just 3]'
+        },
+        {
+            name: 'constructor function as lambda argument',
+            input: `data Wrap a = W a
+(\\f -> f 99) W`,
+            expected: 'W 99'
+        },
+        {
+            name: 'nested constructor pattern match',
+            input: `data Maybe a = Nothing | Just a
+case Just (Just 5) of
+  Just (Just x) -> x
+  _             -> 0`,
+            expected: '5'
+        },
+        {
+            name: 'nested constructor literal pattern',
+            input: `data A = A1 B | A2
+data B = B1 A | B2
+case A1 (B1 A2) of
+  A1 (B1 A2) -> "ok"
+  _          -> "nope"`,
+            expected: '"ok"'
+        },
+        {
+            name: 'multiline definitions with trailing expression in one input',
+            input: `data Tree a = Leaf a | Node (Tree a) (Tree a)
+sumTree t =
+  case t of
+    Leaf x     -> x
+    Node l r   -> sumTree l + sumTree r
+sumTree (Node (Leaf 1) (Node (Leaf 2) (Leaf 3)))`,
+            expected: '6'
+        },
+        {
+            name: 'data declaration then multiline case expression',
+            input: `data Maybe a = Nothing | Just a
+
+case Just 10 of
+  Nothing -> 0
+  Just x  -> x + 1`,
+            expected: '11'
+        },
+        {
+            name: 'data declaration only in repl',
+            input: 'data Boolish = Yep | Nope',
+            expected: 'Registered data declaration: data Boolish = Yep | Nope'
         }
     ];
 
