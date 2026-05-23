@@ -1,3 +1,5 @@
+### Core Language
+
 === Basic Functions ===
 -- Simple function
 double x = x * 2
@@ -125,6 +127,92 @@ collatz n
 -- qsort [3,1,4,1,5,9,2,6] → [1,1,2,3,4,5,6,9]
 -- collatz 6               → [6,3,10,5,16,8,4,2,1]
 -- collatz 27              → (88 steps!)
+
+=== Tuples ===
+-- Tuple creation
+point = (3, 5)
+triple = (1, "hello", True)
+
+-- Tuple pattern matching in functions
+fst (x, y) = x
+snd (x, y) = y
+
+-- Tuple destructuring in assignments
+(a, b) = (10, 20)
+((x, y), z) = ((1, 2), 3)
+
+-- Stateful computation with tuples and lambdas
+counter n = \_ -> (n, counter (n + 1))
+-- Usage: c0 = counter 0
+--        (step0, c1) = c0 ()
+--        (step1, c2) = c1 ()
+
+-- Tuples with guards
+distance (x1, y1) (x2, y2) = ((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+
+-- Compare tuples
+comparePoints (x1, y1) (x2, y2)
+  | x1 > x2 && y1 > y2 = "first dominates"
+  | x1 < x2 && y1 < y2 = "second dominates"
+  | x1 == x2 && y1 == y2 = "equal"
+  | otherwise = "incomparable"
+
+-- Nested tuples
+nested = ((1, 2), (3, 4))
+
+-- Lists of tuples
+points = [(0,0), (1,1), (2,4)]
+
+-- Tuples of lists
+segments = ([1,2,3], [4,5,6])
+
+-- Tuple processing
+sumPairs [] = []
+sumPairs ((x,y):rest) = (x+y) : sumPairs rest
+
+-- Tests:
+-- point                       → (3,5)
+-- fst (10,20)                 → 10
+-- comparePoints (5,3) (2,1)   → "first dominates"
+-- points                      → [(0,0),(1,1),(2,4)]
+-- sumPairs [(1,2),(3,4),(5,6)] → [3,7,11]
+
+=== Built-in Functions ===
+-- head and tail
+getFirst xs = head xs
+getRest xs = tail xs
+
+-- length and null
+isEmpty xs = null xs
+count xs = length xs
+
+-- reverse
+backwards xs = reverse xs
+
+-- take and drop
+firstThree xs = take 3 xs
+skipTwo xs = drop 2 xs
+
+-- Combining built-ins
+getMiddle xs = drop 1 (take (length xs - 1) xs)
+
+-- Using built-ins with operators
+lastElement xs = head (reverse xs)
+allButLast xs = reverse (tail (reverse xs))
+
+-- Tests:
+-- getFirst [1,2,3]          → 1
+-- getRest [1,2,3]           → [2,3]
+-- isEmpty []                → True
+-- backwards [1,2,3]         → [3,2,1]
+-- firstThree [1,2,3,4,5]    → [1,2,3]
+-- getMiddle [1,2,3,4,5]     → [2,3,4]
+-- lastElement [1,2,3,4,5]   → 5
+-- allButLast [1,2,3,4,5]    → [1,2,3,4]
+
+###
+
+### Lists & Recursion
 
 === List Operations ===
 -- Empty list and cons pattern
@@ -264,6 +352,81 @@ primes = sieve [2..]
 -- Tests:
 -- take 10 primes  → [2,3,5,7,11,13,17,19,23,29]
 -- primes !! 99    → 541  (the 100th prime)
+
+=== List Utilities ===
+-- Remove duplicates from a list
+elem x [] = False
+elem x (y:ys)
+  | x == y = True
+  | otherwise = elem x ys
+
+nub [] = []
+nub (x:xs)
+  | elem x xs = nub xs
+  | otherwise = x : nub xs
+
+-- Fixed-point iteration
+fixedPoint f x
+  | x == f x = x
+  | otherwise = fixedPoint f (f x)
+
+-- Digital root (repeatedly sum digits until single digit)
+sumDigits 0 = 0
+sumDigits n = mod n 10 + sumDigits (div n 10)
+
+digitalRoot n = fixedPoint sumDigits n
+
+-- Reverse using fold
+reverseList xs = fold (\acc x -> x : acc) [] xs
+
+-- Maximum element
+maxList [x] = x
+maxList (x:xs)
+  | x > maxList xs = x
+  | otherwise = maxList xs
+
+-- Tests:
+-- nub [1,2,3,2,4,1,5]                → [3,2,4,1,5]
+-- nub [[1,2], [3,4], [1,2], [5,6]]   → [[3,4],[1,2],[5,6]]
+-- digitalRoot 38                     → 2
+-- digitalRoot 123                    → 6
+-- reverseList [1,2,3,4]              → [4,3,2,1]
+-- maxList [3,7,2,9,1]                → 9
+
+=== Pascal's Triangle ===
+-- Generate rows of Pascal's Triangle as strings with spaces
+
+-- zipWith applies a function to pairs of elements
+zipWith f [] _ = []
+zipWith f _ [] = []
+zipWith f (x:xs) (y:ys) = f x y : zipWith f xs ys
+
+-- Generate next row from current row
+nextRow row = zipWith (+) ([0] ++ row) (row ++ [0])
+
+-- Generate the nth row (0-indexed)
+pascalRow 0 = [1]
+pascalRow n = nextRow (pascalRow (n-1))
+
+-- Join list of numbers with spaces
+joinWithSpaces [] = ""
+joinWithSpaces [x] = show x
+joinWithSpaces (x:xs) = show x ++ " " ++ joinWithSpaces xs
+
+-- Generate all rows from 0 to n
+pascalRows n = [pascalRow i | i <- [0..n]]
+
+-- Display n rows as strings with spaces
+pascal n = map joinWithSpaces (pascalRows n)
+
+-- Tests:
+-- pascal 0   → ["1"]
+-- pascal 1   → ["1","1 1"]
+-- pascal 4   → ["1","1 1","1 2 1","1 3 3 1","1 4 6 4 1"]
+-- pascal 6   → ["1","1 1","1 2 1","1 3 3 1","1 4 6 4 1","1 5 10 10 5 1","1 6 15 20 15 6 1"]
+
+###
+### Advanced Functional Concepts ###
 
 === Higher-Order Functions ===
 -- map examples
@@ -411,54 +574,9 @@ quickSort = z (\qs -> \xs ->
 -- myLength [1,2,3,4,5]              → 5
 -- quickSort [5,3,8,1,4,7,2,6]       → [1,2,3,4,5,6,7,8]
 
-=== Tuples ===
--- Tuple creation
-point = (3, 5)
-triple = (1, "hello", True)
+###
 
--- Tuple pattern matching in functions
-fst (x, y) = x
-snd (x, y) = y
-
--- Tuple destructuring in assignments
-(a, b) = (10, 20)
-((x, y), z) = ((1, 2), 3)
-
--- Stateful computation with tuples and lambdas
-counter n = \_ -> (n, counter (n + 1))
--- Usage: c0 = counter 0
---        (step0, c1) = c0 ()
---        (step1, c2) = c1 ()
-
--- Tuples with guards
-distance (x1, y1) (x2, y2) = ((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
-
--- Compare tuples
-comparePoints (x1, y1) (x2, y2)
-  | x1 > x2 && y1 > y2 = "first dominates"
-  | x1 < x2 && y1 < y2 = "second dominates"
-  | x1 == x2 && y1 == y2 = "equal"
-  | otherwise = "incomparable"
-
--- Nested tuples
-nested = ((1, 2), (3, 4))
-
--- Lists of tuples
-points = [(0,0), (1,1), (2,4)]
-
--- Tuples of lists
-segments = ([1,2,3], [4,5,6])
-
--- Tuple processing
-sumPairs [] = []
-sumPairs ((x,y):rest) = (x+y) : sumPairs rest
-
--- Tests:
--- point                       → (3,5)
--- fst (10,20)                 → 10
--- comparePoints (5,3) (2,1)   → "first dominates"
--- points                      → [(0,0),(1,1),(2,4)]
--- sumPairs [(1,2),(3,4),(5,6)] → [3,7,11]
+### Algorithms & Data Structures ###
 
 === Sorting Algorithms ===
 -- Bubble Sort
@@ -528,215 +646,181 @@ primesUpTo n = sieve [2..n]
 -- primesUpTo 30                          → [2,3,5,7,11,13,17,19,23,29]
 -- map isPrime [2,3,4,5,6,7,8,9,10,11]    → [True,True,False,True,False,True,False,False,False,True]
 
-=== List Utilities ===
--- Remove duplicates from a list
+=== Sudoku Validator ===
+-- Validate a Sudoku board (9x9 grid)
+-- Board is a list of 9 rows, each row is a list of 9 numbers (1-9)
+
+-- Check if element is in list
+contains e [] = False
+contains e (x:xs)
+  | e == x    = True
+  | otherwise = contains e xs
+
+-- Check if a group has no duplicates and all values 1-9
+isValidGroup [] = True
+isValidGroup (x:xs)
+  | x < 1 || x > 9 = False
+  | contains x xs  = False
+  | otherwise      = isValidGroup xs
+
+-- Get column n from the board
+getColumn n board = [row !! n | row <- board]
+
+-- Get all 9 columns
+getColumns board = [getColumn i board | i <- [0..8]]
+
+-- Get a 3x3 box starting at row r, column c
+getBox r c board = [board !! (r+i) !! (c+j) | i <- [0..2], j <- [0..2]]
+
+-- Get all 9 boxes
+getBoxes board = [getBox r c board | r <- [0,3,6], c <- [0,3,6]]
+
+-- Check if all groups in a list are valid
+allValid [] = True
+allValid (g:gs) = isValidGroup g && allValid gs
+
+-- Main validation function
+validSudoku board = allValid board && allValid (getColumns board) && allValid (getBoxes board)
+
+-- Example board (valid)
+board = [[5,3,4,6,7,8,9,1,2],
+         [6,7,2,1,9,5,3,4,8],
+         [1,9,8,3,4,2,5,6,7],
+         [8,5,9,7,6,1,4,2,3],
+         [4,2,6,8,5,3,7,9,1],
+         [7,1,3,9,2,4,8,5,6],
+         [9,6,1,5,3,7,2,8,4],
+         [2,8,7,4,1,9,6,3,5],
+         [3,4,5,2,8,6,1,7,9]]
+
+-- Invalid board (duplicate 5 in first row)
+badBoard = [[5,3,4,6,7,8,9,1,5],
+            [6,7,2,1,9,5,3,4,8],
+            [1,9,8,3,4,2,5,6,7],
+            [8,5,9,7,6,1,4,2,3],
+            [4,2,6,8,5,3,7,9,1],
+            [7,1,3,9,2,4,8,5,6],
+            [9,6,1,5,3,7,2,8,4],
+            [2,8,7,4,1,9,6,3,5],
+            [3,4,5,2,8,6,1,7,9]]
+
+-- Tests:
+-- validSudoku board     → True
+-- validSudoku badBoard  → False
+
+=== Sudoku Solver ===
+{- Solves a 9x9 Sudoku puzzle using backtracking
+   Board representation: 0 represents empty cells, 1-9 are filled cells
+
+   PERFORMANCE NOTE: This algorithm has exponential time complexity O(k^n)
+   where k=9 (possible values) and n=number of empty cells.
+   Backtracking with constraint checking makes it practical for typical puzzles.
+   The key optimisation is avoiding redundant computation by computing each
+   recursive solve() only once per attempt. -}
+
+-- Helper: Check if element is in list
 elem x [] = False
-elem x (y:ys)
-  | x == y = True
-  | otherwise = elem x ys
+elem x (y:ys) = if x == y then True else elem x ys
 
-nub [] = []
-nub (x:xs)
-  | elem x xs = nub xs
-  | otherwise = x : nub xs
+-- Helper: Get element at position (row, col) in 2D list
+getAt board row col = (board !! row) !! col
 
--- Fixed-point iteration
-fixedPoint f x
-  | x == f x = x
-  | otherwise = fixedPoint f (f x)
+-- Helper: Set element at position in 2D list
+setAt board row col val = [if r == row then [if c == col then val else getAt board r c | c <- [0..8]] else board !! r | r <- [0..8]]
 
--- Digital root (repeatedly sum digits until single digit)
-sumDigits 0 = 0
-sumDigits n = mod n 10 + sumDigits (div n 10)
+-- Helper: Get all numbers in a row
+getRow board row = board !! row
 
-digitalRoot n = fixedPoint sumDigits n
+-- Helper: Get all numbers in a column
+getCol board col = [row !! col | row <- board]
 
--- Reverse using fold
-reverseList xs = fold (\acc x -> x : acc) [] xs
+-- Helper: Get the 3x3 box containing position (row, col)
+getBox board row col = [board !! r !! c | r <- [(boxRow row)..(boxRow row)+2], c <- [(boxCol col)..(boxCol col)+2]]
+boxRow row = (div row 3) * 3
+boxCol col = (div col 3) * 3
 
--- Maximum element
-maxList [x] = x
-maxList (x:xs)
-  | x > maxList xs = x
-  | otherwise = maxList xs
+{- Tuple accessors -}
+fst (x, _) = x
+snd (_, y) = y
+
+{- Check if a number is valid at a position -}
+isValid board row col num = not (elem num (getRow board row)) && not (elem num (getCol board col)) && not (elem num (getBox board row col))
+
+{- Find first empty cell (returns (-1,-1) if none) -}
+findEmpty board = findEmptyHelper board 0 0
+
+findEmptyHelper board 9 _ = (-1, -1)
+findEmptyHelper board row 9 = findEmptyHelper board (row + 1) 0
+findEmptyHelper board row col
+  | getAt board row col == 0 = (row, col)
+  | otherwise = findEmptyHelper board row (col + 1)
+
+{- Check if position is (-1,-1) -}
+isNoEmpty pos = fst pos == -1 && snd pos == -1
+
+{- Try to solve from current position -}
+solve board
+  | isNoEmpty (findEmpty board) = board
+  | otherwise = solveFrom board (findEmpty board)
+
+{- Solve from a known empty position -}
+solveFrom board pos = tryNumbers board (fst pos) (snd pos) [1..9]
+
+{- Try each number in the list -}
+tryNumbers board _ _ [] = []
+tryNumbers board row col (n:ns)
+  | not (isValid board row col n) = tryNumbers board row col ns
+  | otherwise = checkSolution (solve (setAt board row col n)) board row col ns
+
+{- Check if solution worked, backtrack if not -}
+checkSolution result board row col ns
+  | null result = tryNumbers board row col ns
+  | otherwise = result
+
+{- Almost-solved puzzle (only 1 empty cell - solves instantly) -}
+simplePuzzle = [[5,3,4,6,7,8,9,1,2],
+                [6,7,2,1,9,5,3,4,8],
+                [1,9,8,3,4,2,5,6,7],
+                [8,5,9,7,6,1,4,2,3],
+                [4,2,6,8,5,3,7,9,1],
+                [7,1,3,9,2,4,8,5,6],
+                [9,6,1,5,3,7,2,8,4],
+                [2,8,7,4,1,9,6,3,5],
+                [3,4,5,2,8,6,1,7,0]]
+
+{- Distributed blanks (10 empty cells - solves quickly!)
+   Interestingly, this can solve FASTER than puzzles with fewer blanks
+   because early constraints prune the search tree more effectively -}
+easyPuzzle = [[5,3,4,6,0,8,9,1,2],
+              [6,7,2,1,0,5,3,4,8],
+              [1,9,8,0,4,2,5,6,7],
+              [8,5,9,7,6,1,4,2,3],
+              [4,2,6,8,5,3,7,9,0],
+              [7,1,3,9,2,4,8,0,0],
+              [9,6,1,5,0,7,2,8,0],
+              [2,8,7,4,1,9,6,3,0],
+              [3,4,5,0,8,6,1,7,9]]
+
+{- More challenging (typical puzzle - may be too slow) -}
+mediumPuzzle = [[5,3,0,0,7,0,0,0,0],
+                [6,0,0,1,9,5,0,0,0],
+                [0,9,8,0,0,0,0,6,0],
+                [8,0,0,0,6,0,0,0,3],
+                [4,0,0,8,0,3,0,0,1],
+                [7,0,0,0,2,0,0,0,6],
+                [0,6,0,0,0,0,2,8,0],
+                [0,0,0,4,1,9,0,0,5],
+                [0,0,0,0,8,0,0,7,9]]
 
 -- Tests:
--- nub [1,2,3,2,4,1,5]                → [3,2,4,1,5]
--- nub [[1,2], [3,4], [1,2], [5,6]]   → [[3,4],[1,2],[5,6]]
--- digitalRoot 38                     → 2
--- digitalRoot 123                    → 6
--- reverseList [1,2,3,4]              → [4,3,2,1]
--- maxList [3,7,2,9,1]                → 9
+-- solve simplePuzzle  → (instant - 1 empty cell)
+-- solve easyPuzzle    → (fast - 10 empty cells, well-distributed)  
+-- solve mediumPuzzle  → (may timeout - 50+ empty cells clustered together)
+-- getAt (solve simplePuzzle) 8 8  → 9
 
-=== Built-in Functions ===
--- head and tail
-getFirst xs = head xs
-getRest xs = tail xs
+###
 
--- length and null
-isEmpty xs = null xs
-count xs = length xs
-
--- reverse
-backwards xs = reverse xs
-
--- take and drop
-firstThree xs = take 3 xs
-skipTwo xs = drop 2 xs
-
--- Combining built-ins
-getMiddle xs = drop 1 (take (length xs - 1) xs)
-
--- Using built-ins with operators
-lastElement xs = head (reverse xs)
-allButLast xs = reverse (tail (reverse xs))
-
--- Tests:
--- getFirst [1,2,3]          → 1
--- getRest [1,2,3]           → [2,3]
--- isEmpty []                → True
--- backwards [1,2,3]         → [3,2,1]
--- firstThree [1,2,3,4,5]    → [1,2,3]
--- getMiddle [1,2,3,4,5]     → [2,3,4]
--- lastElement [1,2,3,4,5]   → 5
--- allButLast [1,2,3,4,5]    → [1,2,3,4]
-
-=== ASCII Art ===
-
-checkerboard n =
-  putStr (boardString n)
-  where
-    boardString k
-      | k <= 0    = ""
-      | otherwise = unlines' (buildRows k 1)
-
-    buildRows size row
-      | row > size = []
-      | otherwise  =
-          buildRow size row 1 : buildRows size (row + 1)
-
-    buildRow size row col
-      | col > size = ""
-      | (row + col) % 2 == 0 =
-          "*" ++ buildRow size row (col + 1)
-      | otherwise =
-          " " ++ buildRow size row (col + 1)
-
-    unlines' []     = ""
-    unlines' (x:xs) = x ++ "\n" ++ unlines' xs
-    
--- Tests:
--- checkerboard 8
-
-drawSquare n =
-  putStr (squareString n)
-  where
-    replicateChar k c
-      | k <= 0    = ""
-      | otherwise = c : replicateChar (k - 1) c
-
-    unlines' []     = ""
-    unlines' (x:xs) = x ++ "\n" ++ unlines' xs
-
-    topRow =
-      replicateChar n '*'
-
-    middleRow =
-      "*" ++ replicateChar (n - 2) ' ' ++ "*"
-
-    buildMiddle k
-      | k <= 0    = []
-      | otherwise = middleRow : buildMiddle (k - 1)
-
-    squareString k
-      | k <= 0    = ""
-      | k == 1    = "*\n"
-      | otherwise =
-          unlines' (topRow : buildMiddle (k - 2) ++ [topRow])
-          
--- Tests:
--- drawSquare 10
-
-=== Mandelbrot ===
-mandelbrot =
-  putStr (render (-30) 10 (-12) 12)
-  where
-    maxIter = 20
-    scale = 20
-    radius2 = 4 * scale * scale
-
-    render xMin xMax yMin yMax
-      | yMin > yMax = ""
-      | otherwise = row xMin xMax yMin ++ "\n" ++ render xMin xMax (yMin + 1) yMax
-
-    row x xMax y
-      | x > xMax = ""
-      | otherwise = charFor (mandel 0 0 0 cx cy) ++ row (x + 1) xMax y
-      where
-        cx = div (x * scale) 20
-        cy = div (y * scale) 20
-
-    mandel iter zx zy cx cy
-      | iter >= maxIter = iter
-      | zx*zx + zy*zy > radius2 = iter
-      | otherwise = mandel (iter + 1) zx2 zy2 cx cy
-      where
-        zx2 = div (zx*zx - zy*zy) scale + cx
-        zy2 = div (2 * zx * zy) scale + cy
-
-    charFor n
-      | n >= maxIter = "# "
-      | n > (div (maxIter * 3) 4) = "* "
-      | n > (div maxIter 2) = "+ "
-      | n > (div maxIter 4) = ". "
-      | otherwise = "  "
-
---- Test
---- mandelbrot
-
---- Test
---- mandelbrot
-
-
-=== Trigonometry ===
-factorial 0 = 1
-factorial n = n * factorial (n - 1)
-
-power x 0 = 1
-power x n = x * power x (n - 1)
-
-pi = 3.141592654
-
-abs x
-  | x < 0  = -x
-  | x >= 0 = x
-
--- sign: 1, -1, 1, -1, ...
-sign n
-  | mod n 2 == 0 = 1
-  | otherwise = -1
-
--- nth term of Taylor series for sin(x)
-sinTerm x n = sign n * power x (2*n + 1) / factorial (2*n + 1)
-
-sinHelper x n acc
-  | abs (sinTerm x n) < 1e-12 = acc
-  | otherwise = sinHelper x (n + 1) (acc + sinTerm x n)
-
-mySin x = sinHelper x 0 0
-
--- nth term of Taylor series for cos(x)
-cosTerm x n = sign n * power x (2*n) / factorial (2*n)
-
-cosHelper x n acc
-  | abs (cosTerm x n) < 1e-12 = acc
-  | otherwise = cosHelper x (n + 1) (acc + cosTerm x n)
-
-myCos x = cosHelper x 0 0
-
-myTan x = (mySin x) / (myCos x)
-
--- try mySin (pi/6) etc
+### Text & Data Processing ###
 
 === String Processing - RLE Compression ===
 -- Run-Length Encoding: compress strings by counting consecutive characters
@@ -900,30 +984,49 @@ codeFor (pair:pairs) ww nn
 -- → [0,3,1,2,0,4,0,5,1,2,0,6]
 -- "the" (4×) = 0, "sat" (2×) = 1, "on" (2×) = 2, others get higher codes
 
-=== Newton's Method - Square Root ===
--- Compute square root using Newton's method
--- Iteratively improves guess until close enough
+###
 
--- Helper: absolute value
-abs n
-  | n < 0     = -n
-  | otherwise = n
+### Maths & Numerical Methods ###
 
--- Square root function
-sqrt n
-  | n < 0     = error "Cannot compute square root of negative number"
-  | n == 0    = 0
-  | otherwise = sqrtHelper n 1.0
+=== Trigonometry ===
+factorial 0 = 1
+factorial n = n * factorial (n - 1)
 
-sqrtHelper n guess
-  | abs (guess * guess - n) < 0.0001 = guess
-  | otherwise                         = sqrtHelper n ((guess + n / guess) / 2)
+power x 0 = 1
+power x n = x * power x (n - 1)
 
--- Tests:
--- sqrt 16     → 4.0
--- sqrt 25     → 5.0
--- sqrt 2      → 1.414...
--- sqrt 100    → 10.0
+pi = 3.141592654
+
+abs x
+  | x < 0  = -x
+  | x >= 0 = x
+
+-- sign: 1, -1, 1, -1, ...
+sign n
+  | mod n 2 == 0 = 1
+  | otherwise = -1
+
+-- nth term of Taylor series for sin(x)
+sinTerm x n = sign n * power x (2*n + 1) / factorial (2*n + 1)
+
+sinHelper x n acc
+  | abs (sinTerm x n) < 1e-12 = acc
+  | otherwise = sinHelper x (n + 1) (acc + sinTerm x n)
+
+mySin x = sinHelper x 0 0
+
+-- nth term of Taylor series for cos(x)
+cosTerm x n = sign n * power x (2*n) / factorial (2*n)
+
+cosHelper x n acc
+  | abs (cosTerm x n) < 1e-12 = acc
+  | otherwise = cosHelper x (n + 1) (acc + cosTerm x n)
+
+myCos x = cosHelper x 0 0
+
+myTan x = (mySin x) / (myCos x)
+
+-- try mySin (pi/6) etc
 
 === Polynomial Calculus - Differentiation & Integration ===
 -- Polynomials represented as lists of coefficients [a0, a1, a2, ...]
@@ -1022,206 +1125,126 @@ polyDerivativeN n poly = polyDerivativeN (n - 1) (polyDerivative poly)
 -- polyDegree [5]                            → 0  (constant)
 -- polyDegree [1, 0, 0, 0, 2]                → 4  (degree 4)
 
-=== Sudoku Validator ===
--- Validate a Sudoku board (9x9 grid)
--- Board is a list of 9 rows, each row is a list of 9 numbers (1-9)
+=== Newton's Method - Square Root ===
+-- Compute square root using Newton's method
+-- Iteratively improves guess until close enough
 
--- Check if element is in list
-contains e [] = False
-contains e (x:xs)
-  | e == x    = True
-  | otherwise = contains e xs
+-- Helper: absolute value
+abs n
+  | n < 0     = -n
+  | otherwise = n
 
--- Check if a group has no duplicates and all values 1-9
-isValidGroup [] = True
-isValidGroup (x:xs)
-  | x < 1 || x > 9 = False
-  | contains x xs  = False
-  | otherwise      = isValidGroup xs
+-- Square root function
+sqrt n
+  | n < 0     = error "Cannot compute square root of negative number"
+  | n == 0    = 0
+  | otherwise = sqrtHelper n 1.0
 
--- Get column n from the board
-getColumn n board = [row !! n | row <- board]
-
--- Get all 9 columns
-getColumns board = [getColumn i board | i <- [0..8]]
-
--- Get a 3x3 box starting at row r, column c
-getBox r c board = [board !! (r+i) !! (c+j) | i <- [0..2], j <- [0..2]]
-
--- Get all 9 boxes
-getBoxes board = [getBox r c board | r <- [0,3,6], c <- [0,3,6]]
-
--- Check if all groups in a list are valid
-allValid [] = True
-allValid (g:gs) = isValidGroup g && allValid gs
-
--- Main validation function
-validSudoku board = allValid board && allValid (getColumns board) && allValid (getBoxes board)
-
--- Example board (valid)
-board = [[5,3,4,6,7,8,9,1,2],
-         [6,7,2,1,9,5,3,4,8],
-         [1,9,8,3,4,2,5,6,7],
-         [8,5,9,7,6,1,4,2,3],
-         [4,2,6,8,5,3,7,9,1],
-         [7,1,3,9,2,4,8,5,6],
-         [9,6,1,5,3,7,2,8,4],
-         [2,8,7,4,1,9,6,3,5],
-         [3,4,5,2,8,6,1,7,9]]
-
--- Invalid board (duplicate 5 in first row)
-badBoard = [[5,3,4,6,7,8,9,1,5],
-            [6,7,2,1,9,5,3,4,8],
-            [1,9,8,3,4,2,5,6,7],
-            [8,5,9,7,6,1,4,2,3],
-            [4,2,6,8,5,3,7,9,1],
-            [7,1,3,9,2,4,8,5,6],
-            [9,6,1,5,3,7,2,8,4],
-            [2,8,7,4,1,9,6,3,5],
-            [3,4,5,2,8,6,1,7,9]]
+sqrtHelper n guess
+  | abs (guess * guess - n) < 0.0001 = guess
+  | otherwise                         = sqrtHelper n ((guess + n / guess) / 2)
 
 -- Tests:
--- validSudoku board     → True
--- validSudoku badBoard  → False
+-- sqrt 16     → 4.0
+-- sqrt 25     → 5.0
+-- sqrt 2      → 1.414...
+-- sqrt 100    → 10.0
 
-=== Pascal's Triangle ===
--- Generate rows of Pascal's Triangle as strings with spaces
+###
 
--- zipWith applies a function to pairs of elements
-zipWith f [] _ = []
-zipWith f _ [] = []
-zipWith f (x:xs) (y:ys) = f x y : zipWith f xs ys
+### Graphics & ASCII Art ###
 
--- Generate next row from current row
-nextRow row = zipWith (+) ([0] ++ row) (row ++ [0])
+=== ASCII Art ===
 
--- Generate the nth row (0-indexed)
-pascalRow 0 = [1]
-pascalRow n = nextRow (pascalRow (n-1))
+checkerboard n =
+  putStr (boardString n)
+  where
+    boardString k
+      | k <= 0    = ""
+      | otherwise = unlines' (buildRows k 1)
 
--- Join list of numbers with spaces
-joinWithSpaces [] = ""
-joinWithSpaces [x] = show x
-joinWithSpaces (x:xs) = show x ++ " " ++ joinWithSpaces xs
+    buildRows size row
+      | row > size = []
+      | otherwise  =
+          buildRow size row 1 : buildRows size (row + 1)
 
--- Generate all rows from 0 to n
-pascalRows n = [pascalRow i | i <- [0..n]]
+    buildRow size row col
+      | col > size = ""
+      | (row + col) % 2 == 0 =
+          "*" ++ buildRow size row (col + 1)
+      | otherwise =
+          " " ++ buildRow size row (col + 1)
 
--- Display n rows as strings with spaces
-pascal n = map joinWithSpaces (pascalRows n)
-
+    unlines' []     = ""
+    unlines' (x:xs) = x ++ "\n" ++ unlines' xs
+    
 -- Tests:
--- pascal 0   → ["1"]
--- pascal 1   → ["1","1 1"]
--- pascal 4   → ["1","1 1","1 2 1","1 3 3 1","1 4 6 4 1"]
--- pascal 6   → ["1","1 1","1 2 1","1 3 3 1","1 4 6 4 1","1 5 10 10 5 1","1 6 15 20 15 6 1"]
+-- checkerboard 8
 
-=== Sudoku Solver ===
-{- Solves a 9x9 Sudoku puzzle using backtracking
-   Board representation: 0 represents empty cells, 1-9 are filled cells
+drawSquare n =
+  putStr (squareString n)
+  where
+    replicateChar k c
+      | k <= 0    = ""
+      | otherwise = c : replicateChar (k - 1) c
 
-   PERFORMANCE NOTE: This algorithm has exponential time complexity O(k^n)
-   where k=9 (possible values) and n=number of empty cells.
-   Backtracking with constraint checking makes it practical for typical puzzles.
-   The key optimisation is avoiding redundant computation by computing each
-   recursive solve() only once per attempt. -}
+    unlines' []     = ""
+    unlines' (x:xs) = x ++ "\n" ++ unlines' xs
 
--- Helper: Check if element is in list
-elem x [] = False
-elem x (y:ys) = if x == y then True else elem x ys
+    topRow =
+      replicateChar n '*'
 
--- Helper: Get element at position (row, col) in 2D list
-getAt board row col = (board !! row) !! col
+    middleRow =
+      "*" ++ replicateChar (n - 2) ' ' ++ "*"
 
--- Helper: Set element at position in 2D list
-setAt board row col val = [if r == row then [if c == col then val else getAt board r c | c <- [0..8]] else board !! r | r <- [0..8]]
+    buildMiddle k
+      | k <= 0    = []
+      | otherwise = middleRow : buildMiddle (k - 1)
 
--- Helper: Get all numbers in a row
-getRow board row = board !! row
-
--- Helper: Get all numbers in a column
-getCol board col = [row !! col | row <- board]
-
--- Helper: Get the 3x3 box containing position (row, col)
-getBox board row col = [board !! r !! c | r <- [(boxRow row)..(boxRow row)+2], c <- [(boxCol col)..(boxCol col)+2]]
-boxRow row = (div row 3) * 3
-boxCol col = (div col 3) * 3
-
-{- Tuple accessors -}
-fst (x, _) = x
-snd (_, y) = y
-
-{- Check if a number is valid at a position -}
-isValid board row col num = not (elem num (getRow board row)) && not (elem num (getCol board col)) && not (elem num (getBox board row col))
-
-{- Find first empty cell (returns (-1,-1) if none) -}
-findEmpty board = findEmptyHelper board 0 0
-
-findEmptyHelper board 9 _ = (-1, -1)
-findEmptyHelper board row 9 = findEmptyHelper board (row + 1) 0
-findEmptyHelper board row col
-  | getAt board row col == 0 = (row, col)
-  | otherwise = findEmptyHelper board row (col + 1)
-
-{- Check if position is (-1,-1) -}
-isNoEmpty pos = fst pos == -1 && snd pos == -1
-
-{- Try to solve from current position -}
-solve board
-  | isNoEmpty (findEmpty board) = board
-  | otherwise = solveFrom board (findEmpty board)
-
-{- Solve from a known empty position -}
-solveFrom board pos = tryNumbers board (fst pos) (snd pos) [1..9]
-
-{- Try each number in the list -}
-tryNumbers board _ _ [] = []
-tryNumbers board row col (n:ns)
-  | not (isValid board row col n) = tryNumbers board row col ns
-  | otherwise = checkSolution (solve (setAt board row col n)) board row col ns
-
-{- Check if solution worked, backtrack if not -}
-checkSolution result board row col ns
-  | null result = tryNumbers board row col ns
-  | otherwise = result
-
-{- Almost-solved puzzle (only 1 empty cell - solves instantly) -}
-simplePuzzle = [[5,3,4,6,7,8,9,1,2],
-                [6,7,2,1,9,5,3,4,8],
-                [1,9,8,3,4,2,5,6,7],
-                [8,5,9,7,6,1,4,2,3],
-                [4,2,6,8,5,3,7,9,1],
-                [7,1,3,9,2,4,8,5,6],
-                [9,6,1,5,3,7,2,8,4],
-                [2,8,7,4,1,9,6,3,5],
-                [3,4,5,2,8,6,1,7,0]]
-
-{- Distributed blanks (10 empty cells - solves quickly!)
-   Interestingly, this can solve FASTER than puzzles with fewer blanks
-   because early constraints prune the search tree more effectively -}
-easyPuzzle = [[5,3,4,6,0,8,9,1,2],
-              [6,7,2,1,0,5,3,4,8],
-              [1,9,8,0,4,2,5,6,7],
-              [8,5,9,7,6,1,4,2,3],
-              [4,2,6,8,5,3,7,9,0],
-              [7,1,3,9,2,4,8,0,0],
-              [9,6,1,5,0,7,2,8,0],
-              [2,8,7,4,1,9,6,3,0],
-              [3,4,5,0,8,6,1,7,9]]
-
-{- More challenging (typical puzzle - may be too slow) -}
-mediumPuzzle = [[5,3,0,0,7,0,0,0,0],
-                [6,0,0,1,9,5,0,0,0],
-                [0,9,8,0,0,0,0,6,0],
-                [8,0,0,0,6,0,0,0,3],
-                [4,0,0,8,0,3,0,0,1],
-                [7,0,0,0,2,0,0,0,6],
-                [0,6,0,0,0,0,2,8,0],
-                [0,0,0,4,1,9,0,0,5],
-                [0,0,0,0,8,0,0,7,9]]
-
+    squareString k
+      | k <= 0    = ""
+      | k == 1    = "*\n"
+      | otherwise =
+          unlines' (topRow : buildMiddle (k - 2) ++ [topRow])
+          
 -- Tests:
--- solve simplePuzzle  → (instant - 1 empty cell)
--- solve easyPuzzle    → (fast - 10 empty cells, well-distributed)  
--- solve mediumPuzzle  → (may timeout - 50+ empty cells clustered together)
--- getAt (solve simplePuzzle) 8 8  → 9
+-- drawSquare 10
+
+=== Mandelbrot ===
+mandelbrot =
+  putStr (render (-30) 10 (-12) 12)
+  where
+    maxIter = 60  -- reduce this number if you get a timeout
+    scale = 20
+    radius2 = 4 * scale * scale
+
+    render xMin xMax yMin yMax
+      | yMin > yMax = ""
+      | otherwise = row xMin xMax yMin ++ "\n" ++ render xMin xMax (yMin + 1) yMax
+
+    row x xMax y
+      | x > xMax = ""
+      | otherwise = charFor (mandel 0 0 0 cx cy) ++ row (x + 1) xMax y
+      where
+        cx = div (x * scale) 20
+        cy = div (y * scale) 20
+
+    mandel iter zx zy cx cy
+      | iter >= maxIter = iter
+      | zx*zx + zy*zy > radius2 = iter
+      | otherwise = mandel (iter + 1) zx2 zy2 cx cy
+      where
+        zx2 = div (zx*zx - zy*zy) scale + cx
+        zy2 = div (2 * zx * zy) scale + cy
+
+    charFor n
+      | n >= maxIter = "# "
+      | n > (div (maxIter * 3) 4) = "* "
+      | n > (div maxIter 2) = "+ "
+      | n > (div maxIter 4) = ". "
+      | otherwise = "  "
+
+--- Test
+--- mandelbrot
+
+###

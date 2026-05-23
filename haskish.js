@@ -1142,7 +1142,9 @@ class HaskishInterpreter {
                 const raw = block[i];
                 const t = raw.trim();
                 if (!t || t.startsWith('--')) continue;
-                rawBindingLines.push({ trimmed: t, indent: raw.match(/^(\s*)/)[1].length });
+                const stripped = this.stripComments(t).trim();
+                if (!stripped) continue;
+                rawBindingLines.push({ trimmed: stripped, indent: raw.match(/^(\s*)/)[1].length });
             }
 
             // Merge using indentation-aware logic (also handles nested 'where' blocks)

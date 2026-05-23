@@ -97,6 +97,10 @@ function closeMenuFunc() {
     if (examplesToggle && examplesSubmenu) {
         examplesToggle.classList.remove('expanded');
         examplesSubmenu.classList.remove('expanded');
+        const categoryToggles = examplesSubmenu.querySelectorAll('.examples-category-toggle');
+        const nestedSubmenus = examplesSubmenu.querySelectorAll('.examples-items-submenu');
+        categoryToggles.forEach(el => el.classList.remove('expanded'));
+        nestedSubmenus.forEach(el => el.classList.remove('expanded'));
     }
     
     // Collapse the text size submenu when closing the menu
@@ -547,6 +551,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let exampleSections = {};
     
+    function collapseAllExampleCategories(except = null) {
+        const groups = examplesSubmenu.querySelectorAll('.examples-category');
+        groups.forEach(group => {
+            if (except && group === except) return;
+            const toggle = group.querySelector('.examples-category-toggle');
+            const nested = group.querySelector('.examples-items-submenu');
+            if (toggle) toggle.classList.remove('expanded');
+            if (nested) nested.classList.remove('expanded');
+        });
+    }
+
     // Load and parse examples file
     async function loadExamplesFile() {
         try {
@@ -555,35 +570,111 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Failed to load examples');
             }
             const text = await response.text();
-            
-            // Parse sections separated by === markers (handle both \n and \r\n)
-            const sectionRegex = /===\s*(.+?)\s*===[\r\n]+/g;
-            const sections = [];
-            let match;
-            let lastIndex = 0;
-            
-            while ((match = sectionRegex.exec(text)) !== null) {
-                const sectionName = match[1].trim();
-                const startIndex = match.index + match[0].length;
-                
-                // Find the next section or end of file
-                const nextMatch = sectionRegex.exec(text);
-                const endIndex = nextMatch ? nextMatch.index : text.length;
-                
-                // Reset regex for next iteration
-                sectionRegex.lastIndex = endIndex;
-                
-                const sectionContent = text.substring(startIndex, endIndex).trim();
-                exampleSections[sectionName] = sectionContent;
+            const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+            exampleSections = {};
+            examplesSubmenu.innerHTML = '';
+
+            const categories = new Map();
+            let currentCategory = null;
+            let currentSectionName = null;
+            let currentSectionLines = [];
+
+            const ensureCategory = (name) => {
+                if (!categories.has(name)) categories.set(name, []);
+            };
+
+            const flushSection = () => {
+                if (!currentSectionName || !currentCategory) return;
+                const sectionContent = currentSectionLines.join('\n').trim();
+                exampleSections[currentSectionName] = sectionContent;
+                categories.get(currentCategory).push({ name: currentSectionName, content: sectionContent });
+                currentSectionName = null;
+                currentSectionLines = [];
+            };
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+
+                // Category end marker
+                if (/^###\s*$/.test(trimmed)) {
+                    flushSection();
+                    currentCategory = null;
+                    continue;
+                }
+
+                // Category start marker: ### Category Name
+                // Also tolerates legacy trailing hashes: ### Category Name ###
+                const categoryMatch = trimmed.match(/^###\s*(.+?)\s*(?:###\s*)?$/);
+                if (categoryMatch) {
+                    flushSection();
+                    currentCategory = categoryMatch[1].trim();
+                    ensureCategory(currentCategory);
+                    continue;
+                }
+
+                // Example section marker: === Example Name ===
+                const sectionMatch = trimmed.match(/^===\s*(.+?)\s*===$/);
+                if (sectionMatch) {
+                    flushSection();
+                    if (!currentCategory) {
+                        throw new Error(`Example section '${sectionMatch[1].trim()}' must be inside a category (### Category ... ###)`);
+                    }
+                    currentSectionName = sectionMatch[1].trim();
+                    currentSectionLines = [];
+                    continue;
+                }
+
+                if (currentSectionName) {
+                    currentSectionLines.push(line);
+                }
             }
-            
-            // Populate submenu with section names
-            Object.keys(exampleSections).forEach(sectionName => {
-                const button = document.createElement('button');
-                button.className = 'submenu-item';
-                button.textContent = sectionName;
-                button.addEventListener('click', () => loadExampleSection(sectionName));
-                examplesSubmenu.appendChild(button);
+
+            flushSection();
+
+            // Build nested accordion: category -> section items
+            categories.forEach((items, categoryName) => {
+                if (!items || items.length === 0) return;
+
+                const categoryGroup = document.createElement('div');
+                categoryGroup.className = 'examples-category';
+
+                const categoryButton = document.createElement('button');
+                categoryButton.className = 'submenu-item examples-category-toggle';
+
+                const label = document.createElement('span');
+                label.className = 'examples-category-label';
+                label.textContent = categoryName;
+
+                const arrow = document.createElement('span');
+                arrow.className = 'examples-cat-arrow';
+                arrow.textContent = '>';
+
+                categoryButton.appendChild(label);
+                categoryButton.appendChild(arrow);
+
+                const itemsSubmenu = document.createElement('div');
+                itemsSubmenu.className = 'submenu examples-items-submenu';
+
+                for (const item of items) {
+                    const button = document.createElement('button');
+                    button.className = 'submenu-item submenu-item-nested';
+                    button.textContent = item.name;
+                    button.addEventListener('click', () => loadExampleSection(item.name));
+                    itemsSubmenu.appendChild(button);
+                }
+
+                categoryButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpening = !itemsSubmenu.classList.contains('expanded');
+                    collapseAllExampleCategories(categoryGroup);
+                    categoryButton.classList.toggle('expanded', isOpening);
+                    itemsSubmenu.classList.toggle('expanded', isOpening);
+                });
+
+                categoryGroup.appendChild(categoryButton);
+                categoryGroup.appendChild(itemsSubmenu);
+                examplesSubmenu.appendChild(categoryGroup);
             });
         } catch (error) {
             console.error('Error loading examples:', error);
@@ -599,8 +690,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Toggle examples submenu
     examplesToggle.addEventListener('click', () => {
-        examplesToggle.classList.toggle('expanded');
-        examplesSubmenu.classList.toggle('expanded');
+        const willExpand = !examplesSubmenu.classList.contains('expanded');
+        examplesToggle.classList.toggle('expanded', willExpand);
+        examplesSubmenu.classList.toggle('expanded', willExpand);
+        if (!willExpand) {
+            collapseAllExampleCategories();
+        }
     });
     
     // Load a specific example section
