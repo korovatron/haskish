@@ -337,6 +337,64 @@ case Just 10 of
             name: 'data declaration only in repl',
             input: 'data Boolish = Yep | Nope',
             expected: 'Registered data declaration: data Boolish = Yep | Nope'
+        },
+        {
+            name: 'multiline data declaration with pipe continuations',
+            input: `data Boolish = Yep
+  | Nope
+
+case Yep of
+  Yep  -> 1
+  Nope -> 0`,
+            expected: '1'
+                },
+                {
+                        name: 'multiline data declaration with equals continuation',
+                        input: `data Expr
+    = Lit Int
+    | Add Expr Expr
+    | Mul Expr Expr
+    | Var String
+    | Let String Expr Expr
+
+case Var "x" of
+    Var _ -> 1
+    _ -> 0`,
+                        expected: '1'
+                },
+                {
+                        name: 'interpreter-style constructor stress test',
+                        input: `data Expr
+    = Lit Int
+    | Add Expr Expr
+    | Mul Expr Expr
+    | Var String
+    | Let String Expr Expr
+data Env = Empty | Bind String Int Env
+
+lookupEnv name env =
+    case env of
+        Empty -> error "unbound"
+        Bind k v rest ->
+            if k == name then v else lookupEnv name rest
+
+eval expr env =
+    case expr of
+        Lit n        -> n
+        Add a b      -> eval a env + eval b env
+        Mul a b      -> eval a env * eval b env
+        Var x        -> lookupEnv x env
+        Let x e body ->
+            let v = eval e env
+            in eval body (Bind x v env)
+
+program =
+    Let "x" (Lit 10)
+        (Let "y" (Mul (Var "x") (Lit 2))
+            (Add (Var "x") (Var "y")))
+
+eval program Empty`,
+                        expected: '30'
         }
     ];
 

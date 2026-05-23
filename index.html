@@ -178,10 +178,13 @@
                 </button>
             </div>
             <div class="about-content">
-                <p><strong>Haskish</strong> is a no-fuss Haskell-style functional programming playground for students, teachers, and the curious. Open your browser and start exploring: no installation required. Covers AQA A Level Computer Science (4.12) and installs as a PWA for offline use.</p>
-                <p>Haskish is a strict, expression-oriented, Haskell-flavoured language with eager evaluation, short-circuit if/then/else, and lazy built-in ranges (<code>[n..]</code>, <code>[n,m..]</code>). It supports first-class functions, currying and partial application, function composition, backtick infix application, multi-line lambdas, closures, recursion and mutual recursion, guards, where clauses, and operator sections.</p>
-                <p>Tuples, tuple destructuring, and list comprehensions are also supported. Pattern matching covers multi-case function equations, cons patterns like <code>x:xs</code>, wildcards, and literal patterns for numbers, booleans, tuples, and strings. Strings are lists of characters (<code>String = [Char]</code>), so <code>map</code>, <code>filter</code>, and comprehensions work uniformly over both. Lists built with <code>:</code> evaluate both head and tail immediately, so user-defined infinite lists don't work, but syntactic ranges are lazy infinite sequences that cooperate with functions like <code>take</code>. The result is a compact, predictable language: strict by default, lazy only where explicitly designed, and expressive enough for real functional patterns without the full complexity of Haskell.</p>
-                <p><strong>Note:</strong> Type signatures (e.g. <code>add :: Int -> Int -> Int</code>) are accepted but not enforced; they are ignored at runtime, so real Haskell code snippets can be pasted in without modification.</p>
+                <p><strong>Haskish</strong> is a no-fuss Haskell-style functional programming playground for students, teachers, and curious professionals. Open your browser and start exploring, no installation required. It covers AQA A Level Computer Science 4.12 and also works well as a compact REPL for trying out real functional ideas.</p>
+                <ul>
+                    <li><strong>Core language:</strong> strict evaluation, <code>if condition then expr1 else expr2</code>, <code>let/in</code>, <code>case/of</code>, lazy built-in ranges (<code>[n..]</code>, <code>[n,m..]</code>), first-class functions, currying, partial application, composition, backtick infix application, multi-line lambdas, closures, recursion, mutual recursion, guards, where clauses, and operator sections.</li>
+                    <li><strong>Data and patterns:</strong> tuples, tuple destructuring, algebraic-style data declarations and constructors, list comprehensions, multi-case function equations, cons patterns like <code>x:xs</code>, wildcards, nested constructor and AST shapes, and literal patterns for numbers, booleans, tuples, and strings.</li>
+                    <li><strong>Strings and lists:</strong> strings are lists of characters (<code>String = [Char]</code>), so <code>map</code>, <code>filter</code>, and comprehensions work uniformly over both. Lists built with <code>:</code> evaluate both head and tail immediately, so user-defined infinite lists do not work, but syntactic ranges are lazy infinite sequences that cooperate with functions like <code>take</code>.</li>
+                </ul>
+                <p><strong>Note:</strong> Type signatures such as <code>add :: Int -> Int -> Int</code> are accepted but not enforced. Data declarations are parsed for constructors, but full Haskell typing and module features are not implemented. Real Haskell code snippets can still be pasted in without modification for the supported subset.</p>
                   <p class="about-footer">Created by Neil Kendall © 2025-2026<br>More @ <a href="https://www.korovatron.co.uk/" target="_blank">www.korovatron.co.uk</a><br><a href="mailto:unimatrix@korovatron.co.uk">Contact me</a><br><span id="versionDisplay"></span></p>
             </div>
         </div>
@@ -226,6 +229,13 @@
             </div>
             <div class="about-content builtins-content">
                 <p>The built-in library is intentionally minimal: building standard functions yourself is one of the best ways to learn functional programming. If you prefer, a richer set of Haskell Prelude functions is available by <a href="data/Prelude.hs" id="preludeLink" title="Load Prelude.hs into the function definitions panel">clicking here</a> to load them into the function panel.</p>
+
+                <h3>Language Features</h3>
+                <ul>
+                    <li><code>let ... in ...</code> - Local bindings inside expressions, including multiline layout-sensitive forms</li>
+                    <li><code>case ... of</code> - Pattern matching with constructors, tuples, lists, wildcards, and guards</li>
+                    <li><code>data Type = Ctor ...</code> - Algebraic-style data declarations with constructor values for ASTs and interpreters</li>
+                </ul>
                 
                 <h3>Pattern Matching</h3>
                 <ul>

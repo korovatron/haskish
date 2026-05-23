@@ -830,7 +830,10 @@ class HaskishInterpreter {
     }
 
     registerDataDeclaration(declarationLine) {
-        const match = declarationLine.trim().match(/^data\s+[A-Z][a-zA-Z0-9_']*(?:\s+[a-z][a-zA-Z0-9_']*)*\s*=\s*(.+)$/);
+        const normalizedDecl = declarationLine
+            .replace(new RegExp(`\s*${HASKISH_NEWLINE_MARKER}\s*`, 'g'), ' ')
+            .trim();
+        const match = normalizedDecl.match(/^data\s+[A-Z][a-zA-Z0-9_']*(?:\s+[a-z][a-zA-Z0-9_']*)*\s*=\s*(.+)$/);
         if (!match) return false;
 
         const rhs = match[1].trim();
@@ -2418,6 +2421,7 @@ class HaskishInterpreter {
         let currentParamsLineNumber = null;
         let currentGuards = [];
         let currentWhereRaw = null; // where bindings for the current guard-style case
+        let pendingDataDeclaration = null;
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
@@ -2426,13 +2430,28 @@ class HaskishInterpreter {
             line = line.trim();
             if (!line) continue;
 
+            if (pendingDataDeclaration && line.startsWith('|')) {
+                pendingDataDeclaration += ' | ' + line.replace(/^\|\s*/, '').trim();
+                continue;
+            }
+
+            if (pendingDataDeclaration && line.startsWith('=')) {
+                pendingDataDeclaration += ' = ' + line.replace(/^=\s*/, '').trim();
+                continue;
+            }
+
+            if (pendingDataDeclaration && !line.startsWith('|')) {
+                this.registerDataDeclaration(pendingDataDeclaration);
+                pendingDataDeclaration = null;
+            }
+
             // Skip type signature lines like: funcName :: Type -> Type
             if (/^\w+'*\s*::/.test(line)) continue;
 
             // Accept algebraic data declarations as no-op metadata for now.
             // Constructors are handled dynamically in expression evaluation.
             if (/^data\b/.test(line)) {
-                this.registerDataDeclaration(line);
+                pendingDataDeclaration = line;
                 continue;
             }
 
@@ -2776,6 +2795,11 @@ class HaskishInterpreter {
 
             // If we reach here, the line doesn't match any valid pattern
             throw new Error(`Invalid syntax on line ${lineNumber}: "${originalLine}"`);
+        }
+
+        if (pendingDataDeclaration) {
+            this.registerDataDeclaration(pendingDataDeclaration);
+            pendingDataDeclaration = null;
         }
 
         // Save any pending guards
@@ -5995,18 +6019,39 @@ class HaskishInterpreter {
         const lines = expr.split(/\r?\n/);
         const remainingLines = [];
         const declarations = [];
+        let currentDeclaration = null;
 
         for (const line of lines) {
             const trimmed = line.trim();
+
+            if (currentDeclaration && /^\|/.test(trimmed)) {
+                currentDeclaration += ' | ' + trimmed.replace(/^\|\s*/, '').trim();
+                continue;
+            }
+
+            if (currentDeclaration && /^=/.test(trimmed)) {
+                currentDeclaration += ' = ' + trimmed.replace(/^=\s*/, '').trim();
+                continue;
+            }
+
+            if (currentDeclaration) {
+                declarations.push(currentDeclaration);
+                currentDeclaration = null;
+            }
+
             if (trimmed.startsWith('--')) {
                 remainingLines.push(line);
                 continue;
             }
             if (/^data\b/.test(trimmed)) {
-                declarations.push(trimmed);
+                currentDeclaration = trimmed;
                 continue;
             }
             remainingLines.push(line);
+        }
+
+        if (currentDeclaration) {
+            declarations.push(currentDeclaration);
         }
 
         return {
