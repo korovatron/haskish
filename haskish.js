@@ -1099,8 +1099,10 @@ class HaskishInterpreter {
                     }
 
                     const isContinuation =
+                        /(?<![=<>!\/])=\s*$/.test(merged[merged.length - 1].trim()) ||
                         line.startsWith('|') ||
                         line.startsWith('where') ||
+                        (this.findTopLevelArrow(line) !== -1 && this.findWhereAssignmentEquals(line) === -1) ||
                         line.startsWith('=') ||
                         /^([+*^]|\+\+|&&|\|\||:[^:]|\/(?![\/=]))/.test(line);
 
@@ -1112,6 +1114,9 @@ class HaskishInterpreter {
                             } else {
                                 merged[merged.length - 1] += ' __HASKISH_WHERE__ ' + whereTail;
                             }
+                        } else if (this.findTopLevelArrow(line) !== -1 && this.findWhereAssignmentEquals(line) === -1) {
+                            // Preserve layout boundaries for nested case/of alternatives.
+                            merged[merged.length - 1] += ` ${HASKISH_NEWLINE_MARKER} ${line}`;
                         } else {
                             merged[merged.length - 1] += ' ' + line;
                         }
@@ -1142,6 +1147,225 @@ class HaskishInterpreter {
         }
 
         return null;
+    }
+
+    // Find the matching top-level 'of' for an expression that starts with 'case'.
+    // Returns { caseStart, ofStart } or null if expr is not a case-expression.
+    // Supports nested case/of by tracking case-depth at bracket depth 0.
+    findTopLevelCaseOf(expr) {
+        const isWordChar = (ch) => /[a-zA-Z0-9_']/.test(ch || '');
+        const isStandaloneWordAt = (index, word) => {
+            if (expr.slice(index, index + word.length) !== word) return false;
+            const before = index > 0 ? expr[index - 1] : ' ';
+            const after = index + word.length < expr.length ? expr[index + word.length] : ' ';
+            return !isWordChar(before) && !isWordChar(after);
+        };
+
+        const caseStart = expr.search(/\bcase\b/);
+        if (caseStart !== 0) return null;
+
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+        let caseDepth = 0;
+
+        for (let i = 0; i < expr.length; i++) {
+            const ch = expr[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(expr[i - 1]);
+
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || expr[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                continue;
+            }
+            if (inString) continue;
+
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (depth !== 0) continue;
+
+            if (isStandaloneWordAt(i, 'case')) {
+                caseDepth++;
+                i += 3;
+                continue;
+            }
+
+            if (isStandaloneWordAt(i, 'of') && caseDepth > 0) {
+                caseDepth--;
+                if (caseDepth === 0) {
+                    return { caseStart: 0, ofStart: i };
+                }
+                i += 1;
+            }
+        }
+
+        return { caseStart: 0, ofStart: -1 };
+    }
+
+    // Find top-level branch arrow (->) in a case alternative string.
+    findTopLevelArrow(str) {
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+
+        for (let i = 0; i < str.length - 1; i++) {
+            const ch = str[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                continue;
+            }
+            if (inString) continue;
+
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+
+            if (depth === 0 && str[i] === '-' && str[i + 1] === '>') {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // Find top-level guard separator (|) before the branch arrow in a case alternative.
+    // Skips logical || and respects bracket/string nesting.
+    findTopLevelGuardPipe(str) {
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(str[i - 1]);
+
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || str[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                continue;
+            }
+            if (inString) continue;
+
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+
+            if (depth === 0 && ch === '|' && (i === 0 || str[i - 1] !== '|') && (i + 1 >= str.length || str[i + 1] !== '|')) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // Parse one case alternative string.
+    // Supports:
+    //   pattern -> body
+    //   pattern | condition -> body
+    //   | condition -> body          (pattern inherited from previous alternative)
+    parseCaseAlternative(alternative) {
+        const arrowIdx = this.findTopLevelArrow(alternative);
+        if (arrowIdx === -1) {
+            const hint = alternative.includes('=') ? "Use '->' (not '=') in case branches." : "Expected 'pattern -> expression'.";
+            throw new Error(`Malformed case/of expression: invalid alternative '${alternative}'. ${hint}`);
+        }
+
+        const lhs = alternative.slice(0, arrowIdx).trim();
+        const body = alternative.slice(arrowIdx + 2).trim();
+
+        if (!body) {
+            throw new Error(`Malformed case/of expression: invalid alternative '${alternative}' (expected 'pattern -> expression')`);
+        }
+
+        // Guard-only continuation line: pattern is inherited from previous branch.
+        if (lhs.startsWith('|')) {
+            const condition = lhs.slice(1).trim();
+            if (!condition) {
+                throw new Error(`Malformed case/of expression: missing guard condition in '${alternative}'`);
+            }
+            return { pattern: null, condition, body, inheritsPattern: true };
+        }
+
+        if (!lhs) {
+            throw new Error(`Malformed case/of expression: invalid alternative '${alternative}' (expected 'pattern -> expression')`);
+        }
+
+        const guardIdx = this.findTopLevelGuardPipe(lhs);
+        if (guardIdx === -1) {
+            return { pattern: lhs, condition: null, body, inheritsPattern: false };
+        }
+
+        const pattern = lhs.slice(0, guardIdx).trim();
+        const condition = lhs.slice(guardIdx + 1).trim();
+
+        if (!pattern) {
+            throw new Error(`Malformed case/of expression: missing pattern before guard in '${alternative}'`);
+        }
+        if (!condition) {
+            throw new Error(`Malformed case/of expression: missing guard condition in '${alternative}'`);
+        }
+
+        return { pattern, condition, body, inheritsPattern: false };
+    }
+
+    // Split case alternatives after the 'of' keyword.
+    // Supports semicolon-separated and layout-separated alternatives.
+    splitCaseAlternatives(alternativesStr) {
+        const semicolonParts = this.splitBySemicolon(alternativesStr)
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        if (semicolonParts.length > 1) {
+            return semicolonParts;
+        }
+
+        const hasLayoutBreaks = alternativesStr.includes(HASKISH_NEWLINE_MARKER) || /\r?\n/.test(alternativesStr);
+        if (hasLayoutBreaks) {
+            const normalized = alternativesStr.replace(new RegExp(HASKISH_NEWLINE_MARKER, 'g'), '\n');
+            const rawLines = normalized
+                .split(/\r?\n/)
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            if (rawLines.length > 1) {
+                const merged = [];
+                for (const line of rawLines) {
+                    if (merged.length === 0) {
+                        merged.push(line);
+                        continue;
+                    }
+
+                    const lineHasArrow = this.findTopLevelArrow(line) !== -1;
+                    const currentHasArrow = this.findTopLevelArrow(merged[merged.length - 1]) !== -1;
+
+                    if (lineHasArrow && currentHasArrow) {
+                        merged.push(line);
+                    } else {
+                        merged[merged.length - 1] += ` ${HASKISH_NEWLINE_MARKER} ${line}`;
+                    }
+                }
+
+                return merged;
+            }
+        }
+
+        return semicolonParts;
     }
 
     // Pre-processing pass: detect 'where' blocks and merge their binding lines
@@ -1324,11 +1548,37 @@ class HaskishInterpreter {
     extractWhere(exprStr) {
         const MARKER = ' __HASKISH_WHERE__ ';
         const markerIdx = exprStr.indexOf(MARKER);
-        if (markerIdx === -1) return { expr: exprStr, whereRaw: [] };
-        const expr = exprStr.slice(0, markerIdx).trim();
-        const whereStr = exprStr.slice(markerIdx + MARKER.length);
-        const whereRaw = whereStr.split(' __HASKISH_WSEP__ ').map(s => s.trim()).filter(Boolean);
-        return { expr, whereRaw };
+        if (markerIdx !== -1) {
+            const expr = exprStr.slice(0, markerIdx).trim();
+            const whereStr = exprStr.slice(markerIdx + MARKER.length);
+            const whereRaw = whereStr.split(' __HASKISH_WSEP__ ').map(s => s.trim()).filter(Boolean);
+            return { expr, whereRaw };
+        }
+
+        // Fallback for plain `where` in expression contexts (e.g. case alternatives).
+        const whereIdx = this.findWhereKeyword(exprStr);
+        if (whereIdx === -1) {
+            return { expr: exprStr, whereRaw: [] };
+        }
+
+        const expr = exprStr.slice(0, whereIdx).trim();
+        const whereStr = exprStr.slice(whereIdx + 5).trim();
+        if (!whereStr) {
+            return { expr, whereRaw: [] };
+        }
+
+        const semicolonParts = this.splitBySemicolon(whereStr).map(s => s.trim()).filter(Boolean);
+        if (semicolonParts.length > 1) {
+            return { expr, whereRaw: semicolonParts };
+        }
+
+        const normalizedWhere = whereStr.replace(new RegExp(HASKISH_NEWLINE_MARKER, 'g'), '\n');
+        const lines = normalizedWhere.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        if (lines.length > 1) {
+            return { expr, whereRaw: lines };
+        }
+
+        return { expr, whereRaw: semicolonParts.length > 0 ? semicolonParts : [whereStr] };
     }
 
     // Given the raw where-binding strings stored on a case object and the current
@@ -1972,7 +2222,8 @@ class HaskishInterpreter {
                 // If the next non-empty line is indented deeper than the current
                 // buffer start, it is a continuation of this logical definition
                 // (e.g. let-layout bindings, wrapped expressions).
-                if (nextNonEmptyIndent > bufferStartIndent) {
+                const isGuardLine = /^\|/.test(nextNonEmptyTrimmed);
+                if (nextNonEmptyIndent > bufferStartIndent && !isGuardLine) {
                     continue;
                 }
                 if (startsLikeContinuation && nextNonEmptyIndent >= bufferStartIndent) {
@@ -2416,8 +2667,9 @@ class HaskishInterpreter {
                 const body = caseObj.body;
                 // Must call itself
                 if (!namePattern.test(body)) return false;
-                // Must not use 'if' (could hide a non-recursive else/then branch)
+                // Must not use branching constructs that can hide non-recursive paths.
                 if (/\bif\b/.test(body)) return false;
+                if (/\bcase\b/.test(body)) return false;
                 return true;
             });
             if (allCasesUnconditionallyRecursive) {
@@ -3816,6 +4068,7 @@ class HaskishInterpreter {
         const markerRegex = new RegExp(`\\s*${HASKISH_NEWLINE_MARKER}\\s*`, 'g');
         const rawExpr = expr.trim();
         const leadingMarkerRegex = new RegExp(`^(?:\\s*${HASKISH_NEWLINE_MARKER}\\s*)+`);
+        const rawExprForCase = rawExpr.replace(leadingMarkerRegex, '').trimStart();
         const rawExprForLet = rawExpr.replace(leadingMarkerRegex, '').trimStart();
         expr = rawExpr.replace(markerRegex, ' ').trim();
 
@@ -3868,6 +4121,61 @@ class HaskishInterpreter {
         // Special handling for 'otherwise' keyword
         if (expr === 'otherwise') {
             return true;
+        }
+
+        // case/of expression
+        // Supports alternatives of the form:
+        //   pattern -> expr
+        //   pattern | guard -> expr
+        const caseOf = this.findTopLevelCaseOf(rawExprForCase);
+        if (caseOf && caseOf.caseStart === 0) {
+            if (caseOf.ofStart === -1) {
+                throw new Error("Malformed case/of expression: missing 'of'");
+            }
+
+            const scrutineeExpr = rawExprForCase.slice(4, caseOf.ofStart).trim();
+            const alternativesStr = rawExprForCase.slice(caseOf.ofStart + 2).trim();
+
+            if (!scrutineeExpr) {
+                throw new Error("Malformed case/of expression: missing expression after 'case'");
+            }
+            if (!alternativesStr) {
+                throw new Error("Malformed case/of expression: missing alternatives after 'of'");
+            }
+
+            const alternatives = this.splitCaseAlternatives(alternativesStr);
+            if (alternatives.length === 0) {
+                throw new Error("Malformed case/of expression: missing alternatives after 'of'");
+            }
+
+            const scrutineeValue = this.evaluate(scrutineeExpr);
+            let lastPattern = null;
+
+            for (const alternative of alternatives) {
+                const parsedAlt = this.parseCaseAlternative(alternative);
+                const { condition, body } = parsedAlt;
+                let { pattern } = parsedAlt;
+
+                if (parsedAlt.inheritsPattern) {
+                    if (!lastPattern) {
+                        throw new Error(`Malformed case/of expression: guard continuation '${alternative}' has no preceding pattern`);
+                    }
+                    pattern = lastPattern;
+                } else {
+                    lastPattern = pattern;
+                }
+
+                const matches = this.matchPattern(pattern, scrutineeValue);
+                if (matches !== null) {
+                    if (condition !== null) {
+                        const guardResult = this.evaluateWithBindings(condition, matches);
+                        if (!guardResult) continue;
+                    }
+                    return this.evaluateWithBindings(body, matches);
+                }
+            }
+
+            throw new Error('Non-exhaustive patterns in case expression');
         }
 
         // let/in expression
@@ -5433,14 +5741,17 @@ class HaskishInterpreter {
             // evaluated as expressions (not mis-routed through definition parsing).
             const letInProbe = this.findTopLevelLetIn(expr);
             const isLetInExpression = !!(letInProbe && letInProbe.letStart === 0 && letInProbe.inStart !== -1);
+            const caseOfProbe = this.findTopLevelCaseOf(expr);
+            const isCaseExpression = !!(caseOfProbe && caseOfProbe.caseStart === 0);
+            const isSpecialExpression = isLetInExpression || isCaseExpression;
             
             // Handle REPL commands (starting with :)
             if (expr.startsWith(':')) {
                 return this.handleReplCommand(expr);
             }
 
-            // Evaluate expression-form let/in directly in REPL.
-            if (isLetInExpression) {
+            // Evaluate expression-form special syntax directly in REPL.
+            if (isSpecialExpression) {
                 const result = this.evaluate(expr);
                 if (result && result._isRawOutput) {
                     return { success: true, result: result.value, plainText: true };
@@ -5450,14 +5761,14 @@ class HaskishInterpreter {
             
             // Strip optional 'let' keyword at the start for REPL definitions.
             // Do NOT strip for expression-form let/in.
-            if (!isLetInExpression) {
+            if (!isSpecialExpression) {
                 expr = expr.replace(/^let\s+/, '');
             }
 
             // Multi-line REPL input: route through parseFunctionDefinitions so that
             // guards, where clauses, operator-continuation lines, and multi-line
             // if/then/else are all handled correctly (same as the function panel).
-            if (expr.includes('\n') && !isLetInExpression) {
+            if (expr.includes('\n') && !isSpecialExpression) {
                 const savedFunctions = Object.assign({}, this.functions);
                 const savedVariables = Object.assign({}, this.variables);
                 // If the first non-empty line looks like a definition (name = ... or name params = ...),

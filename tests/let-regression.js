@@ -1,8 +1,8 @@
-// Let/Where regression suite for Haskish.
+// Let/Where/Case regression suite for Haskish.
 //
 // Purpose:
-// - Guard against parser/evaluator regressions around let/in, where, guards,
-//   recursion, and multiline layout-sensitive forms.
+// - Guard against parser/evaluator regressions around let/in, case/of, where,
+//   guards, recursion, and multiline layout-sensitive forms.
 //
 // Run:
 // - node .\\tests\\let-regression.js
@@ -144,6 +144,117 @@ a10`,
   sum (x:xs) = let y = sum xs in x + y
 in sum [1,2,3,4,5]`,
             expected: '15'
+        },
+        {
+            name: 'case/of simple value branches',
+            input: 'case 2 of 0 -> 10; 1 -> 11; _ -> 12',
+            expected: '12'
+        },
+        {
+            name: 'case/of list patterns',
+            input: 'case [9,8,7] of [] -> 0; (x:_) -> x',
+            expected: '9'
+        },
+        {
+            name: 'case/of tuple pattern',
+            input: 'case (10,20) of (a,b) -> a + b',
+            expected: '30'
+        },
+        {
+            name: 'case/of layout alternatives',
+            input: `case [1,2,3] of
+  [] -> 0
+  (x:_) -> x`,
+            expected: '1'
+        },
+        {
+            name: 'case/of inside let body',
+            input: `let
+  describe n = case n of
+    0 -> "zero"
+    _ -> "many"
+in describe 3`,
+            expected: '"many"'
+        },
+        {
+            name: 'case/of guarded alternatives',
+            input: `case 4 of
+  n | n < 0 -> "neg"
+  n | n == 0 -> "zero"
+  _ -> "pos"`,
+            expected: '"pos"'
+        },
+        {
+            name: 'case/of guard with otherwise',
+            input: `case 0 of
+  n | n < 0 -> "neg"
+  _ | otherwise -> "fallback"`,
+            expected: '"fallback"'
+        },
+        {
+            name: 'case/of guard continuation inherits pattern',
+            input: `case 5 of
+  n | n < 3     -> "small"
+    | n < 10    -> "medium"
+    | otherwise -> "large"`,
+            expected: '"medium"'
+        },
+        {
+            name: 'define guard function using case in guard',
+            input: `gCase x
+  | case x of 0 -> True; _ -> False = "zero"
+  | otherwise = "nonzero"`,
+            expected: 'Defined function: gCase'
+        },
+        {
+            name: 'guard function using case in guard: f 0',
+            input: 'gCase 0',
+            expected: '"zero"'
+        },
+        {
+            name: 'guard function using case in guard: f 5',
+            input: 'gCase 5',
+            expected: '"nonzero"'
+        },
+        {
+            name: 'define recursive sum2 with multiline case',
+            input: `sum2 xs =
+  case xs of
+    []     -> 0
+    (x:xs) -> x + sum2 xs`,
+            expected: 'Defined function: sum2'
+        },
+        {
+            name: 'recursive sum2 call',
+            input: 'sum2 [1,2,3,4]',
+            expected: '10'
+        },
+        {
+            name: 'let mutual recursion with multiline case',
+            input: `let
+  even n =
+    case n of
+      0 -> True
+      _ -> odd (n-1)
+
+  odd n =
+    case n of
+      0 -> False
+      _ -> even (n-1)
+in even 10`,
+            expected: 'True'
+        },
+        {
+            name: 'case alternative body with where bindings',
+            input: `case 10 of
+  n -> result
+    where result = n * 2`,
+            expected: '20'
+        },
+        {
+            name: 'case/of malformed branch uses equals',
+            input: 'case 1 of 1 = 10; _ -> 0',
+            expectedError: "Malformed case/of expression: invalid alternative '1 = 10'. Use '->' (not '=') in case branches."
         }
     ];
 
@@ -152,6 +263,13 @@ in sum [1,2,3,4,5]`,
     for (const testCase of cases) {
         try {
             const actual = evaluateReplOrThrow(interpreter, testCase.input);
+            if (testCase.expectedError) {
+                failed++;
+                console.log(`FAIL ${testCase.name}`);
+                console.log(`  expected error: ${testCase.expectedError}`);
+                console.log(`  actual result:  ${actual}`);
+                continue;
+            }
             if (actual !== testCase.expected) {
                 failed++;
                 console.log(`FAIL ${testCase.name}`);
@@ -161,6 +279,17 @@ in sum [1,2,3,4,5]`,
                 console.log(`PASS ${testCase.name}`);
             }
         } catch (error) {
+            if (testCase.expectedError) {
+                if (error.message === testCase.expectedError) {
+                    console.log(`PASS ${testCase.name}`);
+                } else {
+                    failed++;
+                    console.log(`FAIL ${testCase.name}`);
+                    console.log(`  expected error: ${testCase.expectedError}`);
+                    console.log(`  actual error:   ${error.message}`);
+                }
+                continue;
+            }
             failed++;
             console.log(`FAIL ${testCase.name}`);
             console.log(`  error: ${error.message}`);
@@ -172,7 +301,7 @@ in sum [1,2,3,4,5]`,
         process.exit(1);
     }
 
-    console.log(`\nAll ${cases.length} let/where regression tests passed.`);
+    console.log(`\nAll ${cases.length} let/where/case regression tests passed.`);
 }
 
 runRegression();

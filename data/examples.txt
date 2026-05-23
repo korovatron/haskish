@@ -156,6 +156,36 @@ bumpWithLocal x = 10 + (let y = x * 3 in y - 1)
 -- nestedLet 10                   → 11
 -- bumpWithLocal 4                → 21
 
+=== case/of Expressions ===
+-- Branch on a value using pattern matching
+describeWithCase n = case n of 0 -> "zero"; 1 -> "one"; _ -> "many"
+
+-- Case over list structure
+headOrDefault xs = case xs of [] -> 0; (x:_) -> x
+
+-- Case over tuples
+sumPair pair = case pair of (a, b) -> a + b
+
+-- Case nested in an expression
+absCase n = case n of x -> if x < 0 then -x else x
+
+-- Case with guards in alternatives
+classifyCase n = case n of
+  x | x < 0 -> "neg"
+  x | x == 0 -> "zero"
+  _ -> "pos"
+
+-- Tests:
+-- describeWithCase 0        → "zero"
+-- describeWithCase 42       → "many"
+-- headOrDefault []          → 0
+-- headOrDefault [9,8,7]     → 9
+-- sumPair (10,20)           → 30
+-- absCase (-7)              → 7
+-- classifyCase (-2)         → "neg"
+-- classifyCase 0            → "zero"
+-- classifyCase 8            → "pos"
+
 === Tuples ===
 -- Tuple creation
 point = (3, 5)
