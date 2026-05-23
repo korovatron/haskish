@@ -14,7 +14,6 @@ class Lambda {
         if (this.interpreter && this.interpreter.executionStartTime > 0) {
             const elapsed = Date.now() - this.interpreter.executionStartTime;
             if (elapsed > this.interpreter.maxExecutionTime) {
-                this.interpreter.executionStartTime = 0;
                 throw new Error(`Execution timeout (${this.interpreter.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion.`);
             }
         }
@@ -1228,6 +1227,12 @@ class HaskishInterpreter {
                 }
                 return true;
             } catch (e) {
+                // Never defer stack overflows or execution timeouts — they indicate
+                // infrastructure limits that will recur identically on every retry,
+                // causing exponential work or an infinite loop. Propagate immediately.
+                if (e instanceof RangeError || (e.message && e.message.startsWith('Execution timeout'))) {
+                    throw e;
+                }
                 if (defer) { pending.push({ lhs, rhs, isPattern }); }
                 else { throw e; }
                 return false;
@@ -3203,7 +3208,6 @@ class HaskishInterpreter {
         if (this.executionStartTime > 0) {
             const elapsed = Date.now() - this.executionStartTime;
             if (elapsed > this.maxExecutionTime) {
-                this.executionStartTime = 0;
                 throw new Error(`Execution timeout (${this.maxExecutionTime}ms exceeded). Your function implementation may be intractable with exponential O(kⁿ) or factorial O(n!) complexity, or have infinite recursion.`);
             }
         }
@@ -5131,6 +5135,7 @@ class HaskishInterpreter {
 
     // Run code and return result
     run(code) {
+        this.executionStartTime = Date.now();
         try {
             this.parseFunctionDefinitions(code);
             const funcCount = Object.keys(this.functions).length;
@@ -5142,6 +5147,8 @@ class HaskishInterpreter {
             };
         } catch (error) {
             return { success: false, error: error.message };
+        } finally {
+            this.executionStartTime = 0;
         }
     }
 
@@ -5200,9 +5207,16 @@ class HaskishInterpreter {
                     }
                     // Nothing defined - fall through to expression evaluation
                 } catch (e) {
-                    // Restore state and fall through to expression evaluation
+                    // Restore state
                     this.functions = savedFunctions;
                     this.variables = savedVariables;
+                    // Re-throw genuine execution errors (stack overflow, timeout) — these
+                    // came from evaluating a definition, not from a parse failure, so
+                    // falling through to expression evaluation would give a misleading error.
+                    if (e instanceof RangeError || (e.message && e.message.startsWith('Execution timeout'))) {
+                        throw e;
+                    }
+                    // Other errors (parse failures): fall through to expression evaluation
                 }
             }
 
