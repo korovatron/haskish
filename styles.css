@@ -291,7 +291,7 @@ header h1 {
 
 .submenu {
     max-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     transition: max-height 0.3s ease;
     background: var(--code-bg);
     -webkit-overflow-scrolling: touch;
@@ -354,6 +354,20 @@ header h1 {
 .submenu-item-nested {
     padding-left: 68px;
     font-size: 0.92em;
+}
+
+@media (min-width: 769px) {
+    .menu-panel,
+    .menu-items {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .menu-panel::-webkit-scrollbar,
+    .menu-items::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
 }
 
 /* About Overlay */
