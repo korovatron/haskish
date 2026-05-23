@@ -1239,7 +1239,17 @@ class HaskishInterpreter {
             }
         };
 
+        // Expand any semicolon-separated bindings on a single line (e.g. "a = 1; b = 2")
+        // into individual binding strings, mirroring Haskell's layout rule alternative.
+        const expandedWhereRaw = [];
         for (const raw of whereRaw) {
+            const parts = this.splitBySemicolon(raw);
+            for (const p of parts) {
+                if (p.trim()) expandedWhereRaw.push(p.trim());
+            }
+        }
+
+        for (const raw of expandedWhereRaw) {
             const str = raw.trim();
             if (!str || str.startsWith('--')) continue;
 
@@ -1279,6 +1289,19 @@ class HaskishInterpreter {
 
             const lhs = str.slice(0, eqIdx).trim();
             const rhs = str.slice(eqIdx + 1).trim();
+
+            // Detect two bindings written on one line (e.g. "a = 1 b = 2").
+            // If the RHS itself contains a bare assignment-style = at the top level,
+            // the user almost certainly forgot to put each binding on its own line.
+            const rhsSecondEq = this.findWhereAssignmentEquals(rhs);
+            if (rhsSecondEq !== -1) {
+                const rhsBefore = rhs.slice(0, rhsSecondEq).trim();
+                // Only flag it if the part before the second = looks like a plain identifier
+                // (i.e. it's a simple word, not a sub-expression).
+                if (/^[a-zA-Z_]\w*'*$/.test(rhsBefore)) {
+                    throw new Error(`Invalid where binding: '${str}' — put each binding on its own line`);
+                }
+            }
 
             // Pattern destructuring in where: (a,b) = expr  or  [x,y] = expr
             const isPattern = (lhs.startsWith('(') && lhs.endsWith(')')) || (lhs.startsWith('[') && lhs.endsWith(']'));
@@ -1458,6 +1481,36 @@ class HaskishInterpreter {
     }
 
     // Build a Lambda (or nested Lambdas) for a where-local function definition.
+    // Split a string on top-level semicolons (not inside brackets or strings).
+    splitBySemicolon(str) {
+        const parts = [];
+        let current = '';
+        let depth = 0;
+        let inStr = false;
+        let strCh = null;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            if (inStr) {
+                current += ch;
+                if (ch === '\\') { current += str[++i] || ''; }
+                else if (ch === strCh) { inStr = false; }
+            } else if (ch === '"' || ch === "'") {
+                inStr = true; strCh = ch; current += ch;
+            } else if (ch === '(' || ch === '[' || ch === '{') {
+                depth++; current += ch;
+            } else if (ch === ')' || ch === ']' || ch === '}') {
+                depth--; current += ch;
+            } else if (ch === ';' && depth === 0) {
+                parts.push(current);
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+        parts.push(current);
+        return parts;
+    }
+
     // params: space-separated parameter names (may include tuple patterns)
     // body:   expression string, or null if guards are used
     // guards: [{condition, body}, ...] – used when body is null
@@ -3419,17 +3472,18 @@ class HaskishInterpreter {
 
     // Evaluate expression with variable bindings
     evaluateWithBindings(expr, bindings) {
-        // Handle inner where clause embedded in expression by a nested 'where' block.
-        // Must be checked before any other transformation to avoid marker corruption.
-        const INNER_WHERE = ' __HASKISH_WHERE__ ';
-        const innerWhereIdx = expr.indexOf(INNER_WHERE);
-        if (innerWhereIdx !== -1) {
-            const actualBody = expr.slice(0, innerWhereIdx).trim();
-            const whereStr = expr.slice(innerWhereIdx + INNER_WHERE.length);
-            // Inner where uses __HASKISH_IWSEP__ to avoid splitting on outer __HASKISH_WSEP__
-            const whereRaw = whereStr.split(' __HASKISH_IWSEP__ ').map(s => s.trim()).filter(Boolean);
+        // Handle embedded where markers before any other transformation to avoid marker corruption.
+        const extractedWhere = this.extractWhere(expr);
+        const isLambdaExpr = extractedWhere.expr.trimStart().startsWith('\\');
+        if (extractedWhere.whereRaw.length > 0 && !isLambdaExpr) {
+            let whereRaw = extractedWhere.whereRaw;
+            // If extractWhere did not split (single chunk) and this is an inner-where list,
+            // normalize by splitting on the dedicated inner separator.
+            if (whereRaw.length === 1 && whereRaw[0].includes(' __HASKISH_IWSEP__ ')) {
+                whereRaw = whereRaw[0].split(' __HASKISH_IWSEP__ ').map(s => s.trim()).filter(Boolean);
+            }
             const innerScope = this.evaluateWhereBindings(whereRaw, bindings);
-            return this.evaluateWithBindings(actualBody, Object.assign({}, bindings, innerScope));
+            return this.evaluateWithBindings(extractedWhere.expr, Object.assign({}, bindings, innerScope));
         }
 
         // Preprocess: Add implicit multiplication (3x becomes 3*x) BEFORE substitution
@@ -5174,6 +5228,11 @@ class HaskishInterpreter {
             if (expr.includes('\n')) {
                 const savedFunctions = Object.assign({}, this.functions);
                 const savedVariables = Object.assign({}, this.variables);
+                // If the first non-empty line looks like a definition (name = ... or name params = ...),
+                // any error from parseFunctionDefinitions should be reported to the user rather than
+                // silently falling through to expression evaluation (which would give a misleading error).
+                const firstNonEmpty = expr.split('\n').map(l => l.trim().replace(/^let\s+/, '')).find(l => l && !l.startsWith('--')) || '';
+                const looksLikeDefinition = /^[a-zA-Z_]\w*'*/.test(firstNonEmpty) && /(?<![=<>!\/])=(?!=)/.test(firstNonEmpty);
                 try {
                     this.parseFunctionDefinitions(expr);
                     const newFunctions = Object.assign({}, this.functions);
@@ -5211,12 +5270,14 @@ class HaskishInterpreter {
                     this.functions = savedFunctions;
                     this.variables = savedVariables;
                     // Re-throw genuine execution errors (stack overflow, timeout) — these
-                    // came from evaluating a definition, not from a parse failure, so
-                    // falling through to expression evaluation would give a misleading error.
-                    if (e instanceof RangeError || (e.message && e.message.startsWith('Execution timeout'))) {
+                    // came from evaluating a definition, not from a parse failure.
+                    // Also re-throw if the input looks like a definition — the error is
+                    // meaningful (e.g. undefined variable in RHS) and falling through to
+                    // expression evaluation would give a misleading "Undefined operator: =" error.
+                    if (e instanceof RangeError || (e.message && e.message.startsWith('Execution timeout')) || looksLikeDefinition) {
                         throw e;
                     }
-                    // Other errors (parse failures): fall through to expression evaluation
+                    // Other errors on non-definition-looking input: fall through to expression evaluation
                 }
             }
 

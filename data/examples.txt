@@ -601,6 +601,103 @@ allButLast xs = reverse (tail (reverse xs))
 -- lastElement [1,2,3,4,5]   → 5
 -- allButLast [1,2,3,4,5]    → [1,2,3,4]
 
+=== ASCII Art ===
+
+checkerboard n =
+  putStr (boardString n)
+  where
+    boardString k
+      | k <= 0    = ""
+      | otherwise = unlines' (buildRows k 1)
+
+    buildRows size row
+      | row > size = []
+      | otherwise  =
+          buildRow size row 1 : buildRows size (row + 1)
+
+    buildRow size row col
+      | col > size = ""
+      | (row + col) % 2 == 0 =
+          "*" ++ buildRow size row (col + 1)
+      | otherwise =
+          " " ++ buildRow size row (col + 1)
+
+    unlines' []     = ""
+    unlines' (x:xs) = x ++ "\n" ++ unlines' xs
+    
+-- Tests:
+-- checkerboard 8
+
+drawSquare n =
+  putStr (squareString n)
+  where
+    replicateChar k c
+      | k <= 0    = ""
+      | otherwise = c : replicateChar (k - 1) c
+
+    unlines' []     = ""
+    unlines' (x:xs) = x ++ "\n" ++ unlines' xs
+
+    topRow =
+      replicateChar n '*'
+
+    middleRow =
+      "*" ++ replicateChar (n - 2) ' ' ++ "*"
+
+    buildMiddle k
+      | k <= 0    = []
+      | otherwise = middleRow : buildMiddle (k - 1)
+
+    squareString k
+      | k <= 0    = ""
+      | k == 1    = "*\n"
+      | otherwise =
+          unlines' (topRow : buildMiddle (k - 2) ++ [topRow])
+          
+-- Tests:
+-- drawSquare 10
+
+=== Mandelbrot ===
+mandelbrot =
+  putStr (render (-30) 10 (-12) 12)
+  where
+    maxIter = 20
+    scale = 20
+    radius2 = 4 * scale * scale
+
+    render xMin xMax yMin yMax
+      | yMin > yMax = ""
+      | otherwise = row xMin xMax yMin ++ "\n" ++ render xMin xMax (yMin + 1) yMax
+
+    row x xMax y
+      | x > xMax = ""
+      | otherwise = charFor (mandel 0 0 0 cx cy) ++ row (x + 1) xMax y
+      where
+        cx = div (x * scale) 20
+        cy = div (y * scale) 20
+
+    mandel iter zx zy cx cy
+      | iter >= maxIter = iter
+      | zx*zx + zy*zy > radius2 = iter
+      | otherwise = mandel (iter + 1) zx2 zy2 cx cy
+      where
+        zx2 = div (zx*zx - zy*zy) scale + cx
+        zy2 = div (2 * zx * zy) scale + cy
+
+    charFor n
+      | n >= maxIter = "# "
+      | n > (div (maxIter * 3) 4) = "* "
+      | n > (div maxIter 2) = "+ "
+      | n > (div maxIter 4) = ". "
+      | otherwise = "  "
+
+--- Test
+--- mandelbrot
+
+--- Test
+--- mandelbrot
+
+
 === Trigonometry ===
 factorial 0 = 1
 factorial n = n * factorial (n - 1)
