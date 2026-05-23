@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.0.65';
+const HASKISH_VERSION = '1.0.66';
 
 const interpreter = new HaskishInterpreter();
 

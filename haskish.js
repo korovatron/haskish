@@ -1,5 +1,7 @@
 // Haskish Interpreter - A subset of Haskell for A Level Computer Science
 
+const HASKISH_NEWLINE_MARKER = '__HASKISH_NL__';
+
 // Class to represent a lambda function
 class Lambda {
     constructor(param, body, interpreter, closure = {}) {
@@ -1011,6 +1013,137 @@ class HaskishInterpreter {
         return -1;
     }
 
+    // Find the matching top-level 'in' for an expression that starts with 'let'.
+    // Returns { letStart, inStart } or null if expr is not a let-expression.
+    // This supports nested let/in by tracking let-depth at bracket depth 0.
+    findTopLevelLetIn(expr) {
+        const isWordChar = (ch) => /[a-zA-Z0-9_']/.test(ch || '');
+        const isStandaloneWordAt = (index, word) => {
+            if (expr.slice(index, index + word.length) !== word) return false;
+            const before = index > 0 ? expr[index - 1] : ' ';
+            const after = index + word.length < expr.length ? expr[index + word.length] : ' ';
+            return !isWordChar(before) && !isWordChar(after);
+        };
+
+        const letStart = expr.search(/\blet\b/);
+        if (letStart !== 0) return null;
+
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+        let letDepth = 0;
+
+        for (let i = 0; i < expr.length; i++) {
+            const ch = expr[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(expr[i - 1]);
+
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || expr[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                continue;
+            }
+            if (inString) continue;
+
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (depth !== 0) continue;
+
+            if (isStandaloneWordAt(i, 'let')) {
+                letDepth++;
+                i += 2;
+                continue;
+            }
+
+            if (isStandaloneWordAt(i, 'in') && letDepth > 0) {
+                letDepth--;
+                if (letDepth === 0) {
+                    return { letStart: 0, inStart: i };
+                }
+                i += 1;
+            }
+        }
+
+        return { letStart: 0, inStart: -1 };
+    }
+
+    // Split let bindings in the segment between 'let' and 'in'.
+    // Supports both semicolon-separated and layout-separated (line-based) bindings.
+    splitLetBindings(bindingsStr) {
+        const semicolonParts = this.splitBySemicolon(bindingsStr)
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        if (semicolonParts.length > 1) {
+            return semicolonParts;
+        }
+
+        const hasLayoutBreaks = bindingsStr.includes(HASKISH_NEWLINE_MARKER) || /\r?\n/.test(bindingsStr);
+        if (hasLayoutBreaks) {
+            const normalized = bindingsStr.replace(new RegExp(HASKISH_NEWLINE_MARKER, 'g'), '\n');
+            const rawLines = normalized
+                .split(/\r?\n/)
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            if (rawLines.length > 1) {
+                const merged = [];
+                for (const line of rawLines) {
+                    if (merged.length === 0) {
+                        merged.push(line);
+                        continue;
+                    }
+
+                    const isContinuation =
+                        line.startsWith('|') ||
+                        line.startsWith('where') ||
+                        line.startsWith('=') ||
+                        /^([+*^]|\+\+|&&|\|\||:[^:]|\/(?![\/=]))/.test(line);
+
+                    if (isContinuation) {
+                        if (/^where\s+/.test(line)) {
+                            const whereTail = line.replace(/^where\s+/, '').trim();
+                            if (merged[merged.length - 1].includes(' __HASKISH_WHERE__ ')) {
+                                merged[merged.length - 1] += ' __HASKISH_WSEP__ ' + whereTail;
+                            } else {
+                                merged[merged.length - 1] += ' __HASKISH_WHERE__ ' + whereTail;
+                            }
+                        } else {
+                            merged[merged.length - 1] += ' ' + line;
+                        }
+                    } else {
+                        merged.push(line);
+                    }
+                }
+
+                return merged;
+            }
+        }
+
+        return semicolonParts;
+    }
+
+    // Return a short hint to help users fix malformed let bindings.
+    getLetBindingDiagnostic(bindingsStr, letBindings) {
+        if (letBindings.length === 0) {
+            return "No bindings found before 'in'.";
+        }
+
+        const bad = letBindings.find(b => this.findWhereAssignmentEquals(b) === -1);
+        if (bad) {
+            if (/^in\b/.test(bad)) {
+                return `Found '${bad}' inside let bindings. 'in' must come after all bindings and should be aligned with 'let' in layout style.`;
+            }
+            return `Invalid binding '${bad}'. Each let binding must look like 'name = expr' (or pattern/function binding).`;
+        }
+
+        return null;
+    }
+
     // Pre-processing pass: detect 'where' blocks and merge their binding lines
     // into the LAST non-empty line that precedes the 'where' keyword using a
     // special marker, so the bracket-depth pass sees them as one logical line.
@@ -1078,7 +1211,15 @@ class HaskishInterpreter {
                 }
             } else {
                 // Deeper indent: continuation (guard, multi-line body, binary op, etc.)
-                merged[merged.length - 1] += ' ' + trimmed;
+                if (trimmed.startsWith('|')) {
+                    // Guard continuation lines must stay space-joined so splitWhereGuards
+                    // can detect the top-level '|'.
+                    merged[merged.length - 1] += ' ' + trimmed;
+                } else {
+                    // Preserve a logical line break marker for expression continuations
+                    // (e.g. layout-style let bodies inside where bindings).
+                    merged[merged.length - 1] += ` ${HASKISH_NEWLINE_MARKER} ${trimmed}`;
+                }
                 i++;
             }
         }
@@ -1828,13 +1969,20 @@ class HaskishInterpreter {
                     }
                 }
                 const startsLikeContinuation = /^[(["'\\\d]/.test(nextNonEmptyTrimmed);
+                // If the next non-empty line is indented deeper than the current
+                // buffer start, it is a continuation of this logical definition
+                // (e.g. let-layout bindings, wrapped expressions).
+                if (nextNonEmptyIndent > bufferStartIndent) {
+                    continue;
+                }
                 if (startsLikeContinuation && nextNonEmptyIndent >= bufferStartIndent) {
                     continue; // keep accumulating — next line is a continuation argument
                 }
-                // Replace internal newlines with spaces for parsing, and strip comments
+                // Replace internal newlines with a marker so layout-sensitive constructs
+                // (notably let/in) can recover line boundaries later in evaluate().
                 const normalizedBuffer = buffer.split('\n').map(l => {
                     return this.stripComments(l.trim());
-                }).join(' ');
+                }).join(` ${HASKISH_NEWLINE_MARKER} `);
                 combinedLines.push(normalizedBuffer);
                 lineNumberMap.push(bufferStartLine);
                 buffer = '';
@@ -1850,10 +1998,11 @@ class HaskishInterpreter {
                 throw new Error(`Too many closing brackets on line ${bufferStartLine}: ${-bracketDepth} extra closing bracket(s)`);
             }
             
-            // Replace internal newlines with spaces for parsing, and strip comments
+            // Replace internal newlines with a marker so layout-sensitive constructs
+            // (notably let/in) can recover line boundaries later in evaluate().
             const normalizedBuffer = buffer.split('\n').map(l => {
                 return this.stripComments(l.trim());
-            }).join(' ');
+            }).join(` ${HASKISH_NEWLINE_MARKER} `);
             combinedLines.push(normalizedBuffer);
             lineNumberMap.push(bufferStartLine);
         }
@@ -2332,6 +2481,8 @@ class HaskishInterpreter {
 
     // Tokenize an expression
     tokenize(expr) {
+        const markerRegex = new RegExp(`\\s*${HASKISH_NEWLINE_MARKER}\\s*`, 'g');
+        expr = expr.replace(markerRegex, ' ').trim();
         expr = expr.trim();
         const tokens = [];
         let i = 0;
@@ -3662,6 +3813,12 @@ class HaskishInterpreter {
 
     // Main evaluation function
     evaluate(expr) {
+        const markerRegex = new RegExp(`\\s*${HASKISH_NEWLINE_MARKER}\\s*`, 'g');
+        const rawExpr = expr.trim();
+        const leadingMarkerRegex = new RegExp(`^(?:\\s*${HASKISH_NEWLINE_MARKER}\\s*)+`);
+        const rawExprForLet = rawExpr.replace(leadingMarkerRegex, '').trimStart();
+        expr = rawExpr.replace(markerRegex, ' ').trim();
+
         expr = expr.trim();
         
         // Handle unit value () - return null to represent unit
@@ -3711,6 +3868,40 @@ class HaskishInterpreter {
         // Special handling for 'otherwise' keyword
         if (expr === 'otherwise') {
             return true;
+        }
+
+        // let/in expression
+        // First-pass support: semicolon-separated bindings in the let block.
+        // Example: let x = 2; y = 3 in x + y
+        const letIn = this.findTopLevelLetIn(rawExprForLet);
+        if (letIn && letIn.letStart === 0) {
+            if (letIn.inStart === -1) {
+                throw new Error("Malformed let/in expression: missing 'in'. For layout style, place 'in' after the bindings and align it with 'let'.");
+            }
+
+            const bindingsStr = rawExprForLet.slice(3, letIn.inStart).trim();
+            const inExpr = rawExprForLet.slice(letIn.inStart + 2).trim();
+
+            if (!bindingsStr) {
+                throw new Error("Malformed let/in expression: missing bindings before 'in'");
+            }
+            if (!inExpr) {
+                throw new Error("Malformed let/in expression: missing expression after 'in'");
+            }
+
+            const letBindings = this.splitLetBindings(bindingsStr);
+
+            if (letBindings.length === 0) {
+                throw new Error("Malformed let/in expression: missing bindings before 'in'");
+            }
+
+            const letDiagnostic = this.getLetBindingDiagnostic(bindingsStr, letBindings);
+            if (letDiagnostic) {
+                throw new Error(`Malformed let/in expression: ${letDiagnostic}`);
+            }
+
+            const localScope = this.evaluateWhereBindings(letBindings, {});
+            return this.evaluateWithBindings(inExpr, localScope);
         }
 
         // if/then/else expression
@@ -5237,19 +5428,36 @@ class HaskishInterpreter {
             this.executionStartTime = Date.now();
             
             expr = expr.trim();
+
+            // Detect expression-form let/in up front so multiline let blocks are
+            // evaluated as expressions (not mis-routed through definition parsing).
+            const letInProbe = this.findTopLevelLetIn(expr);
+            const isLetInExpression = !!(letInProbe && letInProbe.letStart === 0 && letInProbe.inStart !== -1);
             
             // Handle REPL commands (starting with :)
             if (expr.startsWith(':')) {
                 return this.handleReplCommand(expr);
             }
+
+            // Evaluate expression-form let/in directly in REPL.
+            if (isLetInExpression) {
+                const result = this.evaluate(expr);
+                if (result && result._isRawOutput) {
+                    return { success: true, result: result.value, plainText: true };
+                }
+                return { success: true, result: this.formatOutput(result) };
+            }
             
-            // Strip optional 'let' keyword at the start
-            expr = expr.replace(/^let\s+/, '');
+            // Strip optional 'let' keyword at the start for REPL definitions.
+            // Do NOT strip for expression-form let/in.
+            if (!isLetInExpression) {
+                expr = expr.replace(/^let\s+/, '');
+            }
 
             // Multi-line REPL input: route through parseFunctionDefinitions so that
             // guards, where clauses, operator-continuation lines, and multi-line
             // if/then/else are all handled correctly (same as the function panel).
-            if (expr.includes('\n')) {
+            if (expr.includes('\n') && !isLetInExpression) {
                 const savedFunctions = Object.assign({}, this.functions);
                 const savedVariables = Object.assign({}, this.variables);
                 // If the first non-empty line looks like a definition (name = ... or name params = ...),
@@ -5391,13 +5599,12 @@ class HaskishInterpreter {
                     // Check if function already exists
                     const isRedefinition = this.functions[funcName] !== undefined;
                     
-                    // Normalize multi-line bodies: strip comments and join lines with spaces,
-                    // matching what parseFunctionDefinitions does. Without this, the if/then/else
-                    // evaluator scanner fails because it looks for 'then ' (space) but gets 'then\n'.
+                    // Normalize multi-line bodies: strip comments and keep logical newlines via
+                    // marker so layout-sensitive constructs (e.g. let/in) survive REPL definitions.
                     const normalizedBody = body.split('\n')
                         .map(l => this.stripComments(l.trim()))
                         .filter(l => l)
-                        .join(' ')
+                        .join(` ${HASKISH_NEWLINE_MARKER} `)
                         .trim();
 
                     // In REPL, replace function entirely (like GHCi behavior)
