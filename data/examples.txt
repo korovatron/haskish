@@ -1035,6 +1035,25 @@ unrle ((c, n):rest) = replicate n c ++ unrle rest
 --   → "AABBBBBCCDD"
 -- unrle (rle "Hello")         → "Hello"
 
+=== Anagram Checker ===
+
+-- Anagram checker
+
+-- Usage :
+-- isAnagram "listen" "silent"
+-- isAnagram "haskish" "kishash"
+-- isAnagram "hello" "world"
+
+insert x [] = [x]
+insert x (y:ys) =
+  if x <= y then x:y:ys else y : insert x ys
+
+sort []     = []
+sort (x:xs) = insert x (sort xs)
+
+isAnagram s1 s2 =
+  sort s1 == sort s2
+
 === Luhn Algorithm - Credit Card Validation ===
 -- The real algorithm used by credit card companies!
 -- Validates card numbers using checksum
@@ -1636,6 +1655,81 @@ renderMaze grid =
 
 maze w h seed =
   putStr (renderMaze (carve w h seed (fullWallGrid w h) 0 0))
+
+=== Conway's Life ===
+
+-- Conway's Game of Life
+-- Test:
+-- putStr (runLife world 5)
+
+dirs =
+  [ (-1,-1), (0,-1), (1,-1)
+  , (-1, 0),         (1, 0)
+  , (-1, 1), (0, 1), (1, 1)
+  ]
+
+getCell grid x y =
+  if y < 0 || y >= length grid
+     || x < 0 || x >= length (nth 0 grid)
+    then False
+    else nth x (nth y grid)
+
+countNeighbours grid x y =
+  count dirs
+  where
+    count [] = 0
+    count ((dx,dy):rest) =
+      (if getCell grid (x+dx) (y+dy) then 1 else 0)
+      + count rest
+
+stepCell grid x y =
+  let alive = getCell grid x y
+      n     = countNeighbours grid x y
+  in if alive
+        then n == 2 || n == 3
+        else n == 3
+
+nextGen grid =
+  mapRows 0 grid
+  where
+    h = length grid
+    w = length (nth 0 grid)
+
+    mapRows y []     = []
+    mapRows y (r:rs) = mapCols 0 y r : mapRows (y+1) rs
+
+    mapCols x y []     = []
+    mapCols x y (_:cs) = stepCell grid x y : mapCols (x+1) y cs
+
+cellStr True  = "██"
+cellStr False = "  "
+
+renderRow row =
+  concatMap cellStr row
+
+render grid =
+  unlines (map renderRow grid)
+
+runLife grid 0 = render grid
+runLife grid n =
+  render grid ++ "\n" ++ runLife (nextGen grid) (n-1)
+
+concatMap f []     = []
+concatMap f (x:xs) = f x ++ concatMap f xs
+
+unlines []     = ""
+unlines (x:xs) = x ++ "\n" ++ unlines xs
+
+nth _ []     = error "index out of range"
+nth 0 (x:xs) = x
+nth n (x:xs) = nth (n-1) xs
+
+world =
+  [ [False, False, False, False]
+  , [False, True,  True,  True ]
+  , [True,  True,  True,  False]
+  , [False, False, False, False]
+  ]
 
 
 ###

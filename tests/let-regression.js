@@ -154,6 +154,19 @@ g 5`,
             expected: '6'
         },
         {
+            name: 'where local empty-list pattern does not break lambda arrow parsing',
+            input: `next grid =
+  mapRows 0 grid
+  where
+    mapRows y []     = []
+    mapRows y (r:rs) = mapCols 0 y r : mapRows (y+1) rs
+
+    mapCols x y []     = []
+    mapCols x y (_:cs) = True : mapCols (x+1) y cs
+next [[1,2],[3,4]]`,
+            expected: '[[True,True],[True,True]]'
+        },
+        {
             name: 'deep let chain',
             input: `let a1 = 1 in
 let a2 = a1 + 1 in

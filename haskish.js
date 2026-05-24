@@ -53,6 +53,11 @@ class DispatchLambda extends Lambda {
     }
 
     apply(arg) {
+        const whereArity = this._getWhereMultiArity();
+        if (whereArity > 1) {
+            return this._applyWhereCurried([arg], whereArity);
+        }
+
         // When recursively called with an InfiniteRange, defer via a lazy thunk
         // to avoid unbounded eager recursion (same principle as applyFunction's lazy guard).
         if (this._callDepth >= 1 && arg && arg._isInfiniteRange) {
@@ -78,6 +83,110 @@ class DispatchLambda extends Lambda {
             }
         }
         throw new Error('Pattern match failure: no case matched in where-local function');
+    }
+
+    _getWhereMultiArity() {
+        if (!this.cases || this.cases.length === 0) return 0;
+        const first = this.cases[0];
+        if (!first || !Array.isArray(first._whereParamList)) return 0;
+        const arity = first._whereParamList.length;
+        if (arity <= 1) return 0;
+
+        for (const caseLambda of this.cases) {
+            if (!Array.isArray(caseLambda._whereParamList) || caseLambda._whereParamList.length !== arity) {
+                return 0;
+            }
+        }
+        return arity;
+    }
+
+    _applyWhereCurried(args, arity) {
+        if (args.length < arity) {
+            return new CurriedDispatchLambda(this, args, arity);
+        }
+
+        // Evaluate exactly one full application worth of args against each case.
+        const callArgs = args.slice(0, arity);
+        const extraArgs = args.slice(arity);
+        let matchedAnyPattern = false;
+
+        for (const caseLambda of this.cases) {
+            const paramList = caseLambda._whereParamList;
+            if (!Array.isArray(paramList) || paramList.length !== arity) {
+                continue;
+            }
+
+            const closure = caseLambda._whereClosure || {};
+            const mergedBindings = {};
+            let matched = true;
+
+            for (let i = 0; i < arity; i++) {
+                const pattern = paramList[i];
+                const arg = callArgs[i];
+
+                if ((pattern.startsWith('(') && pattern.endsWith(')')) ||
+                    (pattern.startsWith('[') && pattern.endsWith(']'))) {
+                    const local = this.interpreter.matchPattern(pattern, arg);
+                    if (local === null) {
+                        matched = false;
+                        break;
+                    }
+                    Object.assign(mergedBindings, local);
+                } else {
+                    mergedBindings[pattern] = arg;
+                }
+            }
+
+            if (!matched) {
+                continue;
+            }
+
+            matchedAnyPattern = true;
+            let result;
+            try {
+                result = this.interpreter.evaluateWithBindings(caseLambda._whereInnerBody, {
+                    ...closure,
+                    ...mergedBindings
+                });
+            } catch (e) {
+                if (e.message && e.message.startsWith('Pattern match failure')) {
+                    continue;
+                }
+                throw e;
+            }
+
+            // Support over-application by applying remaining args to the result.
+            for (const extra of extraArgs) {
+                if (result instanceof Lambda || (result && typeof result.apply === 'function')) {
+                    result = result.apply(extra);
+                } else {
+                    throw new Error('Too many arguments for lambda');
+                }
+            }
+            return result;
+        }
+
+        if (matchedAnyPattern) {
+            throw new Error('Pattern match failure: no case matched in where-local function');
+        }
+        throw new Error('Pattern match failure: no case matched in where-local function');
+    }
+
+    toString() {
+        return '<multi-case lambda>';
+    }
+}
+
+class CurriedDispatchLambda extends Lambda {
+    constructor(dispatch, args, arity) {
+        super('__curried_dispatch__', '', dispatch.interpreter, {});
+        this.dispatch = dispatch;
+        this.args = args;
+        this.arity = arity;
+    }
+
+    apply(arg) {
+        return this.dispatch._applyWhereCurried([...this.args, arg], this.arity);
     }
 
     toString() {
@@ -2147,7 +2256,11 @@ class HaskishInterpreter {
         for (let i = paramList.length - 1; i > 0; i--) {
             bodyStr = `\\${paramList[i]} -> ${bodyStr}`;
         }
-        return new Lambda(paramList[0], bodyStr, this, closure);
+        const fn = new Lambda(paramList[0], bodyStr, this, closure);
+        fn._whereParamList = paramList.slice();
+        fn._whereInnerBody = innerBody;
+        fn._whereClosure = closure;
+        return fn;
     }
 
     // Convert an array of {condition, body} guards to a nested if/then/else string
@@ -3205,10 +3318,8 @@ class HaskishInterpreter {
                         if (depth === 0 && seenArrow) break;
                         if (depth > 0) depth--;
                     }
-                    // Lambda ends at whitespace when depth is 0 and we've seen ->
-                    if (depth === 0 && seenArrow && /\s/.test(expr[j])) {
-                        break;
-                    }
+                    // Do not end on whitespace after ->: the lambda body can contain
+                    // spaces and should be captured as part of the same token.
                     j++;
                 }
                 tokens.push({ type: 'lambda', value: expr.slice(i + 1, j) });
@@ -5701,9 +5812,21 @@ class HaskishInterpreter {
                 if (matches && op === '-') {
                     const prevChar = i > 0 ? expr[i - 1] : '';
                     const nextChar = i + 1 < expr.length ? expr[i + 1] : '';
+                    // Don't split the lambda arrow token (->).
+                    if (nextChar === '>') {
+                        matches = false;
+                    }
                     // It's a negative number if: preceded by space/start and followed by digit
                     // But NOT if preceded by a digit or closing paren (that's binary minus)
-                    if (/\d/.test(nextChar) && !/[\d)]/.test(prevChar)) {
+                    if (matches && /\d/.test(nextChar) && !/[\d)]/.test(prevChar)) {
+                        matches = false;
+                    }
+                }
+
+                // Special case: don't split the lambda arrow token (->) as a greater-than operator.
+                if (matches && op === '>') {
+                    const prevChar = i > 0 ? expr[i - 1] : '';
+                    if (prevChar === '-') {
                         matches = false;
                     }
                 }
