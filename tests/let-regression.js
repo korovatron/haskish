@@ -664,6 +664,19 @@ showExprStress
                     name: 'list comprehension let qualifier works with guard',
                     input: '[ z | x <- [1..10], let z = x*x, z < 30 ]',
                     expected: '[1,4,9,16,25]'
+                },
+                {
+                    name: 'list comprehension constructor pattern generator',
+                    input: `data P = Pair Int Int
+        [ a*b | Pair a b <- [Pair 1 2, Pair 3 4, Pair 5 6] ]`,
+                    expected: '[2,12,30]'
+                },
+                {
+                    name: 'list comprehension constructor pattern in let qualifier',
+                    input: `data N = Node (Int,Int)
+        [ a+b | x <- [Node (1,2), Node (3,4)]
+              , let Node (a,b) = x ]`,
+                    expected: '[3,7]'
         }
     ];
 

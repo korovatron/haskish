@@ -1854,14 +1854,24 @@ class HaskishInterpreter {
                 }
             }
 
-            // Pattern destructuring in where: (a,b) = expr  or  [x,y] = expr
-            const isPattern = (lhs.startsWith('(') && lhs.endsWith(')')) || (lhs.startsWith('[') && lhs.endsWith(']'));
-            if (isPattern) {
+            // Pattern destructuring in where/let: tuples/lists/cons/constructor patterns.
+            // Keep function definitions when lhs starts with a lowercase identifier and has params.
+            const spaceIdx = lhs.indexOf(' ');
+            const lhsHead = spaceIdx === -1 ? lhs : lhs.slice(0, spaceIdx).trim();
+            const isLowerFnHead = /^[a-z_][a-zA-Z0-9_']*$/.test(lhsHead);
+            const hasLowerFunctionHeadWithParams = isLowerFnHead && spaceIdx !== -1;
+            const isPatternLikeLhs = !hasLowerFunctionHeadWithParams && (
+                (lhs.startsWith('(') && lhs.endsWith(')')) ||
+                (lhs.startsWith('[') && lhs.endsWith(']')) ||
+                lhs.includes(':') ||
+                this.isConstructorName(lhsHead) ||
+                (!isLowerFnHead && spaceIdx !== -1)
+            );
+            if (isPatternLikeLhs) {
                 trySimple(lhs, rhs, true, true);
                 continue;
             }
 
-            const spaceIdx = lhs.indexOf(' ');
             if (spaceIdx === -1) {
                 // Simple variable binding: try now, defer on failure
                 trySimple(lhs, rhs, false, true);
@@ -3474,53 +3484,46 @@ class HaskishInterpreter {
         let generatorCount = 0;
         
         for (const clause of clauses) {
-            // Try to match tuple pattern: (a, b, c) <- list
-            const tuplePattern = clause.match(/^\(([^)]+)\)\s*<-\s*(.+)$/);
-            // Try to match simple pattern: x <- list (including primed names like x', c'')
-            const simplePattern = clause.match(/^(\w+'*)\s*<-\s*(.+)$/);
-            
-            if (tuplePattern) {
-                const innerPat = tuplePattern[1];
-                // Check if this is a cons pattern like (h:_) rather than a tuple (a,b)
-                let pd = 0, hasTopComma = false;
-                for (let i = 0; i < innerPat.length; i++) {
-                    if (innerPat[i] === '(' || innerPat[i] === '[') pd++;
-                    if (innerPat[i] === ')' || innerPat[i] === ']') pd--;
-                    if (innerPat[i] === ',' && pd === 0) { hasTopComma = true; break; }
-                }
-                if (!hasTopComma) {
-                    // It's a cons/wildcard pattern like (h:_) — use matchPattern, skip on failure
-                    qualifiers.push({
-                        type: 'generator',
-                        consPattern: '(' + innerPat + ')',
-                        list: tuplePattern[2],
-                        isCons: true
-                    });
-                } else {
-                    // Parse tuple pattern variables
-                    const vars = tuplePattern[1].split(',').map(v => v.trim());
-                    qualifiers.push({
-                        type: 'generator',
-                        variables: vars,
-                        list: tuplePattern[2],
-                        isTuple: true
-                    });
-                }
-                generatorCount++;
-            } else if (simplePattern) {
-                qualifiers.push({
-                    type: 'generator',
-                    variable: simplePattern[1],
-                    list: simplePattern[2],
-                    isTuple: false
-                });
-                generatorCount++;
-            } else if (clause.trimStart().startsWith('let ')) {
+            if (clause.trimStart().startsWith('let ')) {
                 const letBody = clause.trimStart().slice(3).trim();
                 if (!letBody) {
                     throw new Error('Malformed list comprehension let qualifier: missing bindings after let');
                 }
                 qualifiers.push({ type: 'let', bindings: letBody });
+                continue;
+            }
+
+            // Try to split a generator pattern clause: <pattern> <- <listExpr>
+            // at depth 0, so nested tuples/lists/patterns are handled safely.
+            let depth2 = 0;
+            let inString = false;
+            let strCh = null;
+            let genSep = -1;
+            for (let i = 0; i < clause.length - 1; i++) {
+                const ch = clause[i];
+                const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(clause[i - 1]);
+                if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || clause[i - 1] !== '\\')) {
+                    if (!inString) { inString = true; strCh = ch; }
+                    else if (ch === strCh) { inString = false; strCh = null; }
+                    continue;
+                }
+                if (inString) continue;
+                if (ch === '(' || ch === '[') depth2++;
+                else if (ch === ')' || ch === ']') depth2--;
+                if (depth2 === 0 && ch === '<' && clause[i + 1] === '-') {
+                    genSep = i;
+                    break;
+                }
+            }
+
+            if (genSep !== -1) {
+                const pattern = clause.slice(0, genSep).trim();
+                const listExpr = clause.slice(genSep + 2).trim();
+                if (!pattern || !listExpr) {
+                    throw new Error(`Malformed list comprehension generator: ${clause}`);
+                }
+                qualifiers.push({ type: 'generator', pattern, list: listExpr });
+                generatorCount++;
             } else {
                 // It's a guard (filter condition)
                 qualifiers.push({ type: 'guard', expr: clause });
@@ -3576,26 +3579,10 @@ class HaskishInterpreter {
         for (const item of sourceList) {
             const newBindings = { ...bindings };
 
-            if (qualifier.isCons) {
-                // Cons/pattern generator: skip items that don't match (Haskell semantics)
-                const match = this.matchPattern(qualifier.consPattern, item);
-                if (match === null) continue;
-                Object.assign(newBindings, match);
-            } else if (qualifier.isTuple) {
-                // Destructure tuple pattern; skip items that don't match (Haskell semantics)
-                if (!item || !item._isTuple) continue;
-                if (item.elements.length !== qualifier.variables.length) continue;
-                let tupleMatched = true;
-                for (let ti = 0; ti < qualifier.variables.length; ti++) {
-                    const elemMatch = this.matchPattern(qualifier.variables[ti], item.elements[ti]);
-                    if (elemMatch === null) { tupleMatched = false; break; }
-                    Object.assign(newBindings, elemMatch);
-                }
-                if (!tupleMatched) continue;
-            } else {
-                // Simple pattern: bind single variable
-                newBindings[qualifier.variable] = item;
-            }
+            // Generic pattern generator: skip non-matching values (Haskell semantics).
+            const match = this.matchPattern(qualifier.pattern, item);
+            if (match === null) continue;
+            Object.assign(newBindings, match);
 
             const subResults = this.evaluateListComprehension(outputExpr, qualifiers, newBindings, qualIndex + 1);
             results.push(...subResults);
