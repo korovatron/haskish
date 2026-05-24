@@ -4249,11 +4249,55 @@ class HaskishInterpreter {
             // Protect string literals before substitution so that a parameter like `n`
             // never corrupts escape sequences inside strings (e.g. "\n", "\t").
             const stringLiterals = [];
-            result = result.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, (m) => {
-                const idx = stringLiterals.length;
-                stringLiterals.push(m);
-                return `\x00STR${idx}\x00`;
-            });
+            const protectStringLiterals = (input) => {
+                let out = '';
+                for (let i = 0; i < input.length; i++) {
+                    const ch = input[i];
+
+                    if (ch === '"') {
+                        let j = i + 1;
+                        while (j < input.length) {
+                            if (input[j] === '"' && input[j - 1] !== '\\') break;
+                            j++;
+                        }
+                        if (j < input.length) {
+                            const literal = input.slice(i, j + 1);
+                            const idx = stringLiterals.length;
+                            stringLiterals.push(literal);
+                            out += `\x00STR${idx}\x00`;
+                            i = j;
+                            continue;
+                        }
+                    }
+
+                    if (ch === "'") {
+                        // Apostrophe after an identifier character is a trailing prime,
+                        // not the start of a char/string literal.
+                        const prev = i > 0 ? input[i - 1] : ' ';
+                        const isPrime = /[a-zA-Z0-9_']/.test(prev);
+                        if (!isPrime) {
+                            let j = i + 1;
+                            while (j < input.length) {
+                                if (input[j] === "'" && input[j - 1] !== '\\') break;
+                                j++;
+                            }
+                            if (j < input.length) {
+                                const literal = input.slice(i, j + 1);
+                                const idx = stringLiterals.length;
+                                stringLiterals.push(literal);
+                                out += `\x00STR${idx}\x00`;
+                                i = j;
+                                continue;
+                            }
+                        }
+                    }
+
+                    out += ch;
+                }
+                return out;
+            };
+
+            result = protectStringLiterals(result);
 
             const substitutedValues = [];
 

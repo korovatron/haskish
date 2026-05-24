@@ -146,6 +146,14 @@ in f 4`,
             expected: '25'
         },
         {
+            name: 'prime identifier does not block substitution',
+            input: `g seed =
+  let dirs' = seed + 1
+  in dirs'
+g 5`,
+            expected: '6'
+        },
+        {
             name: 'deep let chain',
             input: `let a1 = 1 in
 let a2 = a1 + 1 in
