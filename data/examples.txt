@@ -635,11 +635,9 @@ quickSort = z (\qs -> \xs ->
 
 === Mini Expression Interpreter ===
 {-
-============================================================
  Mini Expression Language (Tuple‑Tagged ADT Style)
  Demonstrates: pattern matching, evaluation, substitution,
  lexical scoping, shadowing, and pretty‑printing.
-============================================================
 
 Quick tests (run these after loading the file):
 
@@ -672,7 +670,6 @@ runExpr ("Let","a",("Lit",1),
              ("Let","c",("Mul",("Var","b"),("Lit",3)),
                ("Let","d",("Mul",("Var","c"),("Lit",4)),
                  ("Var","d")))))                           -- 24
-============================================================
 
 
 Expression constructors:
