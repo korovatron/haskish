@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.2.11';
+const HASKISH_VERSION = '1.2.12';
 
 const interpreter = new HaskishInterpreter();
 
@@ -173,7 +173,7 @@ document.getElementById('preludeLink').addEventListener('click', async function(
         codeEditor.setValue(code);
         codeEditor.setCursor({ line: 0, ch: 0 });
         builtinsOverlay.classList.remove('visible');
-        addSystemMessage('✓ Prelude.hs loaded! Click "Run Code" to make the functions available.', 'result');
+        addSystemMessage('Prelude.hs loaded! Click "Run Code" to make the functions available.', 'result');
         saveUniversalState();
     } catch (err) {
         addSystemMessage('Error loading Prelude.hs: ' + err.message, 'error');
@@ -530,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = interpreter.run(code);
         
         if (result.success) {
-            addSystemMessage(`✓ ${result.message}`, 'result');
+            addSystemMessage(`${result.message}`, 'result');
             
             // Display any warnings
             if (result.warnings && result.warnings.length > 0) {
@@ -541,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             addSystemMessage('Now try calling your functions by typing their name below.', 'info');
         } else {
-            addSystemMessage(`✗ Error: ${result.error}`, 'error');
+            addSystemMessage(`Error: ${result.error}`, 'error');
         }
     });
 
@@ -678,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } catch (error) {
             console.error('Error loading examples:', error);
-            addSystemMessage(`✗ Error loading examples: ${error.message}`, 'error');
+            addSystemMessage(`Error loading examples: ${error.message}`, 'error');
         }
     }
     
@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (content) {
             codeEditor.setValue(content);
             codeEditor.setCursor({ line: 0, ch: 0 });
-            addSystemMessage(`✓ Loaded example: ${sectionName}! Click "Run Code" to define the functions.`, 'result');
+            addSystemMessage(`Loaded example: ${sectionName}! Click "Run Code" to define the functions.`, 'result');
             closeMenuFunc(); // Close menu after loading
         }
     }
@@ -751,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error loading exercises:', error);
-            addSystemMessage(`✗ Error loading exercises: ${error.message}`, 'error');
+            addSystemMessage(`Error loading exercises: ${error.message}`, 'error');
         }
     }
     
@@ -926,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await writable.write(code);
                 await writable.close();
                 
-                addSystemMessage('✓ Functions saved successfully.', 'result');
+                addSystemMessage('Functions saved successfully.', 'result');
             } else {
                 // Fallback: download file (iOS-compatible)
                 const blob = new Blob([code], { type: 'text/plain' });
@@ -945,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     URL.revokeObjectURL(url);
                 }, 100);
                 
-                addSystemMessage('✓ Functions downloaded to your Downloads folder.', 'result');
+                addSystemMessage('Functions downloaded to your Downloads folder.', 'result');
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -973,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const code = await file.text();
                 
                 codeEditor.setValue(code);
-                addSystemMessage(`✓ Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
+                addSystemMessage(`Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
                 saveUniversalState();
             } else {
                 // Fallback: use file input
@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (file) {
                         const code = await file.text();
                         codeEditor.setValue(code);
-                        addSystemMessage(`✓ Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
+                        addSystemMessage(`Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
                         saveUniversalState();
                     }
                 };

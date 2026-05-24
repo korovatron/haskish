@@ -4686,10 +4686,10 @@ class HaskishInterpreter {
         
         // Helpful error messages for lowercase boolean literals
         if (expr === 'true') {
-            throw new Error("Unknown identifier 'true'. Did you mean 'True'? In Haskell, boolean constructors must be capitalized.");
+            throw new Error("Unknown identifier 'true'. Did you mean 'True'? In Haskell, boolean constructors must be capitalised.");
         }
         if (expr === 'false') {
-            throw new Error("Unknown identifier 'false'. Did you mean 'False'? In Haskell, boolean constructors must be capitalized.");
+            throw new Error("Unknown identifier 'false'. Did you mean 'False'? In Haskell, boolean constructors must be capitalised.");
         }
 
         // Special handling for 'otherwise' keyword
