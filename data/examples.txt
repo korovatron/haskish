@@ -634,50 +634,54 @@ quickSort = z (\qs -> \xs ->
 
 
 === Mini Expression Interpreter ===
--- ============================================================
---  Mini Expression Language (Tuple‑Tagged ADT Style)
---  Demonstrates: pattern matching, evaluation, substitution,
---  lexical scoping, shadowing, and pretty‑printing.
--- ============================================================
+{-
+============================================================
+ Mini Expression Language (Tuple‑Tagged ADT Style)
+ Demonstrates: pattern matching, evaluation, substitution,
+ lexical scoping, shadowing, and pretty‑printing.
+============================================================
 
--- Quick tests (run these after loading the file):
---
--- runExpr ("Lit", 42)
--- runExpr ("Add", ("Lit",3), ("Lit",4))
--- runExpr ("Mul", ("Lit",6), ("Lit",7))
--- runExpr ("Var", "x")                       -- unbound → 0
---
--- runExpr ("Let","x",("Lit",5),
---            ("Add",("Var","x"),("Lit",3)))  -- 8
---
--- runExpr ("Let","x",("Lit",2),
---            ("Let","y",("Add",("Var","x"),("Lit",3)),
---              ("Mul",("Var","y"),("Var","x"))))  -- 10
---
--- showExpr (subst ("Add",("Var","x"),("Lit",1))
---                  "x"
---                  ("Lit",99))               -- (99 + 1)
---
--- runExpr ("Let","x",("Lit",10),
---            ("Add",
---              ("Let","x",("Lit",3),("Var","x")),
---              ("Var","x")))                 -- 13
---
--- runExpr ("Let","a",("Lit",1),
---            ("Let","b",("Mul",("Var","a"),("Lit",2)),
---              ("Let","c",("Mul",("Var","b"),("Lit",3)),
---                ("Let","d",("Mul",("Var","c"),("Lit",4)),
---                  ("Var","d")))))           -- 24
---
--- ============================================================
+Quick tests (run these after loading the file):
+
+runExpr ("Lit", 42)
+
+runExpr ("Add", ("Lit",3), ("Lit",4))
+
+runExpr ("Mul", ("Lit",6), ("Lit",7))
+
+runExpr ("Var", "x")                                      - unbound → 0
+
+runExpr ("Let","x",("Lit",5),
+           ("Add",("Var","x"),("Lit",3)))                  -- 8
+           
+runExpr ("Let","x",("Lit",2),
+           ("Let","y",("Add",("Var","x"),("Lit",3)),
+             ("Mul",("Var","y"),("Var","x"))))             -- 10
+             
+showExpr (subst ("Add",("Var","x"),("Lit",1))
+                 "x"
+                 ("Lit",99))                               -- (99 + 1)
+
+runExpr ("Let","x",("Lit",10),
+           ("Add",
+             ("Let","x",("Lit",3),("Var","x")),
+             ("Var","x")))                                 -- 13
+             
+runExpr ("Let","a",("Lit",1),
+           ("Let","b",("Mul",("Var","a"),("Lit",2)),
+             ("Let","c",("Mul",("Var","b"),("Lit",3)),
+               ("Let","d",("Mul",("Var","c"),("Lit",4)),
+                 ("Var","d")))))                           -- 24
+============================================================
 
 
--- Expression constructors:
--- ("Lit", n)
--- ("Var", name)
--- ("Add", e1, e2)
--- ("Mul", e1, e2)
--- ("Let", name, e1, e2)
+Expression constructors:
+("Lit", n)
+("Var", name)
+("Add", e1, e2)
+("Mul", e1, e2)
+("Let", name, e1, e2)
+-}
 
 -- Pretty-printing
 showExpr ("Lit", n) =
@@ -695,12 +699,10 @@ showExpr ("Mul", e1, e2) =
 showExpr ("Let", x, e1, e2) =
   "(let " ++ x ++ " = " ++ showExpr e1 ++ " in " ++ showExpr e2 ++ ")"
 
-
 -- Lookup in environment
 lookupEnv x [] = 0
 lookupEnv x ((y,v):env) =
   if x == y then v else lookupEnv x env
-
 
 -- Evaluation
 eval ("Lit", n) env =
@@ -717,7 +719,6 @@ eval ("Mul", e1, e2) env =
 
 eval ("Let", x, e1, e2) env =
   eval e2 ((x, eval e1 env) : env)
-
 
 -- Substitution: substitute variable x with expression s in e
 subst ("Lit", n) x s =
@@ -736,7 +737,6 @@ subst ("Let", y, e1, e2) x s =
   if x == y
     then ("Let", y, subst e1 x s, e2)
     else ("Let", y, subst e1 x s, subst e2 x s)
-
 
 -- Example expression:
 -- let x = 3+4 in x * (x+1)
