@@ -757,6 +757,11 @@ showExprStress
                     input: `let fs = [ (\\n -> n + x) | x <- [1..5] ] in
         [ f 10 | f <- fs ]`,
                     expected: '[11,12,13,14,15]'
+                                },
+                                {
+                                        name: 'list literal containing pipe inside string',
+                                        input: '["|"]',
+                                        expected: '["|"]'
         }
     ];
 

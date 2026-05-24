@@ -3417,11 +3417,28 @@ class HaskishInterpreter {
         }
 
         // Check for list comprehension: [expr | generator, ...]
-        // Need to find the | at depth 0 (not inside nested brackets)
+        // Need to find the | at depth 0 (not inside nested brackets or string/char literals).
         let bracketDepth = 0;
         let pipeIndex = -1;
+        let _inString = false;
+        let _stringChar = null;
         for (let i = 0; i < listStr.length; i++) {
             const char = listStr[i];
+            const isPrime = char === "'" && !_inString && i > 0 && /[\w']/.test(listStr[i - 1]);
+
+            if ((char === '"' || (char === "'" && !isPrime)) && (i === 0 || listStr[i - 1] !== '\\')) {
+                if (!_inString) {
+                    _inString = true;
+                    _stringChar = char;
+                } else if (char === _stringChar) {
+                    _inString = false;
+                    _stringChar = null;
+                }
+                continue;
+            }
+
+            if (_inString) continue;
+
             if (char === '[' || char === '(') bracketDepth++;
             if (char === ']' || char === ')') bracketDepth--;
             if (char === '|' && bracketDepth === 0) {
@@ -3445,8 +3462,25 @@ class HaskishInterpreter {
         let dotsIndex = -1;
         {
             let _d = 0;
+            let _inString = false;
+            let _stringChar = null;
             for (let i = 0; i < listStr.length - 1; i++) {
                 const c = listStr[i];
+                const isPrime = c === "'" && !_inString && i > 0 && /[\w']/.test(listStr[i - 1]);
+
+                if ((c === '"' || (c === "'" && !isPrime)) && (i === 0 || listStr[i - 1] !== '\\')) {
+                    if (!_inString) {
+                        _inString = true;
+                        _stringChar = c;
+                    } else if (c === _stringChar) {
+                        _inString = false;
+                        _stringChar = null;
+                    }
+                    continue;
+                }
+
+                if (_inString) continue;
+
                 if (c === '[' || c === '(') _d++;
                 if (c === ']' || c === ')') _d--;
                 if (c === '.' && listStr[i + 1] === '.' && _d === 0) { dotsIndex = i; break; }
@@ -3461,8 +3495,25 @@ class HaskishInterpreter {
             let commaIdx = -1;
             {
                 let _d = 0;
+                let _inString = false;
+                let _stringChar = null;
                 for (let i = 0; i < before.length; i++) {
                     const c = before[i];
+                    const isPrime = c === "'" && !_inString && i > 0 && /[\w']/.test(before[i - 1]);
+
+                    if ((c === '"' || (c === "'" && !isPrime)) && (i === 0 || before[i - 1] !== '\\')) {
+                        if (!_inString) {
+                            _inString = true;
+                            _stringChar = c;
+                        } else if (c === _stringChar) {
+                            _inString = false;
+                            _stringChar = null;
+                        }
+                        continue;
+                    }
+
+                    if (_inString) continue;
+
                     if (c === '[' || c === '(') _d++;
                     if (c === ']' || c === ')') _d--;
                     if (c === ',' && _d === 0) { commaIdx = i; break; }
