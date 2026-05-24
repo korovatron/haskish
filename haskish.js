@@ -3469,9 +3469,9 @@ class HaskishInterpreter {
             clauses.push(current.trim());
         }
         
-        // Parse each clause as either generator (x <- list) or guard (boolean expr)
-        const generators = [];
-        const guards = [];
+        // Parse clauses in order as generator (x <- list), let-qualifier (let x = ...), or guard.
+        const qualifiers = [];
+        let generatorCount = 0;
         
         for (const clause of clauses) {
             // Try to match tuple pattern: (a, b, c) <- list
@@ -3490,7 +3490,8 @@ class HaskishInterpreter {
                 }
                 if (!hasTopComma) {
                     // It's a cons/wildcard pattern like (h:_) — use matchPattern, skip on failure
-                    generators.push({
+                    qualifiers.push({
+                        type: 'generator',
                         consPattern: '(' + innerPat + ')',
                         list: tuplePattern[2],
                         isCons: true
@@ -3498,90 +3499,68 @@ class HaskishInterpreter {
                 } else {
                     // Parse tuple pattern variables
                     const vars = tuplePattern[1].split(',').map(v => v.trim());
-                    generators.push({
+                    qualifiers.push({
+                        type: 'generator',
                         variables: vars,
                         list: tuplePattern[2],
                         isTuple: true
                     });
                 }
+                generatorCount++;
             } else if (simplePattern) {
-                generators.push({
+                qualifiers.push({
+                    type: 'generator',
                     variable: simplePattern[1],
                     list: simplePattern[2],
                     isTuple: false
                 });
+                generatorCount++;
+            } else if (clause.trimStart().startsWith('let ')) {
+                const letBody = clause.trimStart().slice(3).trim();
+                if (!letBody) {
+                    throw new Error('Malformed list comprehension let qualifier: missing bindings after let');
+                }
+                qualifiers.push({ type: 'let', bindings: letBody });
             } else {
                 // It's a guard (filter condition)
-                guards.push(clause);
+                qualifiers.push({ type: 'guard', expr: clause });
             }
         }
         
-        if (generators.length === 0) {
+        if (generatorCount === 0) {
             throw new Error('List comprehension must have at least one generator');
         }
         
         // Evaluate the list comprehension
-        return this.evaluateListComprehension(outputExpr, generators, guards);
+        return this.evaluateListComprehension(outputExpr, qualifiers);
     }
     
-    // Evaluate list comprehension with nested generators and guards
-    evaluateListComprehension(outputExpr, generators, guards, bindings = {}, genIndex = 0) {
-        // Special case: single generator from infinite range with guards
-        // Return a lazy filtered infinite range instead of materializing
-        if (genIndex === 0 && generators.length === 1 && Object.keys(bindings).length === 0) {
-            const generator = generators[0];
-            const listExpr = this.evaluate(generator.list);
-            
-            // Check if we can create a lazy filtered/mapped infinite range
-            // Skip optimization for tuple patterns - they need full evaluation
-            if (listExpr && listExpr._isInfiniteRange && !generator.isTuple) {
-                const varName = generator.variable;
-                
-                // Check if output expression is just the variable (simple identity)
-                const isIdentity = outputExpr.trim() === varName;
-                
-                // If we have guards, create a combined predicate
-                if (guards.length > 0) {
-                    const combinedPredicate = new Lambda(varName, guards.map(g => `(${g})`).join(' && '), this, {});
-                    
-                    if (isIdentity) {
-                        // Just filter: [x | x <- [n..], guard(x)]
-                        return new FilteredInfiniteRange(listExpr, combinedPredicate, this);
-                    } else {
-                        // Filter and map: [expr | x <- [n..], guard(x)]
-                        const filtered = new FilteredInfiniteRange(listExpr, combinedPredicate, this);
-                        const mapLambda = new Lambda(varName, outputExpr, this, {});
-                        return new MappedInfiniteRange(filtered, mapLambda, this);
-                    }
-                } else if (!isIdentity) {
-                    // Just map, no filter: [expr | x <- [n..]]
-                    const mapLambda = new Lambda(varName, outputExpr, this, {});
-                    return new MappedInfiniteRange(listExpr, mapLambda, this);
-                } else {
-                    // Identity with no guards: [x | x <- [n..]] - just return the range
-                    return listExpr;
-                }
-            }
-        }
-        
-        if (genIndex >= generators.length) {
-            // Base case: all generators exhausted, check guards and produce output
-            // Check all guards
-            for (const guard of guards) {
-                const guardResult = this.evaluateWithBindings(guard, bindings);
-                if (!guardResult) {
-                    return []; // Guard failed, skip this combination
-                }
-            }
-            // All guards passed, evaluate output expression
+    // Evaluate list comprehension with ordered qualifiers (generators, lets, guards)
+    evaluateListComprehension(outputExpr, qualifiers, bindings = {}, qualIndex = 0) {
+        if (qualIndex >= qualifiers.length) {
             const result = this.evaluateWithBindings(outputExpr, bindings);
             return [result];
         }
-        
-        // Recursive case: process current generator
-        const generator = generators[genIndex];
-        const listExpr = this.evaluateWithBindings(generator.list, bindings);
-        
+
+        const qualifier = qualifiers[qualIndex];
+
+        if (qualifier.type === 'let') {
+            // let-qualifier extends local scope for subsequent qualifiers/output.
+            const letBindings = this.splitLetBindings(qualifier.bindings);
+            const localScope = this.evaluateWhereBindings(letBindings, bindings);
+            const nextBindings = Object.assign({}, bindings, localScope);
+            return this.evaluateListComprehension(outputExpr, qualifiers, nextBindings, qualIndex + 1);
+        }
+
+        if (qualifier.type === 'guard') {
+            const guardResult = this.evaluateWithBindings(qualifier.expr, bindings);
+            if (!guardResult) return [];
+            return this.evaluateListComprehension(outputExpr, qualifiers, bindings, qualIndex + 1);
+        }
+
+        // Generator qualifier
+        const listExpr = this.evaluateWithBindings(qualifier.list, bindings);
+
         // Handle infinite ranges specially - take a reasonable amount
         let sourceList;
         if (listExpr && listExpr._isInfiniteRange) {
@@ -3590,40 +3569,38 @@ class HaskishInterpreter {
         } else if (Array.isArray(listExpr)) {
             sourceList = listExpr;
         } else {
-            throw new Error(`Generator expression must evaluate to a list: ${generator.list}`);
+            throw new Error(`Generator expression must evaluate to a list: ${qualifier.list}`);
         }
-        
-        // Iterate through the list and recursively process remaining generators
+
         const results = [];
         for (const item of sourceList) {
-            let newBindings = { ...bindings };
-            
-            if (generator.isCons) {
+            const newBindings = { ...bindings };
+
+            if (qualifier.isCons) {
                 // Cons/pattern generator: skip items that don't match (Haskell semantics)
-                const match = this.matchPattern(generator.consPattern, item);
+                const match = this.matchPattern(qualifier.consPattern, item);
                 if (match === null) continue;
                 Object.assign(newBindings, match);
-            } else if (generator.isTuple) {
+            } else if (qualifier.isTuple) {
                 // Destructure tuple pattern; skip items that don't match (Haskell semantics)
                 if (!item || !item._isTuple) continue;
-                if (item.elements.length !== generator.variables.length) continue;
-                // Match each element pattern (handles sub-patterns like h:_ inside a tuple)
+                if (item.elements.length !== qualifier.variables.length) continue;
                 let tupleMatched = true;
-                for (let ti = 0; ti < generator.variables.length; ti++) {
-                    const elemMatch = this.matchPattern(generator.variables[ti], item.elements[ti]);
+                for (let ti = 0; ti < qualifier.variables.length; ti++) {
+                    const elemMatch = this.matchPattern(qualifier.variables[ti], item.elements[ti]);
                     if (elemMatch === null) { tupleMatched = false; break; }
                     Object.assign(newBindings, elemMatch);
                 }
                 if (!tupleMatched) continue;
             } else {
                 // Simple pattern: bind single variable
-                newBindings[generator.variable] = item;
+                newBindings[qualifier.variable] = item;
             }
-            
-            const subResults = this.evaluateListComprehension(outputExpr, generators, guards, newBindings, genIndex + 1);
+
+            const subResults = this.evaluateListComprehension(outputExpr, qualifiers, newBindings, qualIndex + 1);
             results.push(...subResults);
         }
-        
+
         return results;
     }
 

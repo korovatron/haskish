@@ -654,6 +654,16 @@ showExprStress
                         ("Var","c"))))))
     []`,
                         expected: '31'
+                },
+                {
+                    name: 'list comprehension let qualifier binds local name',
+                    input: '[ z | x <- [1..5], let z = x*x ]',
+                    expected: '[1,4,9,16,25]'
+                },
+                {
+                    name: 'list comprehension let qualifier works with guard',
+                    input: '[ z | x <- [1..10], let z = x*x, z < 30 ]',
+                    expected: '[1,4,9,16,25]'
         }
     ];
 
