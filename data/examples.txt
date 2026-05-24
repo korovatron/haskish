@@ -1449,7 +1449,7 @@ sierpinski n =
 mandelbrot =
   putStr (render (-30) 10 (-12) 12)
   where
-    maxIter = 60  -- reduce this number if you get a timeout
+    maxIter = 20  -- reduce this number if you get a timeout. Increase for more detail
     scale = 20
     radius2 = 4 * scale * scale
 
