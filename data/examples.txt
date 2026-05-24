@@ -632,6 +632,132 @@ quickSort = z (\qs -> \xs ->
 -- myLength [1,2,3,4,5]              → 5
 -- quickSort [5,3,8,1,4,7,2,6]       → [1,2,3,4,5,6,7,8]
 
+
+=== Mini Expression Interpreter ===
+-- ============================================================
+--  Mini Expression Language (Tuple‑Tagged ADT Style)
+--  Demonstrates: pattern matching, evaluation, substitution,
+--  lexical scoping, shadowing, and pretty‑printing.
+-- ============================================================
+
+-- Quick tests (run these after loading the file):
+--
+-- runExpr ("Lit", 42)
+-- runExpr ("Add", ("Lit",3), ("Lit",4))
+-- runExpr ("Mul", ("Lit",6), ("Lit",7))
+-- runExpr ("Var", "x")                       -- unbound → 0
+--
+-- runExpr ("Let","x",("Lit",5),
+--            ("Add",("Var","x"),("Lit",3)))  -- 8
+--
+-- runExpr ("Let","x",("Lit",2),
+--            ("Let","y",("Add",("Var","x"),("Lit",3)),
+--              ("Mul",("Var","y"),("Var","x"))))  -- 10
+--
+-- showExpr (subst ("Add",("Var","x"),("Lit",1))
+--                  "x"
+--                  ("Lit",99))               -- (99 + 1)
+--
+-- runExpr ("Let","x",("Lit",10),
+--            ("Add",
+--              ("Let","x",("Lit",3),("Var","x")),
+--              ("Var","x")))                 -- 13
+--
+-- runExpr ("Let","a",("Lit",1),
+--            ("Let","b",("Mul",("Var","a"),("Lit",2)),
+--              ("Let","c",("Mul",("Var","b"),("Lit",3)),
+--                ("Let","d",("Mul",("Var","c"),("Lit",4)),
+--                  ("Var","d")))))           -- 24
+--
+-- ============================================================
+
+
+-- Expression constructors:
+-- ("Lit", n)
+-- ("Var", name)
+-- ("Add", e1, e2)
+-- ("Mul", e1, e2)
+-- ("Let", name, e1, e2)
+
+-- Pretty-printing
+showExpr ("Lit", n) =
+  show n
+
+showExpr ("Var", x) =
+  x
+
+showExpr ("Add", e1, e2) =
+  "(" ++ showExpr e1 ++ " + " ++ showExpr e2 ++ ")"
+
+showExpr ("Mul", e1, e2) =
+  "(" ++ showExpr e1 ++ " * " ++ showExpr e2 ++ ")"
+
+showExpr ("Let", x, e1, e2) =
+  "(let " ++ x ++ " = " ++ showExpr e1 ++ " in " ++ showExpr e2 ++ ")"
+
+
+-- Lookup in environment
+lookupEnv x [] = 0
+lookupEnv x ((y,v):env) =
+  if x == y then v else lookupEnv x env
+
+
+-- Evaluation
+eval ("Lit", n) env =
+  n
+
+eval ("Var", x) env =
+  lookupEnv x env
+
+eval ("Add", e1, e2) env =
+  eval e1 env + eval e2 env
+
+eval ("Mul", e1, e2) env =
+  eval e1 env * eval e2 env
+
+eval ("Let", x, e1, e2) env =
+  eval e2 ((x, eval e1 env) : env)
+
+
+-- Substitution: substitute variable x with expression s in e
+subst ("Lit", n) x s =
+  ("Lit", n)
+
+subst ("Var", y) x s =
+  if x == y then s else ("Var", y)
+
+subst ("Add", e1, e2) x s =
+  ("Add", subst e1 x s, subst e2 x s)
+
+subst ("Mul", e1, e2) x s =
+  ("Mul", subst e1 x s, subst e2 x s)
+
+subst ("Let", y, e1, e2) x s =
+  if x == y
+    then ("Let", y, subst e1 x s, e2)
+    else ("Let", y, subst e1 x s, subst e2 x s)
+
+
+-- Example expression:
+-- let x = 3+4 in x * (x+1)
+example =
+  ("Let", "x",
+    ("Add", ("Lit",3), ("Lit",4)),
+    ("Mul",
+      ("Var","x"),
+      ("Add", ("Var","x"), ("Lit",1))
+    )
+  )
+
+run =
+  putStr (
+    "Expression: " ++ showExpr example ++ "\n" ++
+    "Evaluates to: " ++ show (eval example []) ++ "\n"
+  )
+
+runExpr e =
+  putStr (showExpr e ++ " = " ++ show (eval e []) ++ "\n")
+
 ###
 
 ### Algorithms & Data Structures ###
@@ -1370,31 +1496,46 @@ mandelbrot =
 --- maze 5 5 249
 --- maze 5 3 27
 
-rand seed = (seed * 1103515245 + 12345) `mod` 2147483648
+rand seed =
+  (seed * 1103515245 + 12345)
+    `mod` 2147483648
 
+
+-- Basic list utilities
 replicate 0 x = []
 replicate n x = x : replicate (n-1) x
 
-concatMap f [] = []
+concatMap f []     = []
 concatMap f (x:xs) = f x ++ concatMap f xs
 
-unlines [] = ""
+unlines []     = ""
 unlines (x:xs) = x ++ "\n" ++ unlines xs
+
 
 -- Build full wall grid: (2*h+1) × (2*w+1)
 fullWallGrid w h =
-  replicate (2*h+1) (replicate (2*w+1) True)
+  replicate (2*h + 1)
+    (replicate (2*w + 1) True)
 
+
+-- Grid mutation helpers
 setInRow 0 val (c:cs) = val : cs
 setInRow n val (c:cs) = c : setInRow (n-1) val cs
 
-setRow 0 x val (row:rows) = setInRow x val row : rows
-setRow n x val (row:rows) = row : setRow (n-1) x val rows
+setRow 0 x val (row:rows) =
+  setInRow x val row : rows
 
-setCell (x,y) val grid = setRow y x val grid
+setRow n x val (row:rows) =
+  row : setRow (n-1) x val rows
 
+setCell (x,y) val grid =
+  setRow y x val grid
+
+
+-- List helpers
 transpose ([]:_) = []
-transpose rows = map head rows : transpose (map tail rows)
+transpose rows   =
+  map head rows : transpose (map tail rows)
 
 nth 0 (x:xs) = x
 nth n (x:xs) = nth (n-1) xs
@@ -1402,27 +1543,45 @@ nth n (x:xs) = nth (n-1) xs
 removeNth 0 (x:xs) = xs
 removeNth n (x:xs) = x : removeNth (n-1) xs
 
-dirs = [(1,0),(-1,0),(0,1),(0,-1)]
 
+-- Directions
+dirs =
+  [ ( 1, 0)
+  , (-1, 0)
+  , ( 0, 1)
+  , ( 0,-1)
+  ]
+
+
+-- Shuffle using deterministic RNG
 shuffle seed xs =
-  if xs == [] then []
-  else nth i xs : shuffle (rand seed) (removeNth i xs)
+  if xs == []
+    then []
+    else nth i xs
+         : shuffle (rand seed) (removeNth i xs)
   where
     i = mod seed (length xs)
 
+
+-- Grid access
 getCell (x,y) grid =
   nth y (nth x (transpose grid))
+
 
 -- DFS carve
 carve w h seed grid x y =
   carveDirs w h seed1 grid1 x y (shuffle seed dirs)
   where
-    grid1 = setCell (2*x+1,2*y+1) False grid
+    grid1 = setCell (2*x+1, 2*y+1) False grid
     seed1 = rand seed
 
-carveDirs w h seed grid x y [] = grid
+
+carveDirs w h seed grid x y [] =
+  grid
+
 carveDirs w h seed grid x y ((dx,dy):rest) =
   carveTry w h seed grid x y dx dy rest
+
 
 carveTry w h seed grid x y dx dy rest =
   if nx < 0 || ny < 0 || nx >= w || ny >= h
@@ -1432,25 +1591,33 @@ carveTry w h seed grid x y dx dy rest =
     nx = x + dx
     ny = y + dy
 
+
 carveTry2 w h seed grid x y dx dy rest nx ny =
-  if getCell (2*nx+1,2*ny+1) grid == False
+  if getCell (2*nx+1, 2*ny+1) grid == False
     then carveDirs w h seed grid x y rest
     else carveThrough w h seed grid x y dx dy rest nx ny
+
 
 carveThrough w h seed grid x y dx dy rest nx ny =
   carveDirs w h seed2 grid3 x y rest
   where
-    wx = 2*x+1 + dx
-    wy = 2*y+1 + dy
+    wx    = 2*x+1 + dx
+    wy    = 2*y+1 + dy
     grid2 = setCell (wx,wy) False grid
     seed2 = rand seed
     grid3 = carve w h seed2 grid2 nx ny
 
-cellStr True = "██"
+
+-- Rendering
+cellStr True  = "██"
 cellStr False = "  "
 
-renderRow row = concatMap cellStr row
-renderMaze grid = unlines (map renderRow grid)
+renderRow row =
+  concatMap cellStr row
+
+renderMaze grid =
+  unlines (map renderRow grid)
+
 
 maze w h seed =
   putStr (renderMaze (carve w h seed (fullWallGrid w h) 0 0))

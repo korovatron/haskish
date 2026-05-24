@@ -420,6 +420,215 @@ program =
 
 eval program Empty`,
                         expected: '30'
+                },
+                {
+                        name: 'tuple-tagged eval handles nested let with multiline call syntax',
+                        input: `lookupEnv x [] = 0
+lookupEnv x ((y,v):env) =
+    if x == y then v else lookupEnv x env
+
+eval ("Lit", n) env =
+    n
+
+eval ("Var", x) env =
+    lookupEnv x env
+
+eval ("Add", e1, e2) env =
+    eval e1 env + eval e2 env
+
+eval ("Mul", e1, e2) env =
+    eval e1 env * eval e2 env
+
+eval ("Let", x, e1, e2) env =
+    eval e2 ((x, eval e1 env) : env)
+
+eval
+    ("Let", "x", ("Lit", 2),
+        ("Let", "y", ("Add", ("Var","x"), ("Lit", 3)),
+            ("Mul", ("Var","y"), ("Var","x"))))
+    []`,
+                        expected: '10'
+                },
+                {
+                        name: 'substitution does not re-substitute inserted string literals',
+                        input: `showExpr ("Lit", n) =
+    show n
+
+showExpr ("Var", x) =
+    x
+
+showExpr ("Add", e1, e2) =
+    "(" ++ showExpr e1 ++ " + " ++ showExpr e2 ++ ")"
+
+subst ("Lit", n) x s =
+    ("Lit", n)
+
+subst ("Var", y) x s =
+    if x == y then s else ("Var", y)
+
+subst ("Add", e1, e2) x s =
+    ("Add", subst e1 x s, subst e2 x s)
+
+showExpr (subst ("Add", ("Var","x"), ("Lit",1)) "x" ("Lit",99))`,
+                        expected: '"(99 + 1)"'
+        },
+        {
+            name: 'repl expression ignores leading comment line',
+            input: `-- pretend f(x) = x*x + 1
+show ((12 * 12) + 1)`,
+            expected: '"145"'
+                },
+                {
+                        name: 'stress helpers for tuple-tagged expr language',
+                        input: `showExprStress ("Lit", n) =
+    show n
+
+showExprStress ("Var", x) =
+    x
+
+showExprStress ("Add", e1, e2) =
+    "(" ++ showExprStress e1 ++ " + " ++ showExprStress e2 ++ ")"
+
+showExprStress ("Mul", e1, e2) =
+    "(" ++ showExprStress e1 ++ " * " ++ showExprStress e2 ++ ")"
+
+showExprStress ("Let", x, e1, e2) =
+    "(let " ++ x ++ " = " ++ showExprStress e1 ++ " in " ++ showExprStress e2 ++ ")"
+
+lookupEnvStress x [] = 0
+lookupEnvStress x ((y,v):env) =
+    if x == y then v else lookupEnvStress x env
+
+evalStress ("Lit", n) env =
+    n
+
+evalStress ("Var", x) env =
+    lookupEnvStress x env
+
+evalStress ("Add", e1, e2) env =
+    evalStress e1 env + evalStress e2 env
+
+evalStress ("Mul", e1, e2) env =
+    evalStress e1 env * evalStress e2 env
+
+evalStress ("Let", x, e1, e2) env =
+    evalStress e2 ((x, evalStress e1 env) : env)
+
+substStress ("Lit", n) x s =
+    ("Lit", n)
+
+substStress ("Var", y) x s =
+    if x == y then s else ("Var", y)
+
+substStress ("Add", e1, e2) x s =
+    ("Add", substStress e1 x s, substStress e2 x s)
+
+substStress ("Mul", e1, e2) x s =
+    ("Mul", substStress e1 x s, substStress e2 x s)
+
+substStress ("Let", y, e1, e2) x s =
+    if x == y
+        then ("Let", y, substStress e1 x s, e2)
+        else ("Let", y, substStress e1 x s, substStress e2 x s)
+
+runExprStress e = showExprStress e ++ " = " ++ show (evalStress e [])`,
+                        expected: 'Defined function: showExprStress\nDefined function: lookupEnvStress\nDefined function: evalStress\nDefined function: substStress\nDefined function: runExprStress'
+                },
+                {
+                        name: 'stress multiline subst call with leading comment',
+                        input: `-- pretend f(x) = x*x + 1
+showExprStress
+    (substStress
+        ("Add",
+            ("Mul",("Var","x"),("Var","x")),
+            ("Lit",1))
+        "x"
+        ("Lit",12))`,
+                        expected: '"((12 * 12) + 1)"'
+                },
+                {
+                        name: 'stress nested let with shadowing and reuse',
+                        input: `evalStress
+    ("Let","x",("Lit",2),
+        ("Let","y",("Lit",10),
+            ("Let","x",("Add",("Var","x"),("Var","y")),
+                ("Add",("Var","x"),("Var","y")))))
+    []`,
+                        expected: '22'
+                },
+                {
+                        name: 'stress simple nested let sum',
+                        input: `evalStress
+    ("Let","a",("Lit",3),
+        ("Let","b",("Lit",5),
+            ("Add",("Var","a"),("Var","b"))))
+    []`,
+                        expected: '8'
+                },
+                {
+                        name: 'stress deep arithmetic tree',
+                        input: `evalStress
+    ("Add",
+        ("Mul",
+            ("Mul",
+                ("Add",("Lit",1),("Lit",2)),
+                ("Add",("Lit",3),("Lit",4))),
+            ("Add",
+                ("Mul",("Lit",5),("Lit",6)),
+                ("Mul",("Lit",7),("Lit",8)))),
+        ("Add",
+            ("Mul",("Lit",9),("Lit",10)),
+            ("Mul",("Lit",11),("Lit",12))))
+    []`,
+                        expected: '2028'
+                },
+                {
+                        name: 'stress subst respects let binder for target variable',
+                        input: `showExprStress
+    (substStress
+        ("Let","x",
+            ("Lit",5),
+            ("Add",("Var","x"),("Var","x")))
+        "x"
+        ("Lit",999))`,
+                        expected: '"(let x = 5 in (x + x))"'
+                },
+                {
+                        name: 'stress long let-chain multiplication',
+                        input: `evalStress
+    ("Let","a",("Lit",1),
+        ("Let","b",("Mul",("Var","a"),("Lit",2)),
+            ("Let","c",("Mul",("Var","b"),("Lit",3)),
+                ("Let","d",("Mul",("Var","c"),("Lit",4)),
+                    ("Let","e",("Mul",("Var","d"),("Lit",5)),
+                        ("Var","e"))))))
+    []`,
+                        expected: '120'
+                },
+                {
+                        name: 'stress let square plus original',
+                        input: `evalStress
+    ("Let","t",("Add",("Lit",20),("Lit",22)),
+        ("Add",
+            ("Mul",("Var","t"),("Var","t")),
+            ("Var","t")))
+    []`,
+                        expected: '1806'
+                },
+                {
+                        name: 'stress polynomial-style expression under lets',
+                        input: `evalStress
+    ("Let","x",("Lit",3),
+        ("Let","a",("Lit",2),
+            ("Let","b",("Lit",3),
+                ("Let","c",("Lit",4),
+                    ("Add",
+                        ("Add",
+                            ("Mul",("Var","a"),("Mul",("Var","x"),("Var","x"))),
+                            ("Mul",("Var","b"),("Var","x"))),
+                        ("Var","c"))))))
+    []`,
+                        expected: '31'
         }
     ];
 

@@ -3862,9 +3862,9 @@ class HaskishInterpreter {
             }
         }
 
-        // Literal match (for numbers, strings, etc.)
+        // Literal match (for numbers, strings, lists, tuples, etc.)
         const literalValue = this.evaluate(pattern);
-        return literalValue === value ? {} : null;
+        return this.deepEquals(literalValue, value) ? {} : null;
     }
 
     // Apply a function with arguments
@@ -4218,6 +4218,8 @@ class HaskishInterpreter {
                 return `\x00STR${idx}\x00`;
             });
 
+            const substitutedValues = [];
+
             for (let [varName, value] of Object.entries(bindings)) {
                 // Skip function objects - they're already in variables table
                 if (tempVars.hasOwnProperty(varName)) {
@@ -4247,7 +4249,17 @@ class HaskishInterpreter {
                         replacement = `(${replacement})`;
                     }
                 }
-                result = result.replace(varRegex, replacement);
+
+                // Use placeholders during substitution so later variable replacements
+                // cannot rewrite text inserted by earlier substitutions.
+                const replacementIndex = substitutedValues.length;
+                substitutedValues.push(replacement);
+                const replacementMarker = `\x00SUB${replacementIndex}\x00`;
+                result = result.replace(varRegex, replacementMarker);
+            }
+
+            if (substitutedValues.length > 0) {
+                result = result.replace(/\x00SUB(\d+)\x00/g, (_, i) => substitutedValues[+i]);
             }
 
             // Restore string literals now that all variable substitutions are done
@@ -6152,8 +6164,14 @@ class HaskishInterpreter {
         try {
             // Start execution timer
             this.executionStartTime = Date.now();
-            
-            expr = expr.trim();
+
+            // Normalize REPL input by removing comments up front so standalone
+            // comment lines (e.g. "-- note") are ignored in expression mode.
+            expr = this.removeMultilineComments(expr)
+                .split(/\r?\n/)
+                .map(line => this.stripComments(line))
+                .join('\n')
+                .trim();
 
             const dataStrip = this.stripDataDeclarationsFromReplInput(expr);
             this.registerDataDeclarations(dataStrip.declarations);
