@@ -473,6 +473,31 @@ showExpr (subst ("Add", ("Var","x"), ("Lit",1)) "x" ("Lit",99))`,
                         expected: '"(99 + 1)"'
         },
         {
+            name: 'nested let case lambda preserves alternative boundaries',
+            input: `let x = 10 in let f = (\\y -> case y of
+  0 -> x
+  _ -> (\\x -> x + y) 5) in f 3`,
+            expected: '8'
+        },
+        {
+            name: 'multiline case in lambda application remains exhaustive',
+            input: `(\\y -> case y of
+  0 -> 0
+  _ -> (\\x -> x + y) 5) 3`,
+            expected: '8'
+        },
+        {
+            name: 'inner lambda parameter shadows outer let binding',
+            input: 'let x = 5 in (\\x -> x + 1) 3',
+            expected: '4'
+        },
+        {
+            name: 'case branch lambda parameter shadows outer let binding',
+            input: `let x = 10 in case 3 of
+  _ -> (\\x -> x + 1) 5`,
+            expected: '6'
+        },
+        {
             name: 'repl expression ignores leading comment line',
             input: `-- pretend f(x) = x*x + 1
 show ((12 * 12) + 1)`,

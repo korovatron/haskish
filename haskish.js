@@ -4082,6 +4082,29 @@ class HaskishInterpreter {
         return new Lambda(lambda.param, lambda.body, this, captured);
     }
 
+    // Extract the body of the outermost lambda from rawExpr, preserving HASKISH_NL markers
+    // (which carry case-alternative layout information).  Returns null on failure so callers
+    // can fall back to the tokenized (marker-free) body.
+    _rawLambdaBody(rawExpr) {
+        let raw = rawExpr.trim();
+        // Strip the outermost paren group (handles both "(\x -> body)" and "(\x -> body) args").
+        if (raw.startsWith('(')) {
+            let depth = 1;
+            let j = 1;
+            while (j < raw.length && depth > 0) {
+                if (raw[j] === '(') depth++;
+                else if (raw[j] === ')') depth--;
+                j++;
+            }
+            // j now points just past the closing ')'.
+            raw = raw.slice(1, j - 1).trim();
+        }
+        if (!raw.startsWith('\\')) return null;
+        const arrowIdx = this.findTopLevelArrow(raw);
+        if (arrowIdx === -1) return null;
+        return raw.slice(arrowIdx + 2).trim();
+    }
+
     formatForSubstitution(value) {
         if (value instanceof Lambda) {
             return value.toString();
@@ -4226,9 +4249,11 @@ class HaskishInterpreter {
                     continue;
                 }
                 
-                // Use lookahead/lookbehind instead of \b so names ending with ' (e.g. fst', even') match correctly
+                // Use lookahead/lookbehind instead of \b so names ending with ' (e.g. fst', even') match correctly.
+                // The lookbehind also excludes backslash so that \x (a lambda parameter introduction)
+                // is never treated as a reference to the variable x.
                 const escapedVarName = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const varRegex = new RegExp(`(?<![a-zA-Z0-9_'])${escapedVarName}(?![a-zA-Z0-9_'])`, 'g');
+                const varRegex = new RegExp(`(?<![a-zA-Z0-9_'\\\\])${escapedVarName}(?![a-zA-Z0-9_'])`, 'g');
                 let replacement;
                 if (typeof value === 'number' && value < 0) {
                     // Wrap negative numbers in parentheses to avoid issues like -n becoming --6
@@ -4250,12 +4275,83 @@ class HaskishInterpreter {
                     }
                 }
 
+                // Fix C: Protect the body of any inner lambda whose parameter is `varName`.
+                // Enforces lexical scoping: outer binding `x = 10` must not substitute into
+                // `\x -> BODY` because the `x` there refers to the lambda's own parameter.
+                const lambdaBodyPlaceholders = [];
+                const lambdaIntroLiteral = `\\${varName}`;
+                let scanPos = 0;
+                while (scanPos < result.length) {
+                    const introPos = result.indexOf(lambdaIntroLiteral, scanPos);
+                    if (introPos === -1) break;
+
+                    const introLen = lambdaIntroLiteral.length;
+                    const beforeCh = introPos > 0 ? result[introPos - 1] : '';
+                    const afterCh = result[introPos + introLen] || '';
+                    // Keep lambda parameter matching conservative: exact parameter name only.
+                    if (/[a-zA-Z0-9_']/.test(beforeCh) || /[a-zA-Z0-9_']/.test(afterCh)) {
+                        scanPos = introPos + introLen;
+                        continue;
+                    }
+
+                    // Locate the -> that terminates this lambda's parameter list at depth 0.
+                    let depth = 0;
+                    let arrowAt = -1;
+                    for (let k = introPos + introLen; k < result.length - 1; k++) {
+                        const c = result[k];
+                        if (c === '(' || c === '[') depth++;
+                        else if (c === ')' || c === ']') depth--;
+                        if (depth === 0 && c === '-' && result[k + 1] === '>') {
+                            arrowAt = k;
+                            break;
+                        }
+                        if (depth < 0) break;
+                    }
+                    if (arrowAt === -1) {
+                        scanPos = introPos + introLen;
+                        continue;
+                    }
+
+                    const bodyStart = arrowAt + 2;
+
+                    // Compute enclosing depth at lambda intro and stop body when it closes.
+                    let baseDepth = 0;
+                    for (let k = 0; k < introPos; k++) {
+                        const c = result[k];
+                        if (c === '(' || c === '[') baseDepth++;
+                        else if (c === ')' || c === ']') baseDepth--;
+                    }
+
+                    let bodyEnd = bodyStart;
+                    let bodyDepth = baseDepth;
+                    while (bodyEnd < result.length) {
+                        const c = result[bodyEnd];
+                        if (c === '(' || c === '[') bodyDepth++;
+                        else if (c === ')' || c === ']') bodyDepth--;
+                        if (bodyDepth < baseDepth) break;
+                        bodyEnd++;
+                    }
+
+                    const body = result.slice(bodyStart, bodyEnd);
+                    const idx = lambdaBodyPlaceholders.length;
+                    lambdaBodyPlaceholders.push(body);
+                    const marker = `\x00LBODY${idx}\x00`;
+                    result = result.slice(0, bodyStart) + marker + result.slice(bodyEnd);
+                    scanPos = bodyStart + marker.length;
+                }
+
                 // Use placeholders during substitution so later variable replacements
                 // cannot rewrite text inserted by earlier substitutions.
                 const replacementIndex = substitutedValues.length;
                 substitutedValues.push(replacement);
                 const replacementMarker = `\x00SUB${replacementIndex}\x00`;
                 result = result.replace(varRegex, replacementMarker);
+
+                // Restore lambda bodies immediately so subsequent variable substitutions
+                // (for OTHER variables) can still reach them.
+                if (lambdaBodyPlaceholders.length > 0) {
+                    result = result.replace(/\x00LBODY(\d+)\x00/g, (_, i) => lambdaBodyPlaceholders[+i]);
+                }
             }
 
             if (substitutedValues.length > 0) {
@@ -4533,7 +4629,9 @@ class HaskishInterpreter {
         const lambdaMatch = expr.match(/^\\(\w+|\([^)]+\))\s*->\s*(.+)$/);
         if (lambdaMatch) {
             const [, param, body] = lambdaMatch;
-            return new Lambda(param, body.trim(), this);
+            const rawBody = this._rawLambdaBody(rawExprForCase);
+            const bodyForLambda = rawBody !== null ? rawBody : body;
+            return new Lambda(param, bodyForLambda.trim(), this);
         }
         
         // Lambda with parens: (\param -> body) - only if it's the complete expression
@@ -4542,7 +4640,9 @@ class HaskishInterpreter {
         const parenLambdaMatch = expr.match(/^\(\\(\w+|\([^)]+\))\s*->\s*([^)]+(?:\([^)]*\)[^)]*)*)\)$/);
         if (parenLambdaMatch) {
             const [, param, body] = parenLambdaMatch;
-            return new Lambda(param, body.trim(), this);
+            const rawBody = this._rawLambdaBody(rawExprForCase);
+            const bodyForLambda = rawBody !== null ? rawBody : body;
+            return new Lambda(param, bodyForLambda.trim(), this);
         }
 
         // Check if it's a variable reference
@@ -5069,6 +5169,21 @@ class HaskishInterpreter {
         
         // Handle single parenthesized expression
         if (tokens.length === 1 && tokens[0].type === 'paren') {
+            const trimmedRaw = rawExprForCase.trim();
+            if (trimmedRaw.startsWith('(')) {
+                let depth = 1;
+                let j = 1;
+                while (j < trimmedRaw.length && depth > 0) {
+                    if (trimmedRaw[j] === '(') depth++;
+                    else if (trimmedRaw[j] === ')') depth--;
+                    j++;
+                }
+                // If the entire raw expression is one parenthesized group,
+                // evaluate the raw inner text so HASKISH_NL markers are preserved.
+                if (depth === 0 && j === trimmedRaw.length) {
+                    return this.evaluate(trimmedRaw.slice(1, j - 1));
+                }
+            }
             return this.evaluate(tokens[0].value);
         }
         
@@ -5098,7 +5213,12 @@ class HaskishInterpreter {
             
             const paramsStr = lambdaStr.slice(startPos, arrowPos).trim();
             const body = lambdaStr.slice(arrowPos + 2).trim();
-            
+
+            // Fix A: prefer the body extracted from rawExprForCase so that HASKISH_NL markers
+            // (which delimit case alternatives in layout-sensitive syntax) are preserved.
+            const rawBody = this._rawLambdaBody(rawExprForCase);
+            const bodyForLambda = rawBody !== null ? rawBody : body;
+
             // Smart parameter splitting: split on spaces, but keep tuple patterns together
             const params = [];
             let current = '';
@@ -5123,11 +5243,11 @@ class HaskishInterpreter {
             
             // If only one parameter, return simple lambda
             if (params.length === 1) {
-                return new Lambda(params[0], body, this);
+                return new Lambda(params[0], bodyForLambda, this);
             }
             
             // Create nested lambdas for multi-parameter functions
-            let bodyStr = body;
+            let bodyStr = bodyForLambda;
             for (let i = params.length - 1; i > 0; i--) {
                 bodyStr = `\\${params[i]} -> ${bodyStr}`;
             }
@@ -5160,7 +5280,12 @@ class HaskishInterpreter {
             
             const paramsStr = lambdaStr.slice(startPos, arrowPos).trim();
             const body = lambdaStr.slice(arrowPos + 2).trim();
-            
+
+            // Fix A: prefer the body extracted from rawExprForCase so that HASKISH_NL markers
+            // (which delimit case alternatives in layout-sensitive syntax) are preserved.
+            const rawBodyLambdaArgs = this._rawLambdaBody(rawExprForCase);
+            const bodyForLambdaArgs = rawBodyLambdaArgs !== null ? rawBodyLambdaArgs : body;
+
             // Smart parameter splitting
             const params = [];
             let current = '';
@@ -5185,9 +5310,9 @@ class HaskishInterpreter {
             // Create the lambda
             let lambda;
             if (params.length === 1) {
-                lambda = new Lambda(params[0], body, this);
+                lambda = new Lambda(params[0], bodyForLambdaArgs, this);
             } else {
-                let bodyStr = body;
+                let bodyStr = bodyForLambdaArgs;
                 for (let i = params.length - 1; i > 0; i--) {
                     bodyStr = `\\${params[i]} -> ${bodyStr}`;
                 }
