@@ -1862,7 +1862,7 @@ class HaskishInterpreter {
                 // Only flag it if the part before the second = looks like a plain identifier
                 // (i.e. it's a simple word, not a sub-expression).
                 if (/^[a-zA-Z_]\w*'*$/.test(rhsBefore)) {
-                    throw new Error(`Invalid where binding: '${str}' — put each binding on its own line`);
+                    throw new Error(`Invalid where binding: '${str}' - put each binding on its own line`);
                 }
             }
 

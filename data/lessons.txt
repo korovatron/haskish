@@ -12,8 +12,8 @@ In Haskish (like Haskell), there's an important distinction:
 So `"hello"` is actually the same as `['h','e','l','l','o']` - a list of individual characters!
 
 This is why functions like `ord` (which converts a character to its numeric code) require a **Char**, not a String:
-- ✅ `ord 'A'` works (single character)
-- ❌ `ord "A"` doesn't work (that's a list containing one character)
+- Works: `ord 'A'` (single character)
+- Doesn't work: `ord "A"` (that's a list containing one character)
 
 **~Experiment~**
 
@@ -634,7 +634,7 @@ Click **Run Code** `<svg width="16" height="16" viewBox="0 0 16 16" fill="curren
 144
 ```
 
-Now add a function that uses `square` as a helper. Add this to the function panel (above or below `square`). The order of functions in the panel doesn’t matter — Haskish reads the whole panel before running your code.
+Now add a function that uses `square` as a helper. Add this to the function panel (above or below `square`). The order of functions in the panel doesn’t matter, Haskish reads the whole panel before running your code.
 ```
 sumOfSquares a b = square a + square b
 ```

@@ -361,7 +361,7 @@ fastFib n = fibHelper n 0 1
 -- fastFib                → 9227465
 
 === Infinite Lists ===
--- Basic infinite ranges — use take to get a finite portion
+-- Basic infinite ranges, use take to get a finite portion
 nats   = [1..]
 evens  = [2,4..]
 odds   = [1,3..]
@@ -597,7 +597,7 @@ snd = \p -> p (\a -> \b -> b)
 -- snd (pair 10 20)         → 20
 
 === Z Combinator ===
--- The Z combinator enables anonymous recursion using only lambdas —
+-- The Z combinator enables anonymous recursion using only lambdas
 -- no named recursive functions required.
 -- Unlike the Y combinator, Z works in strict (eager) languages by
 -- eta-expanding the recursive call: (\v -> x x v) defers self-application
