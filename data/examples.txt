@@ -1514,8 +1514,7 @@ mandelbrot =
 --- maze 5 3 27
 
 rand seed =
-  (seed * 1103515245 + 12345)
-    `mod` 2147483648
+  (seed * 1103515245 + 12345) `mod` 2147483648
 
 
 -- Basic list utilities
@@ -1572,12 +1571,13 @@ dirs =
 
 -- Shuffle using deterministic RNG
 shuffle seed xs =
-  if xs == []
-    then []
-    else nth i xs
-         : shuffle (rand seed) (removeNth i xs)
-  where
-    i = mod seed (length xs)
+  case xs of
+    [] -> []
+    _  ->
+      let i     = mod seed (length xs)
+          picked = nth i xs
+          rest   = removeNth i xs
+      in picked : shuffle (rand seed) rest
 
 
 -- Grid access
@@ -1587,10 +1587,10 @@ getCell (x,y) grid =
 
 -- DFS carve
 carve w h seed grid x y =
-  carveDirs w h seed1 grid1 x y (shuffle seed dirs)
-  where
-    grid1 = setCell (2*x+1, 2*y+1) False grid
-    seed1 = rand seed
+  let grid1 = setCell (2*x+1, 2*y+1) False grid
+      seed1 = rand seed
+      dirs' = shuffle seed dirs
+  in carveDirs w h seed1 grid1 x y dirs'
 
 
 carveDirs w h seed grid x y [] =
@@ -1601,12 +1601,11 @@ carveDirs w h seed grid x y ((dx,dy):rest) =
 
 
 carveTry w h seed grid x y dx dy rest =
-  if nx < 0 || ny < 0 || nx >= w || ny >= h
-    then carveDirs w h seed grid x y rest
-    else carveTry2 w h seed grid x y dx dy rest nx ny
-  where
-    nx = x + dx
-    ny = y + dy
+  let nx = x + dx
+      ny = y + dy
+  in if nx < 0 || ny < 0 || nx >= w || ny >= h
+       then carveDirs w h seed grid x y rest
+       else carveTry2 w h seed grid x y dx dy rest nx ny
 
 
 carveTry2 w h seed grid x y dx dy rest nx ny =
@@ -1616,13 +1615,12 @@ carveTry2 w h seed grid x y dx dy rest nx ny =
 
 
 carveThrough w h seed grid x y dx dy rest nx ny =
-  carveDirs w h seed2 grid3 x y rest
-  where
-    wx    = 2*x+1 + dx
-    wy    = 2*y+1 + dy
-    grid2 = setCell (wx,wy) False grid
-    seed2 = rand seed
-    grid3 = carve w h seed2 grid2 nx ny
+  let wx    = 2*x+1 + dx
+      wy    = 2*y+1 + dy
+      grid2 = setCell (wx,wy) False grid
+      seed2 = rand seed
+      grid3 = carve w h seed2 grid2 nx ny
+  in carveDirs w h seed2 grid3 x y rest
 
 
 -- Rendering
