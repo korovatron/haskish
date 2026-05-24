@@ -101,6 +101,16 @@ in f 5`,
             expected: '1'
         },
         {
+            name: 'backtick div precedence matches multiplicative tier',
+            input: 'let maxIter = 50 in (maxIter * 3 `div` 4)',
+            expected: '37'
+        },
+        {
+            name: 'backtick mod precedence with multiplication',
+            input: 'let a = 10 in (a * 5 `mod` 6)',
+            expected: '2'
+        },
+        {
             name: 'define function with where containing multiline let',
             input: `f x = y
   where

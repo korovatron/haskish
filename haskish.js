@@ -5023,6 +5023,46 @@ class HaskishInterpreter {
         ];
 
         for (let { op, fn } of binaryOps) {
+            // Multiplicative tier: *, /, %, and backtick div/mod/quot/rem should
+            // be left-associative in one precedence group.
+            if (op === '*') {
+                const multChain = this.splitMultiplicativeTier(expr);
+                if (multChain) {
+                    const { parts, ops } = multChain;
+                    let result = this.evaluate(parts[0]);
+                    for (let i = 0; i < ops.length; i++) {
+                        const right = this.evaluate(parts[i + 1]);
+                        const currentOp = ops[i];
+                        if (currentOp === '*') {
+                            if (typeof result !== 'number' || typeof right !== 'number') {
+                                throw new Error(`Type error: (*) requires numbers, got ${typeof result} and ${typeof right}`);
+                            }
+                            result = result * right;
+                        } else if (currentOp === '/') {
+                            if (typeof result !== 'number' || typeof right !== 'number') {
+                                throw new Error(`Type error: (/) requires numbers, got ${typeof result} and ${typeof right}`);
+                            }
+                            result = result / right;
+                        } else if (currentOp === '%') {
+                            if (typeof result !== 'number' || typeof right !== 'number') {
+                                throw new Error(`Type error: (%) requires numbers, got ${typeof result} and ${typeof right}`);
+                            }
+                            result = result % right;
+                        } else {
+                            // Backtick function in multiplicative tier: div/mod/quot/rem
+                            const fnName = currentOp.slice(1, -1); // strip surrounding backticks
+                            result = this.applyFunction(fnName, [result, right]);
+                        }
+                    }
+                    return result;
+                }
+            }
+
+            // Handled together in '*' branch above.
+            if (op === '/' || op === '%') {
+                continue;
+            }
+
             const parts = this.splitByOperator(expr, op);
             if (parts.length >= 2) {
                 // Cons (:) is right-associative: 1:2:3:[] means 1:(2:(3:[]))
@@ -5639,6 +5679,83 @@ class HaskishInterpreter {
         }
 
         return parts.length > 1 ? parts : [expr];
+    }
+
+    // Split multiplicative-precedence expressions into a left-associative chain.
+    // Recognizes top-level: *, /, %, and backtick div/mod/quot/rem.
+    splitMultiplicativeTier(expr) {
+        const parts = [];
+        const ops = [];
+        let depth = 0;
+        let inString = false;
+        let stringChar = null;
+        let lastSplit = 0;
+
+        const isBacktickMulFn = (name) => /^(div|mod|quot|rem)$/.test(name);
+
+        for (let i = 0; i < expr.length; i++) {
+            const ch = expr[i];
+            const isPrime = ch === "'" && !inString && i > 0 && /[\w']/.test(expr[i - 1]);
+            if ((ch === '"' || (ch === "'" && !isPrime)) && (i === 0 || expr[i - 1] !== '\\')) {
+                if (!inString) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (ch === stringChar) {
+                    inString = false;
+                    stringChar = null;
+                }
+                continue;
+            }
+            if (inString) continue;
+
+            if (ch === '(' || ch === '[') depth++;
+            if (ch === ')' || ch === ']') depth--;
+            if (depth !== 0) continue;
+
+            if (ch === '*' || ch === '%') {
+                const left = expr.slice(lastSplit, i).trim();
+                if (!left) return null;
+                parts.push(left);
+                ops.push(ch);
+                lastSplit = i + 1;
+                continue;
+            }
+
+            if (ch === '/') {
+                const prev = i > 0 ? expr[i - 1] : ' ';
+                const next = i + 1 < expr.length ? expr[i + 1] : ' ';
+                // Exclude /= and //-style pairs from split candidates.
+                if (prev !== '=' && next !== '=' && next !== '/') {
+                    const left = expr.slice(lastSplit, i).trim();
+                    if (!left) return null;
+                    parts.push(left);
+                    ops.push(ch);
+                    lastSplit = i + 1;
+                    continue;
+                }
+            }
+
+            if (ch === '`') {
+                const closeIdx = expr.indexOf('`', i + 1);
+                if (closeIdx > i + 1) {
+                    const fnName = expr.slice(i + 1, closeIdx).trim();
+                    if (isBacktickMulFn(fnName)) {
+                        const left = expr.slice(lastSplit, i).trim();
+                        if (!left) return null;
+                        parts.push(left);
+                        ops.push('`' + fnName + '`');
+                        lastSplit = closeIdx + 1;
+                    }
+                    i = closeIdx;
+                }
+            }
+        }
+
+        if (ops.length === 0) return null;
+        const last = expr.slice(lastSplit).trim();
+        if (!last) return null;
+        parts.push(last);
+        return { parts, ops };
     }
 
     // Split an expression on backtick infix operators: a `f` b `g` c
