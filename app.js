@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.2.12';
+const HASKISH_VERSION = '1.2.13';
 
 const interpreter = new HaskishInterpreter();
 
@@ -173,7 +173,7 @@ document.getElementById('preludeLink').addEventListener('click', async function(
         codeEditor.setValue(code);
         codeEditor.setCursor({ line: 0, ch: 0 });
         builtinsOverlay.classList.remove('visible');
-        addSystemMessage('Prelude.hs loaded! Click "Run Code" to make the functions available.', 'result');
+        addSystemMessage('Prelude.hs loaded. Click the play button to load functions into REPL.', 'result');
         saveUniversalState();
     } catch (err) {
         addSystemMessage('Error loading Prelude.hs: ' + err.message, 'error');
@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (content) {
             codeEditor.setValue(content);
             codeEditor.setCursor({ line: 0, ch: 0 });
-            addSystemMessage(`Loaded example: ${sectionName}! Click "Run Code" to define the functions.`, 'result');
+            addSystemMessage(`Loaded example: ${sectionName}. Click the play button to load functions into REPL.`, 'result');
             closeMenuFunc(); // Close menu after loading
         }
     }
@@ -973,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const code = await file.text();
                 
                 codeEditor.setValue(code);
-                addSystemMessage(`Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
+                addSystemMessage(`Loaded ${file.name}. Click the play button to load functions into REPL.`, 'result');
                 saveUniversalState();
             } else {
                 // Fallback: use file input
@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (file) {
                         const code = await file.text();
                         codeEditor.setValue(code);
-                        addSystemMessage(`Loaded ${file.name}! Click "Run Code" to use the functions.`, 'result');
+                        addSystemMessage(`Loaded ${file.name}. Click the play button to load functions into REPL.`, 'result');
                         saveUniversalState();
                     }
                 };
@@ -1011,7 +1011,7 @@ document.addEventListener('DOMContentLoaded', () => {
         replHistoryIndex = -1;
         interpreter.functions = {};
         interpreter.variables = {};
-        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
+        addSystemMessage('Click the play button to load functions into REPL, then try expressions. Type :help for commands. (Examples in menu ☰)', 'info');
         saveUniversalState(); // Save cleared state
     });
 
@@ -1022,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
         replHistoryIndex = -1;
         interpreter.functions = {};
         interpreter.variables = {};
-        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
+        addSystemMessage('Click the play button to load functions into REPL, then try expressions. Type :help for commands. (Examples in menu ☰)', 'info');
         replEditor.focus();
         saveUniversalState(); // Save cleared state
     });
@@ -1082,11 +1082,11 @@ function initExercises() {
             replOutput.scrollTop = replOutput.scrollHeight;
             addSystemMessage('Previous session restored.', 'info');
         } else {
-            addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
+            addSystemMessage('Click the play button to load functions into REPL, then try expressions. Type :help for commands. (Examples in menu ☰)', 'info');
         }
     } else {
         codeEditor.setValue('-- Write your function definitions here\n');
-        addSystemMessage('Click "Run Code" to load functions, then try expressions in the REPL! Type :help for commands. (Examples in menu ☰)', 'info');
+        addSystemMessage('Click the play button to load functions into REPL, then try expressions. Type :help for commands. (Examples in menu ☰)', 'info');
     }
     
     // Focus REPL input on startup
