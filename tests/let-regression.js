@@ -677,6 +677,12 @@ showExprStress
         [ a+b | x <- [Node (1,2), Node (3,4)]
               , let Node (a,b) = x ]`,
                     expected: '[3,7]'
+                },
+                {
+                    name: 'let-bound list of lambdas used in comprehension',
+                    input: `let fs = [ (\\n -> n + x) | x <- [1..5] ] in
+        [ f 10 | f <- fs ]`,
+                    expected: '[11,12,13,14,15]'
         }
     ];
 

@@ -4160,22 +4160,44 @@ class HaskishInterpreter {
             });
         }
         
-        // For function objects and single-char strings (Chars), store them in the variables table
-        // during evaluation, since they can't be safely stringified and re-parsed
-        const tempVars = {};
-        
-        for (let [varName, value] of Object.entries(bindings)) {
-            // Check if this is a function object that can't be stringified
-            if (value instanceof Lambda || 
+        // For runtime-only values (e.g. functions, infinite ranges, or containers that include them)
+        // and single-char strings (Chars), store them in the variables table during evaluation,
+        // since they can't always be safely stringified and re-parsed.
+        const hasRuntimeOnlyValue = (value, seen = new Set()) => {
+            if (value === null || value === undefined) return false;
+            if (typeof value !== 'object') return false;
+            if (seen.has(value)) return false;
+            seen.add(value);
+
+            if (value instanceof Lambda ||
+                value instanceof PartialFunction ||
                 (value && value._isOperatorFunction) ||
                 (value && value._isComposedFunction) ||
                 (value && value._isConstructorFunction) ||
-                value instanceof PartialFunction) {
-                // Store directly in variables table under the binding name
-                tempVars[varName] = value;
+                (value && value._isInfiniteRange)) {
+                return true;
             }
-            // Store infinite ranges directly — their toString() includes '...' which is invalid syntax
-            else if (value && value._isInfiniteRange) {
+
+            if (Array.isArray(value)) {
+                return value.some(v => hasRuntimeOnlyValue(v, seen));
+            }
+
+            if (value && value._isTuple && Array.isArray(value.elements)) {
+                return value.elements.some(v => hasRuntimeOnlyValue(v, seen));
+            }
+
+            if (value && value._isConstructor && Array.isArray(value.args)) {
+                return value.args.some(v => hasRuntimeOnlyValue(v, seen));
+            }
+
+            return false;
+        };
+
+        const tempVars = {};
+        
+        for (let [varName, value] of Object.entries(bindings)) {
+            if (hasRuntimeOnlyValue(value)) {
+                // Store directly in variables table under the binding name
                 tempVars[varName] = value;
             }
             // Also store single-char strings (Chars) to preserve them during evaluation
