@@ -1498,21 +1498,33 @@ class HaskishInterpreter {
             const normalized = alternativesStr.replace(new RegExp(HASKISH_NEWLINE_MARKER, 'g'), '\n');
             const rawLines = normalized
                 .split(/\r?\n/)
-                .map(s => s.trim())
-                .filter(Boolean);
+                .map(s => s.replace(/\r$/, ''))
+                .filter(s => s.trim().length > 0);
 
             if (rawLines.length > 1) {
+                const lineIndent = (line) => {
+                    const m = line.match(/^\s*/);
+                    return m ? m[0].length : 0;
+                };
+                const minIndent = Math.min(...rawLines.map(lineIndent));
+
                 const merged = [];
-                for (const line of rawLines) {
+                for (const rawLine of rawLines) {
+                    const line = rawLine.trim();
                     if (merged.length === 0) {
                         merged.push(line);
                         continue;
                     }
 
+                    // Start a new alternative only for top-level layout lines.
+                    // More-indented lines (including nested case alternatives) are
+                    // continuations of the current branch body.
+                    const isTopLevelLayoutLine = lineIndent(rawLine) === minIndent;
                     const lineHasArrow = this.findTopLevelArrow(line) !== -1;
-                    const currentHasArrow = this.findTopLevelArrow(merged[merged.length - 1]) !== -1;
+                    const isGuardContinuation = line.startsWith('|');
+                    const startsNewAlternative = lineHasArrow && (isTopLevelLayoutLine || isGuardContinuation);
 
-                    if (lineHasArrow && currentHasArrow) {
+                    if (startsNewAlternative) {
                         merged.push(line);
                     } else {
                         merged[merged.length - 1] += ` ${HASKISH_NEWLINE_MARKER} ${line}`;
@@ -4474,12 +4486,13 @@ class HaskishInterpreter {
             }
 
             const scrutineeExpr = rawExprForCase.slice(4, caseOf.ofStart).trim();
-            const alternativesStr = rawExprForCase.slice(caseOf.ofStart + 2).trim();
+            // Keep leading indentation for layout-sensitive alternative splitting.
+            const alternativesStr = rawExprForCase.slice(caseOf.ofStart + 2).trimEnd();
 
             if (!scrutineeExpr) {
                 throw new Error("Malformed case/of expression: missing expression after 'case'");
             }
-            if (!alternativesStr) {
+            if (!alternativesStr.trim()) {
                 throw new Error("Malformed case/of expression: missing alternatives after 'of'");
             }
 

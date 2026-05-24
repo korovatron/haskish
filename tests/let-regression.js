@@ -239,6 +239,24 @@ in describe 3`,
             expected: '"medium"'
         },
         {
+            name: 'nested case in guarded case branch body',
+            input: `case (1,2) of
+  (x,y) | x < y -> case x+y of
+                     3 -> let x = 10 in x+y
+                     _ -> 0
+  _ -> 99`,
+            expected: '12'
+        },
+        {
+            name: 'nested case in simple case branch body',
+            input: `case 1 of
+  1 -> case 2 of
+         2 -> 99
+         _ -> 0
+  _ -> 0`,
+            expected: '99'
+        },
+        {
             name: 'define guard function using case in guard',
             input: `gCase x
   | case x of 0 -> True; _ -> False = "zero"
