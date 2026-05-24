@@ -1728,5 +1728,139 @@ world =
   , [False, False, False, False]
   ]
 
+=== Tower of Hanoi ===
+
+--  Tower of Hanoi 
+--  Try:
+--   playHanoi 3
+
+-- Generate list of moves
+hanoi 0 from to spare =
+  []
+hanoi n from to spare =
+  hanoi (n - 1) from spare to ++
+  [(from, to)] ++
+  hanoi (n - 1) spare to from
+
+
+-- Remove top disc from a peg
+extract ((p,s):rest) from =
+  if p == from
+    then (s, rest)
+    else
+      let (d, rest') = extract rest from
+      in (d, (p,s) : rest')
+
+
+-- Repeat a character n times
+repeatChar c 0 = ""
+repeatChar c n = c : repeatChar c (n - 1)
+
+
+-- Centre a string inside a fixed width
+centre width str =
+  let len = length str
+      pad = (width - len) `div` 2
+      left  = repeatChar ' ' pad
+      right = repeatChar ' ' (width - pad - len)
+  in left ++ str ++ right
+
+
+-- Render a disc or empty pole level
+renderDisc size maxSize =
+  if size == 0
+    then centre (2 * maxSize - 1) "|"
+    else
+      let w = 2 * size - 1
+          disc = repeatChar '█' w
+      in centre (2 * maxSize - 1) disc
+
+
+-- Collect sizes on a peg (bottom to top)
+pegSizes name [] = []
+pegSizes name ((p,s):rest) =
+  if p == name
+    then s : pegSizes name rest
+    else pegSizes name rest
+
+
+collect [] name = []
+collect ((p,s):rest) name =
+  if p == name
+    then s : collect rest name
+    else collect rest name
+
+-- Pad sizes to fixed height
+padToHeight xs h =
+  if length xs >= h
+    then xs
+    else padToHeight (xs ++ [0]) h
+
+-- Split a multi-line string into lines
+linesOf s =
+  split s ""
+
+split "" acc = [acc]
+split (c:cs) acc =
+  if c == '\n'
+    then acc : split cs ""
+    else split cs (acc ++ [c])
+
+-- Join lines with newlines
+joinLines [] = ""
+joinLines (x:xs) = x ++ "\n" ++ joinLines xs
+
+-- Render one peg as list of lines
+pegLines name discs maxSize height =
+  let sizesTop    = pegSizes name discs      -- top -> bottom
+      sizesBottom = reverse sizesTop         -- bottom -> top
+      padded      = padToHeight sizesBottom height
+      rev         = reverse padded           -- top -> bottom for drawing
+  in map (\s -> renderDisc s maxSize) rev
+
+-- Combine three lists of lines
+combineLines [] [] [] = []
+combineLines (a:as) (b:bs) (c:cs) =
+  (a ++ "   " ++ b ++ "   " ++ c) : combineLines as bs cs
+
+-- Render full state
+renderState discs maxSize height =
+  let la = pegLines "A" discs maxSize height
+      lb = pegLines "B" discs maxSize height
+      lc = pegLines "C" discs maxSize height
+      combined = combineLines la lb lc
+  in joinLines combined ++ "\n   A       B       C\n\n"
+
+-- Apply one move
+step discs (from, to) =
+  let (d, rest) = extract discs from
+  in (to, d) : rest
+
+-- Build list of states
+scanStates discs [] =
+  [discs]
+scanStates discs (m:ms) =
+  let discs' = step discs m
+  in discs : scanStates discs' ms
+
+-- Join list of strings
+joinStrings [] = ""
+joinStrings (x:xs) = x ++ joinStrings xs
+
+-- Play animation
+playHanoi n =
+  let moves   = hanoi n "A" "C" "B"
+      initial = buildInitial n
+      states  = scanStates initial moves
+      maxSize = n
+      height  = n
+      frames  = map (\st -> renderState st maxSize height) states
+  in putStr (joinStrings frames)
+
+-- Build initial state without list comprehension
+buildInitial 0 = []
+buildInitial n = buildInitial (n - 1) ++ [("A", n)]
+
+
 
 ###
