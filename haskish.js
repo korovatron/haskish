@@ -1606,9 +1606,17 @@ class HaskishInterpreter {
             } else {
                 // Deeper indent: continuation (guard, multi-line body, binary op, etc.)
                 if (trimmed.startsWith('|')) {
-                    // Guard continuation lines must stay space-joined so splitWhereGuards
-                    // can detect the top-level '|'.
-                    merged[merged.length - 1] += ' ' + trimmed;
+                    // If '=' already occurred in the current binding, this pipe belongs
+                    // to the RHS expression (for example case/of guard alternatives), so
+                    // preserve a logical newline marker. Otherwise it is a where-function
+                    // guard continuation and must stay space-joined for splitWhereGuards.
+                    const currentBinding = merged[merged.length - 1];
+                    const hasAssignmentInHeader = this.findWhereAssignmentEquals(currentBinding) !== -1;
+                    if (hasAssignmentInHeader) {
+                        merged[merged.length - 1] += ` ${HASKISH_NEWLINE_MARKER} ${trimmed}`;
+                    } else {
+                        merged[merged.length - 1] += ' ' + trimmed;
+                    }
                 } else {
                     // Preserve a logical line break marker for expression continuations
                     // (e.g. layout-style let bodies inside where bindings).
@@ -1963,6 +1971,13 @@ class HaskishInterpreter {
             if (ch === '(' || ch === '[') depth++;
             if (ch === ')' || ch === ']') depth--;
             if (depth === 0 && ch === '|' && (i === 0 || str[i - 1] !== '|') && (i + 1 >= str.length || str[i + 1] !== '|')) {
+                // Guard syntax is only valid when '|' appears before the first
+                // top-level assignment '='. If '=' already occurred, this pipe is
+                // part of the RHS (for example: case-of guard alternatives).
+                const eqIdx = this.findWhereAssignmentEquals(str);
+                if (eqIdx !== -1 && eqIdx < i) {
+                    break;
+                }
                 // Found first guard separator – parse all guards from here
                 const header = str.slice(0, i).trim();
                 const guardStr = str.slice(i); // "| cond = body | cond = body"
@@ -2403,7 +2418,8 @@ class HaskishInterpreter {
                 // buffer start, it is a continuation of this logical definition
                 // (e.g. let-layout bindings, wrapped expressions).
                 const isGuardLine = /^\|/.test(nextNonEmptyTrimmed);
-                if (nextNonEmptyIndent > bufferStartIndent && !isGuardLine) {
+                const isCaseGuardContinuation = isGuardLine && strippedSoFar.includes('->');
+                if (nextNonEmptyIndent > bufferStartIndent && (!isGuardLine || isCaseGuardContinuation)) {
                     continue;
                 }
                 if (startsLikeContinuation && nextNonEmptyIndent >= bufferStartIndent) {
@@ -4567,32 +4583,33 @@ class HaskishInterpreter {
 
         // if/then/else expression
         // Find 'if', 'then', 'else' at depth 0 (not inside parens/brackets)
-        if (expr.trimStart().startsWith('if ')) {
+        const rawExprForIf = rawExpr.replace(leadingMarkerRegex, '').trimStart();
+        if (rawExprForIf.startsWith('if ')) {
             let depth = 0;
             let ifIndex = -1;
             let thenIndex = -1;
             let elseIndex = -1;
             let ifNesting = 0; // tracks inner if/else pairs after the outermost 'then'
             
-            for (let i = 0; i < expr.length; i++) {
-                if (expr[i] === '(' || expr[i] === '[') depth++;
-                if (expr[i] === ')' || expr[i] === ']') depth--;
+            for (let i = 0; i < rawExprForIf.length; i++) {
+                if (rawExprForIf[i] === '(' || rawExprForIf[i] === '[') depth++;
+                if (rawExprForIf[i] === ')' || rawExprForIf[i] === ']') depth--;
                 
                 if (depth === 0) {
                     // Match 'if' as a word boundary
-                    if (ifIndex === -1 && expr.substr(i, 3) === 'if ' && (i === 0 || /\s/.test(expr[i-1]))) {
+                    if (ifIndex === -1 && rawExprForIf.substr(i, 3) === 'if ' && (i === 0 || /\s/.test(rawExprForIf[i-1]))) {
                         ifIndex = i;
                     }
                     // Match 'then' as a word boundary
                     else if (ifIndex !== -1 && thenIndex === -1 && 
-                             expr.substr(i, 5) === 'then ' && /\s/.test(expr[i-1])) {
+                             rawExprForIf.substr(i, 5) === 'then ' && /\s/.test(rawExprForIf[i-1])) {
                         thenIndex = i;
                     }
                     // After 'then', track nested if/else to find the matching 'else' for the outermost 'if'
                     else if (thenIndex !== -1 && elseIndex === -1) {
-                        if (expr.substr(i, 3) === 'if ' && (i === 0 || /\s/.test(expr[i-1]))) {
+                        if (rawExprForIf.substr(i, 3) === 'if ' && (i === 0 || /\s/.test(rawExprForIf[i-1]))) {
                             ifNesting++;
-                        } else if (expr.substr(i, 5) === 'else ' && /\s/.test(expr[i-1])) {
+                        } else if (rawExprForIf.substr(i, 5) === 'else ' && /\s/.test(rawExprForIf[i-1])) {
                             if (ifNesting === 0) {
                                 elseIndex = i;
                             } else {
@@ -4604,9 +4621,9 @@ class HaskishInterpreter {
             }
             
             if (ifIndex !== -1 && thenIndex !== -1 && elseIndex !== -1) {
-                const condition = expr.slice(ifIndex + 3, thenIndex).trim();
-                const thenExpr = expr.slice(thenIndex + 5, elseIndex).trim();
-                const elseExpr = expr.slice(elseIndex + 5).trim();
+                const condition = rawExprForIf.slice(ifIndex + 3, thenIndex).trim();
+                const thenExpr = rawExprForIf.slice(thenIndex + 5, elseIndex).trim();
+                const elseExpr = rawExprForIf.slice(elseIndex + 5).trim();
                 
                 const condResult = this.evaluate(condition);
                 return condResult ? this.evaluate(thenExpr) : this.evaluate(elseExpr);

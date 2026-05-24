@@ -1446,41 +1446,58 @@ sierpinski n =
 
 
 === Mandelbrot ===
+--- Mandelbrot Generator
+--- Test:
+--- mandelbrot
+
 mandelbrot =
-  putStr (render (-30) 10 (-12) 12)
+  let xMin = -30
+      xMax =  10
+      yMin = -12
+      yMax =  12
+  in putStr (render xMin xMax yMin yMax)
+
   where
-    maxIter = 20  -- reduce this number if you get a timeout. Increase for more detail
-    scale = 20
+    maxIter = 20		-- reduce this number if you get a timeout. Increase for more detail
+    scale   = 20
     radius2 = 4 * scale * scale
 
-    render xMin xMax yMin yMax
-      | yMin > yMax = ""
-      | otherwise = row xMin xMax yMin ++ "\n" ++ render xMin xMax (yMin + 1) yMax
+    -- render whole region
+    render xMin xMax yMin yMax =
+      case yMin > yMax of
+        True  -> ""
+        False ->
+          let line = row xMin xMax yMin
+          in line ++ "\n" ++ render xMin xMax (yMin + 1) yMax
 
-    row x xMax y
-      | x > xMax = ""
-      | otherwise = charFor (mandel 0 0 0 cx cy) ++ row (x + 1) xMax y
-      where
-        cx = div (x * scale) 20
-        cy = div (y * scale) 20
+    -- render one row
+    row x xMax y =
+      case x > xMax of
+        True  -> ""
+        False ->
+          let cx = div (x * scale) 20
+              cy = div (y * scale) 20
+              iter = mandel 0 0 0 cx cy
+          in charFor iter ++ row (x + 1) xMax y
 
+    -- mandelbrot iteration
     mandel iter zx zy cx cy
-      | iter >= maxIter = iter
-      | zx*zx + zy*zy > radius2 = iter
-      | otherwise = mandel (iter + 1) zx2 zy2 cx cy
-      where
-        zx2 = div (zx*zx - zy*zy) scale + cx
-        zy2 = div (2 * zx * zy) scale + cy
+      | iter >= maxIter          = iter
+      | zx*zx + zy*zy > radius2  = iter
+      | otherwise =
+          let zx2 = div (zx*zx - zy*zy) scale + cx
+              zy2 = div (2 * zx * zy) scale + cy
+          in mandel (iter + 1) zx2 zy2 cx cy
 
-    charFor n
-      | n >= maxIter = "# "
-      | n > (div (maxIter * 3) 4) = "* "
-      | n > (div maxIter 2) = "+ "
-      | n > (div maxIter 4) = ". "
-      | otherwise = "  "
+    -- choose character using case + guards + lambdas
+    charFor n =
+      case () of
+        _ | n >= maxIter                 -> "# "
+          | n > (maxIter * 3 `div` 4)    -> "* "
+          | n > (maxIter `div` 2)        -> "+ "
+          | n > (maxIter `div` 4)        -> ". "
+          | otherwise                    -> "  "
 
---- Test
---- mandelbrot
 
 === DFS Maze Generator ===
 

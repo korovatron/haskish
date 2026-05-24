@@ -171,6 +171,17 @@ in sum [1,2,3,4,5]`,
             expected: '15'
         },
         {
+            name: 'layout let in else branch at top level function',
+            input: `row x xMax y =
+  if x > xMax then ""
+  else
+    let cx = x
+        cy = y
+    in "ok"
+row 0 1 0`,
+            expected: '"ok"'
+        },
+        {
             name: 'case/of simple value branches',
             input: 'case 2 of 0 -> 10; 1 -> 11; _ -> 12',
             expected: '12'
@@ -238,6 +249,20 @@ in describe 3`,
     | otherwise -> "large"`,
             expected: '"medium"'
         },
+                {
+                        name: 'case/of wildcard pattern with guarded continuations',
+                        input: `let
+    maxIter = 50
+    charFor n =
+        case () of
+            _ | n >= maxIter              -> "# "
+                | n > div (maxIter * 3) 4      -> "* "
+                | n > div maxIter 2            -> "+ "
+                | n > div maxIter 4            -> ". "
+                | otherwise                 -> "  "
+in [charFor 60, charFor 40, charFor 30, charFor 20, charFor 10]`,
+                        expected: '["# ","* ","+ ",". ","  "]'
+                },
         {
             name: 'nested case in guarded case branch body',
             input: `case (1,2) of
