@@ -1367,6 +1367,7 @@ class HaskishInterpreter {
 
                     const isContinuation =
                         /(?<![=<>!\/])=\s*$/.test(merged[merged.length - 1].trim()) ||
+                        /->\s*$/.test(merged[merged.length - 1].trim()) ||
                         line.startsWith('|') ||
                         line.startsWith('where') ||
                         (this.findTopLevelArrow(line) !== -1 && this.findWhereAssignmentEquals(line) === -1) ||
@@ -4462,10 +4463,43 @@ class HaskishInterpreter {
             result = protectStringLiterals(result);
 
             const substitutedValues = [];
+            const localLeadingMarkerRegex = new RegExp(`^(?:\\s*${HASKISH_NEWLINE_MARKER}\\s*)+`);
+
+            // If an expression (or top-level lambda body) starts with `let` and
+            // binds the same name, that name is shadowed in the let scope.
+            // In that case, do not substitute the outer binding for this name.
+            const shadowsBindingInTopLevelLet = (expression, name) => {
+                const raw = String(expression || '').replace(localLeadingMarkerRegex, '').trimStart();
+                const letIn = this.findTopLevelLetIn(raw);
+                if (!letIn || letIn.letStart !== 0 || letIn.inStart === -1) {
+                    return false;
+                }
+
+                const bindingsStr = raw.slice(3, letIn.inStart).trim();
+                const letBindings = this.splitLetBindings(bindingsStr);
+                for (const binding of letBindings) {
+                    const eqIdx = this.findWhereAssignmentEquals(binding);
+                    if (eqIdx === -1) continue;
+                    const lhs = binding.slice(0, eqIdx).trim();
+                    if (!lhs) continue;
+                    const head = lhs.split(/\s+/)[0];
+                    if (head === name) return true;
+                }
+
+                return false;
+            };
 
             for (let [varName, value] of Object.entries(bindings)) {
                 // Skip function objects - they're already in variables table
                 if (tempVars.hasOwnProperty(varName)) {
+                    continue;
+                }
+
+                if (shadowsBindingInTopLevelLet(result, varName)) {
+                    continue;
+                }
+                const topLambdaBody = result.trimStart().startsWith('\\') ? this._rawLambdaBody(result) : null;
+                if (topLambdaBody && shadowsBindingInTopLevelLet(topLambdaBody, varName)) {
                     continue;
                 }
                 

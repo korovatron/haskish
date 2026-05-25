@@ -566,6 +566,25 @@ showExpr (subst ("Add", ("Var","x"), ("Lit",1)) "x" ("Lit",99))`,
             expected: '4'
         },
         {
+            name: 'let captures lexical value after later shadowing',
+            input: `let x = 10 in
+let f = \\y -> x + y in
+let x = 99 in
+f 1`,
+            expected: '11'
+        },
+        {
+            name: 'nested let inside lambda shadows captured name',
+            input: `let x = 1 in
+let f = \\y ->
+  let x = 2 in
+  \\z -> x + y + z
+in
+let x = 99 in
+(f 10) 100`,
+            expected: '112'
+        },
+        {
             name: 'case branch lambda parameter shadows outer let binding',
             input: `let x = 10 in case 3 of
   _ -> (\\x -> x + 1) 5`,
