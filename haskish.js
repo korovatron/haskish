@@ -1368,6 +1368,7 @@ class HaskishInterpreter {
                     const isContinuation =
                         /(?<![=<>!\/])=\s*$/.test(merged[merged.length - 1].trim()) ||
                         /->\s*$/.test(merged[merged.length - 1].trim()) ||
+                        /\bin\s*$/.test(merged[merged.length - 1].trim()) ||
                         line.startsWith('|') ||
                         line.startsWith('where') ||
                         (this.findTopLevelArrow(line) !== -1 && this.findWhereAssignmentEquals(line) === -1) ||

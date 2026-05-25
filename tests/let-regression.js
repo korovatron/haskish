@@ -193,6 +193,27 @@ a10`,
 ) 5`,
             expected: '10'
         },
+                {
+                        name: 'let-bound lambda body continues after inner let in',
+                        input: `let make = \\f ->
+    let x = 3 in
+    f x
+in
+make (\\n -> n * n)`,
+                        expected: '9'
+                },
+                {
+                        name: 'nested let lambda body with local helper application line',
+                        input: `let x = 1 in
+let f = \\a ->
+    let x = 2 in
+    let g = \\b -> x + a + b in
+    g 10
+in
+let x = 99 in
+f 5`,
+                        expected: '17'
+                },
         {
             name: 'recursive local sum with pattern matching',
             input: `let
