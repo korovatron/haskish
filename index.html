@@ -8,7 +8,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="A free Haskell-style programming playground and browser-based REPL with guided lessons, exercises and challenges. Practice recursion, pattern matching and higher-order functions online. Ideal for A-Level Computer Science (AQA 4.12). Works offline as a PWA.">
-    <meta name="keywords" content="Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, map, filter, fold, list comprehensions, lambda functions, tuples, currying, lazy evaluation, free online programming, REPL, interactive coding, education, teachers, students, no installation, PWA, offline, lessons, tutorials">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <link rel="canonical" href="https://www.korovatron.co.uk/haskish/">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -16,7 +17,7 @@
     <meta property="og:title" content="Haskish | Haskell&#8209;Style Programming Playground &amp; REPL in Your Browser">
     <meta property="og:description" content="A free Haskell-style programming playground and browser-based REPL with guided lessons, exercises and challenges. Practice recursion, pattern matching and higher-order functions online. Ideal for A-Level Computer Science (AQA 4.12). Works offline as a PWA.">
     <meta property="og:image" content="https://www.korovatron.co.uk/haskish/images/preview-v3.png">
-    <meta property="og:url" content="https://www.korovatron.co.uk/haskish">
+    <meta property="og:url" content="https://www.korovatron.co.uk/haskish/">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
@@ -44,7 +45,7 @@
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "Haskish",
-      "url": "https://www.korovatron.co.uk/haskish",
+    "url": "https://www.korovatron.co.uk/haskish/",
       "description": "A free Haskell-style functional programming playground for students, teachers and beginners. Practice recursion, pattern matching and higher-order functions in your browser. Works offline as a PWA.",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Any",
@@ -350,16 +351,6 @@
         </div>
     </div>
 
-    <p class="visually-hidden">
-      Haskish is a free, lightweight Haskell&#8209;style functional programming playground that runs entirely in your browser.
-      It supports recursion, pattern matching, higher&#8209;order functions (map, filter, fold), list comprehensions, lambda functions,
-      currying, lazy evaluation with infinite lists, and function composition.
-      Guided lessons and examples make it ideal for A&#8209;Level Computer Science students and teachers following the AQA specification (4.12),
-      as well as anyone learning functional programming for the first time.
-      Write and run code instantly with no installation, no accounts, and no tracking.
-      Can be installed as a Progressive Web App for offline use.
-    </p>
-
     <div class="main-container">
         <div class="main-content" id="mainContent">
             <!-- REPL Panel (Column 1) -->
@@ -456,6 +447,7 @@
                 <span id="currentExerciseLabel" class="exercise-label">Select a lesson</span>
                 <button id="nextExercise" class="nav-arrow" title="Next lesson">&gt;&gt;</button>
             </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js"></script>
