@@ -1347,20 +1347,56 @@ footer a:hover {
 }
 
 /* Scrollbar Styling */
-.repl-history::-webkit-scrollbar {
-    width: 8px;
+.repl-history,
+.editor-panel .CodeMirror-scroll,
+.editor-panel .CodeMirror,
+.editor-panel .CodeMirror-vscrollbar,
+.editor-panel .CodeMirror-hscrollbar,
+.exercise-content-panel,
+.about-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--repl-bg);
 }
 
-.repl-history::-webkit-scrollbar-track {
+.repl-history::-webkit-scrollbar,
+.editor-panel .CodeMirror-scroll::-webkit-scrollbar,
+.editor-panel .CodeMirror::-webkit-scrollbar,
+.editor-panel .CodeMirror-vscrollbar::-webkit-scrollbar,
+.editor-panel .CodeMirror-hscrollbar::-webkit-scrollbar,
+.exercise-content-panel::-webkit-scrollbar,
+.about-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.repl-history::-webkit-scrollbar-track,
+.editor-panel .CodeMirror-scroll::-webkit-scrollbar-track,
+.editor-panel .CodeMirror::-webkit-scrollbar-track,
+.editor-panel .CodeMirror-vscrollbar::-webkit-scrollbar-track,
+.editor-panel .CodeMirror-hscrollbar::-webkit-scrollbar-track,
+.exercise-content-panel::-webkit-scrollbar-track,
+.about-content::-webkit-scrollbar-track {
     background: var(--repl-bg);
 }
 
-.repl-history::-webkit-scrollbar-thumb {
+.repl-history::-webkit-scrollbar-thumb,
+.editor-panel .CodeMirror-scroll::-webkit-scrollbar-thumb,
+.editor-panel .CodeMirror::-webkit-scrollbar-thumb,
+.editor-panel .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+.editor-panel .CodeMirror-hscrollbar::-webkit-scrollbar-thumb,
+.exercise-content-panel::-webkit-scrollbar-thumb,
+.about-content::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 4px;
 }
 
-.repl-history::-webkit-scrollbar-thumb:hover {
+.repl-history::-webkit-scrollbar-thumb:hover,
+.editor-panel .CodeMirror-scroll::-webkit-scrollbar-thumb:hover,
+.editor-panel .CodeMirror::-webkit-scrollbar-thumb:hover,
+.editor-panel .CodeMirror-vscrollbar::-webkit-scrollbar-thumb:hover,
+.editor-panel .CodeMirror-hscrollbar::-webkit-scrollbar-thumb:hover,
+.exercise-content-panel::-webkit-scrollbar-thumb:hover,
+.about-content::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
 }
 
