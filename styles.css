@@ -25,13 +25,13 @@ html {
     --module5-color: #34d399;
     --module6-color: #22d3ee;
     --bg-color: #0f0f0f;
-    --panel-bg: #1e1e1e;
+    --panel-bg: #000000;
     --border-color: #444;
     --text-color: #e0e0e0;
     --text-secondary: #a0a0a0;
-    --code-bg: #2a2a2a;
-    --repl-bg: #1e1e1e;
-    --repl-input-bg: #2a2a2a;
+    --code-bg: #000000;
+    --repl-bg: #000000;
+    --repl-input-bg: #000000;
     --repl-text: #e0e0e0;
     --header-gradient-start: #5865f2;
     --header-gradient-end: #a855f7;
@@ -102,7 +102,7 @@ header {
     padding-top: calc(12px + var(--safe-area-top, 0px));
     padding-left: max(20px, var(--safe-area-left, 0px));
     padding-right: max(20px, var(--safe-area-right, 0px));
-    background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
+    background: var(--header-gradient-start);
     color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     flex-shrink: 0;
@@ -183,7 +183,7 @@ header h1 {
     max-width: 85vw;
     height: 100vh;
     height: calc(100vh + env(safe-area-inset-bottom));
-    background: var(--panel-bg);
+    background: #1e1e1e;
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
     transition: right 0.3s ease;
     z-index: 1000;
@@ -281,7 +281,7 @@ header h1 {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
-    background: var(--code-bg);
+    background: #2a2a2a;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -336,7 +336,7 @@ header h1 {
 }
 
 .examples-items-submenu {
-    background: rgba(0, 0, 0, 0.12);
+    background: #252525;
 }
 
 .submenu-item-nested {
@@ -382,7 +382,7 @@ header h1 {
 }
 
 .about-modal {
-    background: var(--panel-bg);
+    background: #1e1e1e;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     max-width: 600px;
@@ -445,7 +445,7 @@ header h1 {
 }
 
 .about-content code {
-    background: var(--code-bg);
+    background: #2a2a2a;
     padding: 0.15rem 0.4rem;
     border-radius: 3px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -573,7 +573,7 @@ header h1 {
 }
 
 .builtins-content code {
-    background: var(--code-bg);
+    background: #2a2a2a;
     padding: 0.15rem 0.4rem;
     border-radius: 3px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -592,7 +592,7 @@ header h1 {
 }
 
 .builtins-pre {
-    background: var(--code-bg);
+    background: #2a2a2a;
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -667,7 +667,7 @@ body.menu-open .repl-history {
 /* Exercise Selector Bar */
 .mobile-exercise-nav {
     display: none;
-    background: var(--panel-bg);
+    background: #1e1e1e;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 15px;
@@ -715,7 +715,7 @@ body.menu-open .repl-history {
 }
 
 .exercise-selector-bar {
-    background: var(--panel-bg);
+    background: #000000;
     padding: 20px;
     flex-shrink: 0;
 }
@@ -844,6 +844,19 @@ body.menu-open .repl-history {
     box-shadow: 0 4px 8px rgba(94, 53, 177, 0.3);
 }
 
+#runCode {
+    background-color: #1b8f43;
+    border: 2px solid #28b45a;
+    color: #ffffff;
+    box-shadow: 0 0 0 1px #28b45a, 0 0 8px rgba(40, 180, 90, 0.35);
+}
+
+#runCode:hover {
+    background-color: #16773a;
+    border-color: #39c56d;
+    box-shadow: 0 0 0 1px #39c56d, 0 0 10px rgba(57, 197, 109, 0.45);
+}
+
 .button-group {
     display: flex;
     gap: 10px;
@@ -864,33 +877,37 @@ body.menu-open .repl-history {
 /* Hamburger menu button - subtle neon styling */
 #menuToggle,
 #closeMenu {
-    background: rgba(251, 191, 36, 0.55);
-    border: 2px solid rgba(251, 191, 36, 0.9);
+    background: #1f1600;
+    border: 2px solid #fbbf24;
     color: white;
-    backdrop-filter: blur(4px);
+    box-shadow: 0 0 0 1px #fbbf24, 0 0 10px #fbbf24;
 }
 
 #menuToggle:hover,
 #closeMenu:hover {
-    background: rgba(251, 191, 36, 0.7);
-    border-color: rgba(251, 191, 36, 1);
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+    background: #2e2100;
+    border-color: #ffd24a;
+    box-shadow: 0 0 0 1px #ffd24a, 0 0 14px #ffd24a;
 }
 
-/* Modal close buttons - same golden styling as hamburger */
+/* Non-hamburger close buttons: solid red with white X */
 #closeAbout,
-#closeBuiltins {
-    background: rgba(251, 191, 36, 0.55);
-    border: 2px solid rgba(251, 191, 36, 0.9);
-    color: white;
-    backdrop-filter: blur(4px);
+#closeBuiltins,
+#closeLessons,
+#closeExercise {
+    background: #d32f2f;
+    border: 2px solid #ff4d4d;
+    color: #ffffff;
+    box-shadow: 0 0 0 1px #ff4d4d, 0 0 10px rgba(211, 47, 47, 0.55);
 }
 
 #closeAbout:hover,
-#closeBuiltins:hover {
-    background: rgba(251, 191, 36, 0.7);
-    border-color: rgba(251, 191, 36, 1);
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+#closeBuiltins:hover,
+#closeLessons:hover,
+#closeExercise:hover {
+    background: #b71c1c;
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 1px #ff6b6b, 0 0 14px rgba(211, 47, 47, 0.75);
 }
 
 .btn-danger {
@@ -946,6 +963,16 @@ body.text-size-xlarge {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.1);
+}
+
+/* Match function panel focus weight to REPL input focus treatment */
+.editor-panel .CodeMirror {
+    border: 2px solid var(--border-color);
+}
+
+.editor-panel .CodeMirror.CodeMirror-focused {
+    border-color: var(--primary-color);
+    box-shadow: none;
 }
 
 #codeEditor {
@@ -1123,7 +1150,7 @@ body.text-size-xlarge {
 
 /* Examples Panel */
 .examples-panel {
-    background: var(--panel-bg);
+    background: #1e1e1e;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
@@ -1358,6 +1385,10 @@ footer a:hover {
     scrollbar-color: var(--border-color) var(--repl-bg);
 }
 
+.about-content {
+    scrollbar-color: var(--border-color) #1e1e1e;
+}
+
 .repl-history::-webkit-scrollbar,
 .editor-panel .CodeMirror-scroll::-webkit-scrollbar,
 .editor-panel .CodeMirror::-webkit-scrollbar,
@@ -1376,7 +1407,7 @@ footer a:hover {
 .editor-panel .CodeMirror-hscrollbar::-webkit-scrollbar-track,
 .exercise-content-panel::-webkit-scrollbar-track,
 .about-content::-webkit-scrollbar-track {
-    background: var(--repl-bg);
+    background: #1e1e1e;
 }
 
 .repl-history::-webkit-scrollbar-thumb,
@@ -1421,7 +1452,7 @@ footer a:hover {
 
 /* Exercises Section */
 .exercises-section {
-    background: var(--panel-bg);
+    background: #1e1e1e;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
@@ -1443,7 +1474,7 @@ footer a:hover {
 }
 
 .module {
-    background: var(--panel-bg);
+    background: #1e1e1e;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     margin-bottom: 0.75rem;
@@ -1459,7 +1490,7 @@ footer a:hover {
 
 .module-header {
     padding: 0.875rem 1rem;
-    background: var(--panel-bg);
+    background: #1e1e1e;
     cursor: pointer;
     display: flex;
     align-items: center;
