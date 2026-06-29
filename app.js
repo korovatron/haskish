@@ -1,7 +1,7 @@
 // Haskish App - UI Controller
 
 // Version number
-const HASKISH_VERSION = '1.2.19';
+const HASKISH_VERSION = '1.2.20';
 
 const interpreter = new HaskishInterpreter();
 
@@ -119,6 +119,16 @@ menuOverlay.addEventListener('click', closeMenuFunc);
 // Toggle exercises column
 const toggleExercisesBtn = document.getElementById('toggleExercises');
 
+function trackGoatcounterEvent(path, title) {
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({
+            path,
+            title,
+            event: true
+        });
+    }
+}
+
 function toggleExercisesPanel() {
     const exercisesColumn = document.getElementById('exercisesColumn');
     const mainContent = document.getElementById('mainContent');
@@ -129,11 +139,13 @@ function toggleExercisesPanel() {
         mainContent.classList.remove('exercises-visible');
         document.body.classList.remove('exercises-visible');
         toggleExercisesBtn.classList.remove('active');
+        trackGoatcounterEvent('lessons-toggle-off', 'Lessons toggled off');
     } else {
         exercisesColumn.style.display = 'flex';
         mainContent.classList.add('exercises-visible');
         document.body.classList.add('exercises-visible');
         toggleExercisesBtn.classList.add('active');
+        trackGoatcounterEvent('lessons-toggle-on', 'Lessons toggled on');
     }
 }
 
