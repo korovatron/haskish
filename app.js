@@ -129,6 +129,13 @@ function trackGoatcounterEvent(path, title) {
     }
 }
 
+function toGoatcounterSlug(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
 function toggleExercisesPanel() {
     const exercisesColumn = document.getElementById('exercisesColumn');
     const mainContent = document.getElementById('mainContent');
@@ -542,6 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = interpreter.run(code);
         
         if (result.success) {
+            trackGoatcounterEvent('Haskish-functions loaded iinto REPL', 'Functions loaded into REPL');
             addSystemMessage(`${result.message}`, 'result');
             
             // Display any warnings
@@ -716,6 +724,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (content) {
             codeEditor.setValue(content);
             codeEditor.setCursor({ line: 0, ch: 0 });
+            const exampleSlug = toGoatcounterSlug(sectionName) || 'unknown';
+            trackGoatcounterEvent(`Haskish-${exampleSlug}-loaded`, `Example loaded: ${sectionName}`);
             addSystemMessage(`Loaded example: ${sectionName}. Click the play button to load functions into REPL.`, 'result');
             closeMenuFunc(); // Close menu after loading
         }
