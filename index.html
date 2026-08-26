@@ -41,37 +41,68 @@
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Haskish",
-    "url": "https://www.korovatron.co.uk/haskish/",
-      "description": "A free Haskell-style functional programming playground for students, teachers and beginners. Practice recursion, pattern matching and higher-order functions in your browser. Works offline as a PWA.",
-      "applicationCategory": "EducationalApplication",
-      "operatingSystem": "Any",
-      "browserRequirements": "Requires a modern web browser",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "GBP"
-      },
-      "author": {
-        "@type": "Person",
-        "name": "Neil Kendall",
-        "url": "https://www.korovatron.co.uk/"
-      },
-      "featureList": [
-        "Interactive REPL with syntax highlighting",
-        "Pattern matching and recursion",
-        "Higher-order functions: map, filter, fold",
-        "List comprehensions",
-        "Lambda functions and currying",
-        "Lazy evaluation with infinite lists",
-        "Guided lessons and examples",
-        "Works offline as a Progressive Web App",
-        "AQA A Level Computer Science coverage"
-      ],
-      "educationalLevel": "A Level",
-      "keywords": "Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, REPL"
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "BreadcrumbList",
+                "@id": "https://www.korovatron.co.uk/haskish/#breadcrumb",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Korovatron",
+                        "item": "https://www.korovatron.co.uk/"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Haskish",
+                        "item": "https://www.korovatron.co.uk/haskish/"
+                    }
+                ]
+            },
+            {
+                "@type": "SoftwareApplication",
+                "@id": "https://www.korovatron.co.uk/haskish/#softwareapplication",
+                "name": "Haskish",
+                "url": "https://www.korovatron.co.uk/haskish/",
+                "description": "A free Haskell-style functional programming playground for students, teachers and beginners. Practice recursion, pattern matching and higher-order functions in your browser. Works offline as a PWA.",
+                "applicationCategory": "EducationalApplication",
+                "operatingSystem": "Web Browser",
+                "inLanguage": "en-GB",
+                "isAccessibleForFree": true,
+                "browserRequirements": "Requires a modern web browser",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "GBP"
+                },
+                "author": {
+                    "@type": "Person",
+                    "name": "Neil Kendall",
+                    "url": "https://www.korovatron.co.uk"
+                },
+                "publisher": {
+                    "@id": "https://www.korovatron.co.uk/#organization"
+                },
+                "featureList": [
+                    "Interactive REPL with syntax highlighting",
+                    "Pattern matching and recursion",
+                    "Higher-order functions: map, filter, fold",
+                    "List comprehensions",
+                    "Lambda functions and currying",
+                    "Lazy evaluation with infinite lists",
+                    "Guided lessons and examples",
+                    "Works offline as a Progressive Web App",
+                    "AQA A Level Computer Science coverage"
+                ],
+                "educationalLevel": "A Level",
+                "keywords": "Haskell, functional programming, A Level Computer Science, AQA, recursion, pattern matching, higher-order functions, REPL",
+                "breadcrumb": {
+                    "@id": "https://www.korovatron.co.uk/haskish/#breadcrumb"
+                }
+            }
+        ]
     }
     </script>
 
